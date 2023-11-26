@@ -1,0 +1,7 @@
+*.class
+*.log
+.idea/
+.bsp/
+target/
+*/target/
+private/
