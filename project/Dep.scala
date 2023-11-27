@@ -6,9 +6,11 @@ object Dep {
     val zio                   = "2.0.19"
     val zioSchema             = "0.4.16"
     val scalaCollectionCompat = "2.11.0"
+    val apacheParquet         = "1.13.0"
   }
 
   object O {
+    val apacheParquet    = "org.apache.parquet"
     val scalaLang        = "org.scala-lang"
     val zio              = "dev.zio"
     val scalaLangModules = "org.scala-lang.modules"
@@ -20,6 +22,8 @@ object Dep {
   lazy val zioTest             = O.zio %% "zio-test"              % V.zio
   lazy val zioTestSbt          = O.zio %% "zio-test-sbt"          % V.zio
 
+  lazy val parquetHadoop = O.apacheParquet % "parquet-hadoop" % V.apacheParquet
+
   lazy val scalaCollectionCompat = O.scalaLangModules %% "scala-collection-compat" % V.scalaCollectionCompat
 
   lazy val core = Seq(
@@ -27,6 +31,7 @@ object Dep {
     zioSchema,
     zioSchemaDerivation,
     scalaCollectionCompat,
+    parquetHadoop,
     zioTest    % Test,
     zioTestSbt % Test
   )
