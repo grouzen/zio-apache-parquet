@@ -23,6 +23,7 @@ object Dep {
   lazy val zioTestSbt          = O.zio %% "zio-test-sbt"          % V.zio
 
   lazy val parquetHadoop = O.apacheParquet % "parquet-hadoop" % V.apacheParquet
+  lazy val parquetColumn = O.apacheParquet % "parquet-column" % V.apacheParquet
 
   lazy val scalaCollectionCompat = O.scalaLangModules %% "scala-collection-compat" % V.scalaCollectionCompat
 
@@ -32,6 +33,7 @@ object Dep {
     zioSchemaDerivation,
     scalaCollectionCompat,
     parquetHadoop,
+    parquetColumn,
     zioTest    % Test,
     zioTestSbt % Test
   )
