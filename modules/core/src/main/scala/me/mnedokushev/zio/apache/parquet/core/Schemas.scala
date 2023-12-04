@@ -7,12 +7,25 @@ import zio.Chunk
 
 object Schemas {
 
+  trait Def[Self <: Def[_]] {
+
+    def named(name: String): Type
+
+    def optionality(condition: Boolean): Self =
+      if (condition) optional else required
+
+    def required: Self
+
+    def optional: Self
+
+  }
+
   case class PrimitiveDef(
     typeName: PrimitiveTypeName,
     annotation: LogicalTypeAnnotation,
     isOptional: Boolean = false,
     length: Int = 0
-  ) {
+  ) extends Def[PrimitiveDef] {
 
     def named(name: String): Type =
       Types
@@ -20,9 +33,6 @@ object Schemas {
         .as(annotation)
         .length(length)
         .named(name)
-
-    def optionality(condition: Boolean): PrimitiveDef =
-      if (condition) optional else required
 
     def length(len: Int): PrimitiveDef =
       this.copy(length = len)
@@ -35,7 +45,7 @@ object Schemas {
 
   }
 
-  case class RecordDef(fields: Chunk[Type], isOptional: Boolean = false) {
+  case class RecordDef(fields: Chunk[Type], isOptional: Boolean = false) extends Def[RecordDef] {
 
     def named(name: String): Type = {
       val builder = Types.buildGroup(repetition(isOptional))
@@ -43,9 +53,6 @@ object Schemas {
       fields.foreach(builder.addField)
       builder.named(name)
     }
-
-    def optionality(condition: Boolean): RecordDef =
-      if (condition) optional else required
 
     def required: RecordDef =
       this.copy(isOptional = true)
