@@ -14,11 +14,16 @@ import org.apache.parquet.schema.Types
 //val elementName = listSchema.getFields.get(0).getName
 //val listIndex = groupSchema.getFieldIndex(listFieldName)
 
-val schema = Types
-  .map(Repetition.REQUIRED)
-  .key(PrimitiveTypeName.INT32)
-  .requiredValue(PrimitiveTypeName.INT32)
-  .named("mymap")
+//val schema = Types
+//  .map(Repetition.REQUIRED)
+//  .key(PrimitiveTypeName.INT32)
+//  .requiredValue(PrimitiveTypeName.INT32)
+//  .named("mymap")
+//
+//val groupSchema = schema.asGroupType()
+//val mapSchema = groupSchema.getFields.get(0).asGroupType()
 
-val groupSchema = schema.asGroupType()
-val mapSchema = groupSchema.getFields.get(0).asGroupType()
+val schema = Types
+  .buildGroup(Repetition.REQUIRED)
+  .addField(Types.required(PrimitiveTypeName.FLOAT).named("foo"))
+  .named("mygroup")
