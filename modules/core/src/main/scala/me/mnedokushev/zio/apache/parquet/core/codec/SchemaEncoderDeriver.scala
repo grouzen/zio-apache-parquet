@@ -28,7 +28,7 @@ object SchemaEncoderDeriver {
     }
 
     override def deriveEnum[A](
-      enum: Schema.Enum[A],
+      `enum`: Schema.Enum[A],
       cases: => Chunk[Deriver.WrappedF[SchemaEncoder, _]],
       summoned: => Option[SchemaEncoder[A]]
     ): SchemaEncoder[A] = ???

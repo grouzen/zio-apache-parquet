@@ -2,11 +2,13 @@ package me.mnedokushev.zio.apache.parquet.core.codec
 
 import me.mnedokushev.zio.apache.parquet.core.Schemas
 import me.mnedokushev.zio.apache.parquet.core.Schemas.PrimitiveDef
+import org.apache.parquet.schema.Type
 import zio._
 import zio.schema._
 import zio.test._
 
 import java.util.UUID
+import scala.annotation.nowarn
 
 object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
 
@@ -162,6 +164,25 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
             )
           }
           .reduce(_ && _)
+      },
+      test("summoned") {
+        // @nowarn annotation is needed to avoid having 'variable is not used' compiler error
+        @nowarn
+        implicit val intEncoder: SchemaEncoder[Int] = new SchemaEncoder[Int] {
+          override def encode(schema: Schema[Int], name: String, optional: Boolean): Type =
+            Schemas.uuid.optionality(optional).named(name)
+        }
+
+        val name    = "myrecord"
+        val encoder = Derive.derive[SchemaEncoder, Record](SchemaEncoderDeriver.summoned)
+        val tpe     = encoder.encode(Record.schema, name, optional = true)
+
+        assertTrue(
+          tpe == Schemas
+            .record(Chunk(Schemas.uuid.required.named("a"), Schemas.string.optional.named("b")))
+            .optional
+            .named(name)
+        )
       }
     )
 

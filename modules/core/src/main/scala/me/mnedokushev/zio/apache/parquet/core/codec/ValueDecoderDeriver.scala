@@ -12,7 +12,7 @@ class ValueEncoderDeriver extends Deriver[ValueEncoder] {
   ): ValueEncoder[A] = ???
 
   override def deriveEnum[A](
-    enum: Schema.Enum[A],
+    `enum`: Schema.Enum[A],
     cases: => Chunk[Deriver.WrappedF[ValueEncoder, _]],
     summoned: => Option[ValueEncoder[A]]
   ): ValueEncoder[A] = ???
