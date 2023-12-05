@@ -7,7 +7,7 @@ import zio.Chunk
 
 object Schemas {
 
-  trait Def[Self <: Def[_]] {
+  abstract class Def[Self <: Def[_]] {
 
     def named(name: String): Type
 
@@ -38,10 +38,10 @@ object Schemas {
       this.copy(length = len)
 
     def required: PrimitiveDef =
-      this.copy(isOptional = true)
+      this.copy(isOptional = false)
 
     def optional: PrimitiveDef =
-      this.copy(isOptional = false)
+      this.copy(isOptional = true)
 
   }
 
@@ -55,10 +55,29 @@ object Schemas {
     }
 
     def required: RecordDef =
-      this.copy(isOptional = true)
+      this.copy(isOptional = false)
 
     def optional: RecordDef =
+      this.copy(isOptional = true)
+
+  }
+
+  case class ListDef(
+    element: Type,
+    isOptional: Boolean = false
+  ) extends Def[ListDef] {
+
+    def named(name: String): Type =
+      Types
+        .list(repetition(isOptional))
+        .element(element)
+        .named(name)
+
+    def required: ListDef =
       this.copy(isOptional = false)
+
+    def optional: ListDef =
+      this.copy(isOptional = true)
 
   }
 
@@ -77,5 +96,6 @@ object Schemas {
   val uuid: PrimitiveDef    = PrimitiveDef(FIXED_LEN_BYTE_ARRAY, uuidType()).length(16)
 
   def record(fields: Chunk[Type]): RecordDef = RecordDef(fields)
+  def list(element: Type): ListDef           = ListDef(element)
 
 }

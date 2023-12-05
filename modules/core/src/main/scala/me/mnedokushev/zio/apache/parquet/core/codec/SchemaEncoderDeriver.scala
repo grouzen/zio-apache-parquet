@@ -15,18 +15,8 @@ object SchemaEncoderDeriver {
       summoned: => Option[SchemaEncoder[A]]
     ): SchemaEncoder[A] = new SchemaEncoder[A] {
 
-      private def fieldType[A1](
-        name0: String,
-        schema0: Schema[A1],
-        encoder: SchemaEncoder[_]
-      ) = {
-        val fieldOptional = schema0 match {
-          case _: Schema.Optional[_] => true
-          case _                     => false
-        }
-
-        encoder.asInstanceOf[SchemaEncoder[A1]].encode(schema0, name0, fieldOptional)
-      }
+      private def fieldType[A1](name0: String, schema0: Schema[A1], encoder: SchemaEncoder[_]) =
+        encoder.asInstanceOf[SchemaEncoder[A1]].encode(schema0, name0, isSchemaOptional(schema0))
 
       override def encode(schema: Schema[A], name: String, optional: Boolean): Type = {
         val fieldTypes = record.fields.zip(fields.map(_.unwrap)).map { case (field, encoder) =>
@@ -82,7 +72,13 @@ object SchemaEncoderDeriver {
       sequence: Schema.Sequence[C[A], A, _],
       inner: => SchemaEncoder[A],
       summoned: => Option[SchemaEncoder[C[A]]]
-    ): SchemaEncoder[C[A]] = ???
+    ): SchemaEncoder[C[A]] = new SchemaEncoder[C[A]] {
+      override def encode(schema: Schema[C[A]], name: String, optional: Boolean): Type =
+        Schemas
+          .list(inner.encode(sequence.elementSchema, "element", isSchemaOptional(sequence.elementSchema)))
+          .optionality(optional)
+          .named(name)
+    }
 
     override def deriveMap[K, V](
       map: Schema.Map[K, V],
@@ -98,8 +94,13 @@ object SchemaEncoderDeriver {
       summoned: => Option[SchemaEncoder[B]]
     ): SchemaEncoder[B] = ???
 
-  }
+  }.cached
 
   val summoned: Deriver[SchemaEncoder] = default.autoAcceptSummoned
 
+  private def isSchemaOptional(schema: Schema[_]): Boolean =
+    schema match {
+      case _: Schema.Optional[_] => true
+      case _                     => false
+    }
 }

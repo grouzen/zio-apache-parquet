@@ -15,12 +15,12 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
     implicit val schema: Schema[Record] = DeriveSchema.gen[Record]
   }
 
+  private def encode[A](encoder: SchemaEncoder[_], schema: Schema[A], name: String, optional: Boolean) =
+    encoder.asInstanceOf[SchemaEncoder[A]].encode(schema, name, optional)
+
   override def spec: Spec[TestEnvironment with Scope, Any] =
     suite("SchemaEncoderDeriverSpec")(
       test("primitive") {
-        def encode[A](encoder: SchemaEncoder[_], schema: Schema[A], name: String, optional: Boolean) =
-          encoder.asInstanceOf[SchemaEncoder[A]].encode(schema, name, optional)
-
         def named(defs: List[PrimitiveDef], names: List[String]) =
           defs.zip(names).map { case (schemaDef, name) =>
             schemaDef.named(name)
@@ -87,9 +87,10 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
           .reduce(_ && _)
       },
       test("record") {
+        val name        = "record"
         val encoder     = Derive.derive[SchemaEncoder, Record](SchemaEncoderDeriver.default)
-        val tpeOptional = encoder.encode(Record.schema, "record", optional = true)
-        val tpeRequired = encoder.encode(Record.schema, "record", optional = false)
+        val tpeOptional = encoder.encode(Record.schema, name, optional = true)
+        val tpeRequired = encoder.encode(Record.schema, name, optional = false)
         val schemaDef   = Schemas.record(
           Chunk(
             Schemas.int.required.named("a"),
@@ -98,9 +99,69 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
         )
 
         assertTrue(
-          tpeOptional == schemaDef.optional.named("record"),
-          tpeRequired == schemaDef.required.named("record")
+          tpeOptional == schemaDef.optional.named(name),
+          tpeRequired == schemaDef.required.named(name)
         )
+      },
+      test("sequence") {
+        val name                             = "mylist"
+        val encoders: List[SchemaEncoder[_]] =
+          List(
+            Derive.derive[SchemaEncoder, List[String]](SchemaEncoderDeriver.default),
+            Derive.derive[SchemaEncoder, List[Boolean]](SchemaEncoderDeriver.default),
+            Derive.derive[SchemaEncoder, List[Byte]](SchemaEncoderDeriver.default),
+            Derive.derive[SchemaEncoder, List[Short]](SchemaEncoderDeriver.default),
+            Derive.derive[SchemaEncoder, List[Int]](SchemaEncoderDeriver.default),
+            Derive.derive[SchemaEncoder, List[Long]](SchemaEncoderDeriver.default),
+            Derive.derive[SchemaEncoder, List[UUID]](SchemaEncoderDeriver.default),
+            Derive.derive[SchemaEncoder, List[Option[String]]](SchemaEncoderDeriver.default),
+            Derive.derive[SchemaEncoder, List[Option[Boolean]]](SchemaEncoderDeriver.default),
+            Derive.derive[SchemaEncoder, List[Option[Byte]]](SchemaEncoderDeriver.default),
+            Derive.derive[SchemaEncoder, List[Option[Short]]](SchemaEncoderDeriver.default),
+            Derive.derive[SchemaEncoder, List[Option[Int]]](SchemaEncoderDeriver.default),
+            Derive.derive[SchemaEncoder, List[Option[Long]]](SchemaEncoderDeriver.default),
+            Derive.derive[SchemaEncoder, List[Option[UUID]]](SchemaEncoderDeriver.default)
+          )
+        val schemas: List[Schema[_]]         =
+          List(
+            Schema.list[String],
+            Schema.list[Int],
+            Schema.list[Option[String]],
+            Schema.list[Option[Int]]
+          )
+        val elements                         =
+          List(
+            Schemas.string,
+            Schemas.boolean,
+            Schemas.byte,
+            Schemas.short,
+            Schemas.int,
+            Schemas.long,
+            Schemas.uuid
+          )
+        val schemaDefs                       =
+          (elements.map(_.required) ++ elements.map(_.optional))
+            .map(_.named("element"))
+            .map(Schemas.list)
+        val expectedOptional                 =
+          schemaDefs.map(_.optional.named(name))
+        val expectedRequired                 =
+          schemaDefs.map(_.required.named(name))
+
+        encoders
+          .zip(schemas)
+          .zip(expectedOptional)
+          .zip(expectedRequired)
+          .map { case (((encoder, schema), expOptional), expRequired) =>
+            val tpeOptional = encode(encoder, schema, name, optional = true)
+            val tpeRequired = encode(encoder, schema, name, optional = false)
+
+            assertTrue(
+              tpeOptional == expOptional,
+              tpeRequired == expRequired
+            )
+          }
+          .reduce(_ && _)
       }
     )
 
