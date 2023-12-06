@@ -17,6 +17,7 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
     implicit val schema: Schema[Record] = DeriveSchema.gen[Record]
   }
 
+  // Helper for being able to extract type parameter A from a given schema in order to cast the type of encoder<
   private def encode[A](encoder: SchemaEncoder[_], schema: Schema[A], name: String, optional: Boolean) =
     encoder.asInstanceOf[SchemaEncoder[A]].encode(schema, name, optional)
 

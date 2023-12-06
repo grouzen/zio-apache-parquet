@@ -15,12 +15,12 @@ object SchemaEncoderDeriver {
       summoned: => Option[SchemaEncoder[A]]
     ): SchemaEncoder[A] = new SchemaEncoder[A] {
 
-      private def fieldType[A1](name0: String, schema0: Schema[A1], encoder: SchemaEncoder[_]) =
+      private def enc[A1](name0: String, schema0: Schema[A1], encoder: SchemaEncoder[_]) =
         encoder.asInstanceOf[SchemaEncoder[A1]].encode(schema0, name0, isSchemaOptional(schema0))
 
       override def encode(schema: Schema[A], name: String, optional: Boolean): Type = {
         val fieldTypes = record.fields.zip(fields.map(_.unwrap)).map { case (field, encoder) =>
-          fieldType(field.name, field.schema, encoder)
+          enc(field.name, field.schema, encoder)
         }
 
         Schemas.record(fieldTypes).optionality(optional).named(name)
