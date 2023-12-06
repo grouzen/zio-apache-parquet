@@ -5,6 +5,9 @@ import zio._
 import zio.schema._
 import zio.test._
 
+import java.util.UUID
+import scala.annotation.nowarn
+
 object ValueEncoderDeriverSpec extends ZIOSpecDefault {
 
   case class Record(a: Int, b: Boolean, c: Option[String], d: Option[Int])
@@ -21,9 +24,31 @@ object ValueEncoderDeriverSpec extends ZIOSpecDefault {
         assertTrue(
           value == Value.record(
             Map(
-              "a" -> Value.int(3),
+              "a" -> Value.int(2),
               "b" -> Value.boolean(false),
               "c" -> Value.string("data"),
+              "d" -> Value.nil
+            )
+          )
+        )
+      },
+      test("summoned") {
+        @nowarn
+        implicit val stringEncoder: ValueEncoder[String] = new ValueEncoder[String] {
+          override def encode(value: String): Value =
+            Value.uuid(UUID.fromString(value))
+        }
+
+        val uuid    = UUID.randomUUID()
+        val encoder = Derive.derive[ValueEncoder, Record](ValueEncoderDeriver.summoned)
+        val value   = encoder.encode(Record(2, false, Some(uuid.toString), None))
+
+        assertTrue(
+          value == Value.record(
+            Map(
+              "a" -> Value.int(2),
+              "b" -> Value.boolean(false),
+              "c" -> Value.uuid(uuid),
               "d" -> Value.nil
             )
           )
