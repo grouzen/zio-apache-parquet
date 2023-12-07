@@ -81,9 +81,10 @@ object Value {
 
         values.foreach { case (name, value) =>
           val fieldIndex = groupSchema.getFieldIndex(name)
+          val fieldType  = groupSchema.getType(name)
 
           recordConsumer.startField(name, fieldIndex)
-          value.write(groupSchema.getType(name), recordConsumer)
+          value.write(fieldType, recordConsumer)
           recordConsumer.endField(name, fieldIndex)
         }
 
