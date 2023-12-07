@@ -73,7 +73,7 @@ object ParquetWriter {
       for {
         schema        <- schemaEncoder.encodeZIO(schema, tag.tag.shortName, optional = false)
         messageSchema <- castSchema(schema)
-        hadoopFile    <- ZIO.attemptBlockingIO(HadoopOutputFile.fromPath(path.underlying, hadoopConf))
+        hadoopFile    <- ZIO.attemptBlockingIO(HadoopOutputFile.fromPath(path.toHadoop, hadoopConf))
         builder        = new Builder(hadoopFile, messageSchema)
                            .withWriteMode(writeMode)
                            .withCompressionCodec(compressionCodecName)

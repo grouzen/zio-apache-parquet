@@ -16,6 +16,9 @@ case class Path(underlying: HadoopPath) {
   def toJava: JPath =
     Paths.get(underlying.toUri)
 
+  def toHadoop: HadoopPath =
+    underlying
+
 }
 
 object Path {
