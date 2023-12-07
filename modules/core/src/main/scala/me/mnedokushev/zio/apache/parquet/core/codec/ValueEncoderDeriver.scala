@@ -47,6 +47,8 @@ object ValueEncoderDeriver {
               Value.string(v)
             case (StandardType.BoolType, v: Boolean)    =>
               Value.boolean(v)
+            case (StandardType.ByteType, v: Byte)       =>
+              Value.int(v.toInt)
             case (StandardType.ShortType, v: Short)     =>
               Value.short(v)
             case (StandardType.IntType, v: Int)         =>
