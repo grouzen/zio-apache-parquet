@@ -55,7 +55,7 @@ object ValueDecoderDeriver {
     ): ValueDecoder[A] = new ValueDecoder[A] {
       override def decode(value: Value): A =
         (st, value) match {
-          case (StandardType.StringType, PrimitiveValue.ByteArrayValue(v)) =>
+          case (StandardType.StringType, PrimitiveValue.BinaryValue(v)) =>
             new String(v.getBytes, StandardCharsets.UTF_8)
           case (StandardType.BoolType, PrimitiveValue.BooleanValue(v))     =>
             v
@@ -71,11 +71,11 @@ object ValueDecoderDeriver {
             v
           case (StandardType.DoubleType, PrimitiveValue.DoubleValue(v))    =>
             v
-          case (StandardType.BinaryType, PrimitiveValue.ByteArrayValue(v)) =>
+          case (StandardType.BinaryType, PrimitiveValue.BinaryValue(v)) =>
             Chunk.fromArray(v.getBytes)
           case (StandardType.CharType, PrimitiveValue.Int32Value(v))       =>
             v.toChar
-          case (StandardType.UUIDType, PrimitiveValue.ByteArrayValue(v))   =>
+          case (StandardType.UUIDType, PrimitiveValue.BinaryValue(v))   =>
             val bb = ByteBuffer.wrap(v.getBytes)
             new UUID(bb.getLong, bb.getLong)
           case (other, _)                                                  =>
@@ -135,6 +135,7 @@ object ValueDecoderDeriver {
       fields: => Chunk[Deriver.WrappedF[ValueDecoder, _]],
       summoned: => Option[ValueDecoder[B]]
     ): ValueDecoder[B] = ???
+
   }.cached
 
   def summoned: Deriver[ValueDecoder] =

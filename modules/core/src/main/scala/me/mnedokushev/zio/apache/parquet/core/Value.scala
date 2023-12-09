@@ -59,7 +59,7 @@ object Value {
 
     }
 
-    case class ByteArrayValue(value: Binary) extends PrimitiveValue[Binary] {
+    case class BinaryValue(value: Binary) extends PrimitiveValue[Binary] {
 
       override def write(schema: Type, recordConsumer: RecordConsumer): Unit =
         recordConsumer.addBinary(value)
@@ -68,11 +68,15 @@ object Value {
 
   }
 
-  sealed trait GroupValue extends Value
+  sealed trait GroupValue[Self <: GroupValue[Self]] extends Value {
+
+    def put(name: String, value: Value): Self
+
+  }
 
   object GroupValue {
 
-    case class RecordValue(values: Map[String, Value]) extends GroupValue {
+    case class RecordValue(values: Map[String, Value]) extends GroupValue[RecordValue] {
 
       override def write(schema: Type, recordConsumer: RecordConsumer): Unit = {
         val groupSchema = schema.asGroupType()
@@ -91,9 +95,15 @@ object Value {
         recordConsumer.endGroup()
       }
 
+      override def put(name: String, value: Value): RecordValue =
+        if (values.contains(name))
+          this.copy(values.updated(name, value))
+        else
+          throw new IllegalArgumentException(s"Record doesn't contain field $name")
+
     }
 
-    case class ListValue(values: Chunk[Value]) extends GroupValue {
+    case class ListValue(values: Chunk[Value]) extends GroupValue[ListValue] {
 
       override def write(schema: Type, recordConsumer: RecordConsumer): Unit = {
         recordConsumer.startGroup()
@@ -102,7 +112,7 @@ object Value {
           val groupSchema   = schema.asGroupType()
           val listSchema    = groupSchema.getFields.get(0).asGroupType()
           val listFieldName = listSchema.getName
-          val elementName   = listSchema.getFields.get(0).getName
+          val elementName   = listSchema.getFields.get(0).getName // TODO: validate, must be "element"
           val listIndex     = groupSchema.getFieldIndex(listFieldName)
 
           recordConsumer.startField(listFieldName, listIndex)
@@ -117,9 +127,12 @@ object Value {
         recordConsumer.endGroup()
       }
 
+      override def put(name: String, value: Value): ListValue =
+        this.copy(values = values :+ value)
+
     }
 
-    case class MapValue(values: Map[Value, Value]) extends GroupValue {
+    case class MapValue(values: Map[Value, Value]) extends GroupValue[MapValue] {
 
       override def write(schema: Type, recordConsumer: RecordConsumer): Unit = {
         recordConsumer.startGroup()
@@ -142,6 +155,8 @@ object Value {
         recordConsumer.endGroup()
       }
 
+      override def put(name: String, value: Value): MapValue = ???
+//        this.copy(values = values.updated(name, value))
     }
 
   }
@@ -150,7 +165,7 @@ object Value {
     NullValue
 
   def string(v: String) =
-    PrimitiveValue.ByteArrayValue(Binary.fromString(v))
+    PrimitiveValue.BinaryValue(Binary.fromString(v))
 
   def boolean(v: Boolean) =
     PrimitiveValue.BooleanValue(v)
@@ -171,7 +186,7 @@ object Value {
     PrimitiveValue.DoubleValue(v)
 
   def binary(v: Chunk[Byte]) =
-    PrimitiveValue.ByteArrayValue(Binary.fromConstantByteArray(v.toArray))
+    PrimitiveValue.BinaryValue(Binary.fromConstantByteArray(v.toArray))
 
   def char(v: Char) =
     PrimitiveValue.Int32Value(v.toInt)
@@ -182,7 +197,7 @@ object Value {
     bb.putLong(v.getMostSignificantBits)
     bb.putLong(v.getLeastSignificantBits)
 
-    PrimitiveValue.ByteArrayValue(Binary.fromConstantByteArray(bb.array()))
+    PrimitiveValue.BinaryValue(Binary.fromConstantByteArray(bb.array()))
   }
 
   def record(r: Map[String, Value]) =

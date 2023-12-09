@@ -16,6 +16,8 @@ trait ParquetWriter[A <: Product] {
 
   def write(data: Chunk[A]): Task[Unit]
 
+  def close: Task[Unit]
+
 }
 
 final class ParquetWriterLive[A <: Product](
@@ -24,9 +26,15 @@ final class ParquetWriterLive[A <: Product](
     extends ParquetWriter[A] {
 
   override def write(data: Chunk[A]): Task[Unit] =
-    ZIO.attemptBlocking(
-      data.foreach(v => underlying.write(encoder.encode(v).asInstanceOf[RecordValue]))
-    )
+    ZIO.foreachDiscard(data) { value =>
+      for {
+        record <- encoder.encodeZIO(value)
+        _      <- ZIO.attemptBlockingIO(underlying.write(record.asInstanceOf[RecordValue]))
+      } yield ()
+    }
+
+  override def close: Task[Unit] =
+    ZIO.attemptBlockingIO(underlying.close())
 
 }
 
@@ -42,7 +50,7 @@ object ParquetWriter {
 
   }
 
-  def configured[A <: Product](
+  def configured[A <: Product: ValueEncoder](
     path: Path,
     writeMode: ParquetFileWriter.Mode = ParquetFileWriter.Mode.CREATE,
     compressionCodecName: CompressionCodecName = HadoopParquetWriter.DEFAULT_COMPRESSION_CODEC_NAME,
@@ -56,11 +64,10 @@ object ParquetWriter {
   )(implicit
     schema: Schema[A],
     schemaEncoder: SchemaEncoder[A],
-    encoder: ValueEncoder[A],
     tag: Tag[A]
   ): TaskLayer[ParquetWriter[A]] = {
 
-    def castSchema(schema: Type) =
+    def castToMessageSchema(schema: Type) =
       ZIO.attempt {
         val groupSchema = schema.asGroupType()
         val name        = groupSchema.getName
@@ -72,7 +79,7 @@ object ParquetWriter {
     ZLayer.scoped(
       for {
         schema        <- schemaEncoder.encodeZIO(schema, tag.tag.shortName, optional = false)
-        messageSchema <- castSchema(schema)
+        messageSchema <- castToMessageSchema(schema)
         hadoopFile    <- ZIO.attemptBlockingIO(HadoopOutputFile.fromPath(path.toHadoop, hadoopConf))
         builder        = new Builder(hadoopFile, messageSchema)
                            .withWriteMode(writeMode)
@@ -84,7 +91,7 @@ object ParquetWriter {
                            .withRowGroupSize(rowGroupSize)
                            .withValidation(validationEnabled)
                            .withConf(hadoopConf)
-        underlying    <- ZIO.fromAutoCloseable(ZIO.attemptBlocking(builder.build()))
+        underlying    <- ZIO.fromAutoCloseable(ZIO.attemptBlockingIO(builder.build()))
         writer         = new ParquetWriterLive[A](underlying)
       } yield writer
     )
