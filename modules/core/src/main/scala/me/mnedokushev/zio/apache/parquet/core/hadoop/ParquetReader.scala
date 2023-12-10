@@ -3,8 +3,8 @@ package me.mnedokushev.zio.apache.parquet.core.hadoop
 import me.mnedokushev.zio.apache.parquet.core.Value.GroupValue.RecordValue
 import me.mnedokushev.zio.apache.parquet.core.codec.ValueDecoder
 import org.apache.hadoop.conf.Configuration
-import org.apache.parquet.hadoop.{ ParquetReader => HadoopParquetReader }
 import org.apache.parquet.hadoop.api.{ ReadSupport => HadoopReadSupport }
+import org.apache.parquet.hadoop.{ ParquetReader => HadoopParquetReader }
 import org.apache.parquet.io.InputFile
 import zio._
 import zio.stream._

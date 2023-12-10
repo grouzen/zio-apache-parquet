@@ -3,8 +3,8 @@ package me.mnedokushev.zio.apache.parquet.core.hadoop
 import me.mnedokushev.zio.apache.parquet.core.codec._
 import zio._
 import zio.schema._
-import zio.test._
 import zio.test.TestAspect._
+import zio.test._
 
 import java.nio.file.Files
 

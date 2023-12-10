@@ -5,6 +5,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.api.{ WriteSupport => HadoopWriteSupport }
 import org.apache.parquet.io.api.RecordConsumer
 import org.apache.parquet.schema.MessageType
+
 import scala.jdk.CollectionConverters._
 
 class WriteSupport(schema: MessageType, metadata: Map[String, String]) extends HadoopWriteSupport[RecordValue] {
