@@ -165,7 +165,7 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
             )
           }
           .reduce(_ && _)
-      },
+      }
 //      test("summoned") {
       //        // @nowarn annotation is needed to avoid having 'variable is not used' compiler error
       //        @nowarn

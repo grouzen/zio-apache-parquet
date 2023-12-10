@@ -57,28 +57,28 @@ object ValueDecoderDeriver {
         (st, value) match {
           case (StandardType.StringType, PrimitiveValue.BinaryValue(v)) =>
             new String(v.getBytes, StandardCharsets.UTF_8)
-          case (StandardType.BoolType, PrimitiveValue.BooleanValue(v))     =>
+          case (StandardType.BoolType, PrimitiveValue.BooleanValue(v))  =>
             v
-          case (StandardType.ByteType, PrimitiveValue.Int32Value(v))       =>
+          case (StandardType.ByteType, PrimitiveValue.Int32Value(v))    =>
             v.toByte
-          case (StandardType.ShortType, PrimitiveValue.Int32Value(v))      =>
+          case (StandardType.ShortType, PrimitiveValue.Int32Value(v))   =>
             v.toShort
-          case (StandardType.IntType, PrimitiveValue.Int32Value(v))        =>
+          case (StandardType.IntType, PrimitiveValue.Int32Value(v))     =>
             v
-          case (StandardType.LongType, PrimitiveValue.Int64Value(v))       =>
+          case (StandardType.LongType, PrimitiveValue.Int64Value(v))    =>
             v
-          case (StandardType.FloatType, PrimitiveValue.FloatValue(v))      =>
+          case (StandardType.FloatType, PrimitiveValue.FloatValue(v))   =>
             v
-          case (StandardType.DoubleType, PrimitiveValue.DoubleValue(v))    =>
+          case (StandardType.DoubleType, PrimitiveValue.DoubleValue(v)) =>
             v
           case (StandardType.BinaryType, PrimitiveValue.BinaryValue(v)) =>
             Chunk.fromArray(v.getBytes)
-          case (StandardType.CharType, PrimitiveValue.Int32Value(v))       =>
+          case (StandardType.CharType, PrimitiveValue.Int32Value(v))    =>
             v.toChar
           case (StandardType.UUIDType, PrimitiveValue.BinaryValue(v))   =>
             val bb = ByteBuffer.wrap(v.getBytes)
             new UUID(bb.getLong, bb.getLong)
-          case (other, _)                                                  =>
+          case (other, _)                                               =>
             throw DecoderError(s"Unsupported ZIO Schema StandartType $other")
         }
     }
