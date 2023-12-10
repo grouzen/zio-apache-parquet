@@ -12,7 +12,7 @@ import org.apache.parquet.schema.{ MessageType, Type }
 import zio._
 import zio.schema.Schema
 
-trait ParquetWriter[A <: Product] {
+trait ParquetWriter[-A <: Product] {
 
   def write(data: Chunk[A]): Task[Unit]
 

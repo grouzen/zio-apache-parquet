@@ -11,7 +11,7 @@ import zio.stream._
 
 import scala.annotation.nowarn
 
-trait ParquetReader[A <: Product] {
+trait ParquetReader[+A <: Product] {
 
   def read(path: Path): ZStream[Scope, Throwable, A]
 

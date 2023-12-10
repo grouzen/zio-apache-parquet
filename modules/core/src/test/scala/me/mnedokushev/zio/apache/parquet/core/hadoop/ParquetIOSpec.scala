@@ -37,7 +37,7 @@ object ParquetIOSpec extends ZIOSpecDefault {
           reader <- ZIO.service[ParquetReader[Record]]
           _      <- writer.write(payload)
           _      <- writer.close // force to flush parquet data on disk
-          result <- ZIO.scoped(reader.read(tmpPath).runCollect)
+          result <- ZIO.scoped[Any](reader.read(tmpPath).runCollect)
         } yield assertTrue(result == payload)
       }.provide(
         ParquetWriter.configured[Record](tmpPath),
