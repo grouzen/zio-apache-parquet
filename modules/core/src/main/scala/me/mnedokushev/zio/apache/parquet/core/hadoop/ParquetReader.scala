@@ -9,6 +9,8 @@ import org.apache.parquet.io.InputFile
 import zio._
 import zio.stream._
 
+import scala.annotation.nowarn
+
 trait ParquetReader[A <: Product] {
 
   def read(path: Path): ZStream[Scope, Throwable, A]
@@ -48,9 +50,9 @@ object ParquetReader {
 
   }
 
-  def configured[A <: Product: ValueDecoder: Tag](
+  def configured[A <: Product: ValueDecoder](
     hadoopConf: Configuration = new Configuration()
-  ): ULayer[ParquetReader[A]] =
+  )(implicit @nowarn tag: Tag[A]): ULayer[ParquetReader[A]] =
     ZLayer.succeed(new ParquetReaderLive[A](hadoopConf))
 
 }
