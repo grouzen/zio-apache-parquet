@@ -38,7 +38,7 @@ inThisBuild(
 lazy val root =
   project
     .in(file("."))
-    .aggregate(core, docs)
+    .aggregate(core)
     .settings(publish / skip := true)
 
 lazy val core =
@@ -49,18 +49,3 @@ lazy val core =
       libraryDependencies ++= Dep.core,
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
     )
-
-lazy val docs =
-  project
-    .in(file("docs"))
-    .dependsOn(core)
-    .settings(
-      name           := "zio-apache-parquet-docs",
-      organization   := "me.mnedokushev",
-      publish / skip := true,
-      mdocIn         := file("docs/src/main/mdoc"),
-      mdocVariables  := Map(
-        "VERSION" -> version.value
-      )
-    )
-    .enablePlugins(MdocPlugin)

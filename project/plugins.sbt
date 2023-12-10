@@ -12,7 +12,4 @@ addSbtPlugin("org.typelevel"  % "sbt-tpolecat"       % "0.5.0")
 addSbtPlugin("com.github.sbt" % "sbt-ci-release"     % "1.5.12")
 addSbtPlugin("com.github.sbt" % "sbt-github-actions" % "0.19.0")
 
-// Docs
-addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.5.1")
-
 addDependencyTreePlugin
