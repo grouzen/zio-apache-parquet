@@ -85,7 +85,16 @@ object SchemaEncoderDeriver {
       key: => SchemaEncoder[K],
       value: => SchemaEncoder[V],
       summoned: => Option[SchemaEncoder[Map[K, V]]]
-    ): SchemaEncoder[Map[K, V]] = ???
+    ): SchemaEncoder[Map[K, V]] = new SchemaEncoder[Map[K, V]] {
+      override def encode(schema: Schema[Map[K, V]], name: String, optional: Boolean): Type =
+        Schemas
+          .map(
+            key.encode(map.keySchema, "key", optional = false),
+            value.encode(map.valueSchema, "value", optional = isSchemaOptional(map.valueSchema))
+          )
+          .optionality(optional)
+          .named(name)
+    }
 
     override def deriveTransformedRecord[A, B](
       record: Schema.Record[A],

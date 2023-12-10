@@ -81,6 +81,23 @@ object Schemas {
 
   }
 
+  case class MapDef(key: Type, value: Type, isOptional: Boolean = false) extends Def[MapDef] {
+
+    override def named(name: String): Type =
+      Types
+        .map(repetition(isOptional))
+        .key(key)
+        .value(value)
+        .named(name)
+
+    override def required: MapDef =
+      this.copy(isOptional = false)
+
+    override def optional: MapDef =
+      this.copy(isOptional = true)
+
+  }
+
   def repetition(optional: Boolean): Repetition =
     if (optional) Repetition.OPTIONAL else Repetition.REQUIRED
 
@@ -97,5 +114,6 @@ object Schemas {
 
   def record(fields: Chunk[Type]): RecordDef = RecordDef(fields)
   def list(element: Type): ListDef           = ListDef(element)
+  def map(key: Type, value: Type)            = MapDef(key, value)
 
 }

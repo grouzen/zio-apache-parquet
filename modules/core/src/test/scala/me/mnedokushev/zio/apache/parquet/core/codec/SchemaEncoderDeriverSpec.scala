@@ -164,6 +164,19 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
             )
           }
           .reduce(_ && _)
+      },
+      test("map") {
+        val name = "mymap"
+
+        val encoder = Derive.derive[SchemaEncoder, Map[String, Int]](SchemaEncoderDeriver.default)
+        val tpe     = encoder.encode(Schema.map[String, Int], name, optional = true)
+
+        assertTrue(
+          tpe == Schemas
+            .map(Schemas.string.required.named("key"), Schemas.int.required.named("value"))
+            .optional
+            .named(name)
+        )
       }
 //      test("summoned") {
       //        // @nowarn annotation is needed to avoid having 'variable is not used' compiler error
