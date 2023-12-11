@@ -114,6 +114,6 @@ object Schemas {
 
   def record(fields: Chunk[Type]): RecordDef = RecordDef(fields)
   def list(element: Type): ListDef           = ListDef(element)
-  def map(key: Type, value: Type)            = MapDef(key, value)
+  def map(key: Type, value: Type): MapDef    = MapDef(key, value)
 
 }
