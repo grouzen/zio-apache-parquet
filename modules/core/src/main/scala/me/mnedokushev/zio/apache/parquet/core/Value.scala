@@ -155,7 +155,8 @@ object Value {
         recordConsumer.endGroup()
       }
 
-      override def put(name: String, value: Value): MapValue = ???
+      override def put(name: String, value: Value): MapValue =
+        this.copy(values = Map(Value.string(name) -> value))
 //        this.copy(values = values.updated(name, value))
     }
 

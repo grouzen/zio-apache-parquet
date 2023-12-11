@@ -15,7 +15,7 @@ object ParquetIOSpec extends ZIOSpecDefault {
   val tmpCrcPath = tmpDir / ".parquet-writer-spec.parquet.crc"
   val tmpPath    = tmpDir / tmpFile
 
-  case class Record(a: Int, b: String, c: Option[Long])
+  case class Record(a: Int, b: String, c: Option[Long], d: List[Int])
   object Record {
     implicit val schema: Schema[Record]               =
       DeriveSchema.gen[Record]
@@ -30,7 +30,10 @@ object ParquetIOSpec extends ZIOSpecDefault {
   override def spec: Spec[TestEnvironment with Scope, Any] =
     suite("ParquetIOSpec")(
       test("write and read") {
-        val payload = Chunk(Record(1, "foo", None), Record(2, "bar", Some(3L)))
+        val payload = Chunk(
+          Record(1, "foo", None, List(1, 2)),
+          Record(2, "bar", Some(3L), List.empty)
+        )
 
         for {
           writer <- ZIO.service[ParquetWriter[Record]]
