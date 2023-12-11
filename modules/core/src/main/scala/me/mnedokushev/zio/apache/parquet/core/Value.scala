@@ -156,8 +156,16 @@ object Value {
       }
 
       override def put(name: String, value: Value): MapValue =
-        this.copy(values = Map(Value.string(name) -> value))
-//        this.copy(values = values.updated(name, value))
+        value match {
+          case RecordValue(values0) =>
+            (values0.get("key"), values0.get("value")) match {
+              case (Some(k), Some(v)) =>
+                this.copy(values = values.updated(k, v))
+              case _                  => this
+            }
+          case mv: MapValue         => mv
+          case _                    => this
+        }
     }
 
   }

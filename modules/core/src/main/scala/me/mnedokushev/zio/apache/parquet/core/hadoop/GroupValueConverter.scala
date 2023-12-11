@@ -35,12 +35,14 @@ abstract class GroupValueConverter[V <: GroupValue[V]](
           case _: LogicalTypeAnnotation.MapLogicalTypeAnnotation  =>
             map(schema0.asGroupType(), name)
           case _                                                  =>
-            val name       = schema0.getName
-            val repetition = schema0.getRepetition
-
-            val p = if (name == "list" && repetition == Repetition.REPEATED) Some(this) else None
-
-            record(schema0.asGroupType(), name, p)
+            (name, schema0.getRepetition) match {
+              case ("list", Repetition.REPEATED)      =>
+                listElement(schema0.asGroupType())
+              case ("key_value", Repetition.REPEATED) =>
+                mapKeyValue(schema0.asGroupType(), name)
+              case _                                  =>
+                record(schema0.asGroupType(), name)
+            }
         }
       }
     )
@@ -73,25 +75,17 @@ abstract class GroupValueConverter[V <: GroupValue[V]](
 
   private def record(
     schema: GroupType,
-    name: String,
-    parent: Option[GroupValueConverter[_]]
-  ): GroupValueConverter[GroupValue.RecordValue] = parent match {
-    case Some(_) =>
-      new GroupValueConverter[GroupValue.RecordValue](schema, parent) {
-        override def start(): Unit = ()
-        override def end(): Unit   = ()
-      }
-    case _       =>
-      new GroupValueConverter[GroupValue.RecordValue](schema, parent) {
+    name: String
+  ): GroupValueConverter[GroupValue.RecordValue] =
+    new GroupValueConverter[GroupValue.RecordValue](schema, parent) {
 
-        override def start(): Unit =
-          this.groupValue = Value.record(Map.empty)
+      override def start(): Unit =
+        this.groupValue = Value.record(Map.empty)
 
-        override def end(): Unit =
-          self.put(name, this.groupValue)
+      override def end(): Unit =
+        put(name, this.groupValue)
 
-      }
-  }
+    }
 
   private def list(
     schema: GroupType,
@@ -106,6 +100,15 @@ abstract class GroupValueConverter[V <: GroupValue[V]](
         self.put(name, this.groupValue)
     }
 
+  private def listElement(schema: GroupType): GroupValueConverter[GroupValue.RecordValue] =
+    new GroupValueConverter[GroupValue.RecordValue](schema, Some(self)) {
+
+      override def start(): Unit = ()
+
+      override def end(): Unit = ()
+
+    }
+
   private def map(
     schema: GroupType,
     name: String
@@ -117,6 +120,20 @@ abstract class GroupValueConverter[V <: GroupValue[V]](
 
       override def end(): Unit =
         self.put(name, this.groupValue)
+    }
+
+  private def mapKeyValue(
+    schema: GroupType,
+    name: String
+  ): GroupValueConverter[GroupValue.RecordValue] =
+    new GroupValueConverter[GroupValue.RecordValue](schema) {
+
+      override def start(): Unit =
+        this.groupValue = Value.record(Map("key" -> Value.nil, "value" -> Value.nil))
+
+      override def end(): Unit =
+        self.put(name, this.groupValue)
+
     }
 
 }

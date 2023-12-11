@@ -15,7 +15,7 @@ object ParquetIOSpec extends ZIOSpecDefault {
   val tmpCrcPath = tmpDir / ".parquet-writer-spec.parquet.crc"
   val tmpPath    = tmpDir / tmpFile
 
-  case class Record(a: Int, b: String, c: Option[Long], d: List[Int])
+  case class Record(a: Int, b: String, c: Option[Long], d: List[Int], e: Map[String, Int])
   object Record {
     implicit val schema: Schema[Record]               =
       DeriveSchema.gen[Record]
@@ -31,8 +31,8 @@ object ParquetIOSpec extends ZIOSpecDefault {
     suite("ParquetIOSpec")(
       test("write and read") {
         val payload = Chunk(
-          Record(1, "foo", None, List(1, 2)),
-          Record(2, "bar", Some(3L), List.empty)
+          Record(1, "foo", None, List(1, 2), Map("first" -> 1, "second" -> 2)),
+          Record(2, "bar", Some(3L), List.empty, Map("third" -> 3))
         )
 
         for {
@@ -48,7 +48,7 @@ object ParquetIOSpec extends ZIOSpecDefault {
       ) @@ after(cleanTmpFile(tmpDir))
     )
 
-  def cleanTmpFile(path: Path) =
+  private def cleanTmpFile(path: Path) =
     for {
       _ <- ZIO.attemptBlockingIO(Files.delete(tmpCrcPath.toJava))
       _ <- ZIO.attemptBlockingIO(Files.delete(tmpPath.toJava))

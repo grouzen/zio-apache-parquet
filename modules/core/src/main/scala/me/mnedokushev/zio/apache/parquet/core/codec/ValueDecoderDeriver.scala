@@ -24,7 +24,7 @@ object ValueDecoderDeriver {
             Unsafe.unsafe { implicit unsafe =>
               record.construct(
                 Chunk
-                  .fromIterable(values.values)
+                  .fromIterable(record.fields.map(f => values(f.name)))
                   .zip(fields.map(_.unwrap))
                   .map { case (v, decoder) =>
                     decoder.decode(v)
