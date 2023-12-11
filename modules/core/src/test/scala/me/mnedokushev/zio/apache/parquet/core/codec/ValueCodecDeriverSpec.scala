@@ -14,7 +14,7 @@ import java.util.UUID
 
 object ValueCodecDeriverSpec extends ZIOSpecDefault {
 
-  case class Record(a: Int, b: Boolean, c: Option[String], d: Option[Int])
+  case class Record(a: Int, b: Boolean, c: Option[String], d: List[Int], e: Map[String, Int])
   object Record {
     implicit val schema: Schema[Record] = DeriveSchema.gen[Record]
   }
@@ -89,9 +89,9 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
         }.reduce(_ && _)
       },
       test("sequence") {
-        val encoder  = Derive.derive[ValueEncoder, List[String]](ValueEncoderDeriver.default)
-        val decoder  = Derive.derive[ValueDecoder, List[String]](ValueDecoderDeriver.default)
-        val payloads = List(List("foo", "bar"), List.empty)
+        val encoder  = Derive.derive[ValueEncoder, List[Map[String, Int]]](ValueEncoderDeriver.default)
+        val decoder  = Derive.derive[ValueDecoder, List[Map[String, Int]]](ValueDecoderDeriver.default)
+        val payloads = List(List(Map("foo" -> 1, "bar" -> 2)), List.empty)
 
         payloads.map { payload =>
           for {
@@ -115,7 +115,7 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
       test("record") {
         val encoder = Derive.derive[ValueEncoder, Record](ValueEncoderDeriver.default)
         val decoder = Derive.derive[ValueDecoder, Record](ValueDecoderDeriver.default)
-        val payload = Record(2, false, Some("data"), None)
+        val payload = Record(2, false, Some("data"), List(1), Map("zio" -> 1))
 
         for {
           value  <- encoder.encodeZIO(payload)
