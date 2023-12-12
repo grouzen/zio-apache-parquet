@@ -9,6 +9,7 @@ import org.apache.parquet.io.InputFile
 import zio._
 import zio.stream._
 
+import java.io.IOException
 import scala.annotation.nowarn
 
 trait ParquetReader[+A <: Product] {
@@ -19,47 +20,34 @@ trait ParquetReader[+A <: Product] {
 
 }
 
-final class ParquetReaderLive[A <: Product](conf: Configuration)(implicit decoder: ValueDecoder[A])
+final class ParquetReaderLive[A <: Product](hadoopConf: Configuration)(implicit decoder: ValueDecoder[A])
     extends ParquetReader[A] {
 
   override def readStream(path: Path): ZStream[Scope, Throwable, A] =
     for {
-      inputFile <- ZStream.fromZIO(path.toInputFileZIO(conf))
-      reader    <- ZStream.fromZIO(
-                     ZIO.fromAutoCloseable(
-                       ZIO.attemptBlockingIO(
-                         new ParquetReader.Builder(inputFile).withConf(conf).build()
-                       )
-                     )
-                   )
-      value     <- ZStream.repeatZIOOption(
-                     ZIO
-                       .attemptBlockingIO(reader.read())
-                       .asSomeError
-                       .filterOrFail(_ != null)(None)
-                       .flatMap(decoder.decodeZIO(_).asSomeError)
-                   )
+      reader <- ZStream.fromZIO(build(path))
+      value  <- ZStream.repeatZIOOption(
+                  ZIO
+                    .attemptBlockingIO(reader.read())
+                    .asSomeError
+                    .filterOrFail(_ != null)(None)
+                    .flatMap(decoder.decodeZIO(_).asSomeError)
+                )
     } yield value
 
-  override def readChunk(path: Path): ZIO[Scope, Throwable, Chunk[A]] = {
-    val builder = Chunk.newBuilder[A]
-
+  override def readChunk(path: Path): ZIO[Scope, Throwable, Chunk[A]] =
     for {
-      inputFile <- path.toInputFileZIO(conf)
-      reader    <- ZIO.fromAutoCloseable(
-                     ZIO.attemptBlockingIO(
-                       new ParquetReader.Builder(inputFile).withConf(conf).build()
-                     )
-                   )
-      readNext   = for {
-                     value  <- ZIO.attemptBlockingIO(reader.read())
-                     record <- if (value != null)
-                                 decoder.decodeZIO(value)
-                               else
-                                 ZIO.succeed(null.asInstanceOf[A])
-                   } yield record
-      initial   <- readNext
-      _         <- {
+      reader  <- build(path)
+      readNext = for {
+                   value  <- ZIO.attemptBlockingIO(reader.read())
+                   record <- if (value != null)
+                               decoder.decodeZIO(value)
+                             else
+                               ZIO.succeed(null.asInstanceOf[A])
+                 } yield record
+      builder  = Chunk.newBuilder[A]
+      initial <- readNext
+      _       <- {
         var current = initial
 
         ZIO.whileLoop(current != null)(readNext) { next =>
@@ -68,7 +56,16 @@ final class ParquetReaderLive[A <: Product](conf: Configuration)(implicit decode
         }
       }
     } yield builder.result()
-  }
+
+  private def build(path: Path): ZIO[Scope, IOException, HadoopParquetReader[RecordValue]] =
+    for {
+      inputFile <- path.toInputFileZIO(hadoopConf)
+      reader    <- ZIO.fromAutoCloseable(
+                     ZIO.attemptBlockingIO(
+                       new ParquetReader.Builder(inputFile).withConf(hadoopConf).build()
+                     )
+                   )
+    } yield reader
 
 }
 

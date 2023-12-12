@@ -5,7 +5,6 @@ import me.mnedokushev.zio.apache.parquet.core.codec.{ SchemaEncoder, ValueEncode
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.api.{ WriteSupport => HadoopWriteSupport }
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
-import org.apache.parquet.hadoop.util.HadoopOutputFile
 import org.apache.parquet.hadoop.{ ParquetFileWriter, ParquetWriter => HadoopParquetWriter }
 import org.apache.parquet.io.OutputFile
 import org.apache.parquet.schema.{ MessageType, Type }
@@ -50,13 +49,13 @@ final class ParquetWriterLive[A <: Product](
       } yield ()
     )
 
-  private def writeSingle(writer: HadoopParquetWriter[RecordValue], value: A) =
+  private def writeSingle(writer: HadoopParquetWriter[RecordValue], value: A): Task[Unit] =
     for {
       record <- encoder.encodeZIO(value)
       _      <- ZIO.attemptBlockingIO(writer.write(record.asInstanceOf[RecordValue]))
     } yield ()
 
-  private def build(path: Path) = {
+  private def build(path: Path): RIO[Scope, HadoopParquetWriter[RecordValue]] = {
 
     def castToMessageSchema(schema: Type) =
       ZIO.attempt {
@@ -70,8 +69,8 @@ final class ParquetWriterLive[A <: Product](
     for {
       schema        <- schemaEncoder.encodeZIO(schema, tag.tag.shortName, optional = false)
       messageSchema <- castToMessageSchema(schema)
-      hadoopFile    <- ZIO.attemptBlockingIO(HadoopOutputFile.fromPath(path.toHadoop, hadoopConf))
-      builder        = new ParquetWriter.Builder(hadoopFile, messageSchema)
+      outputFile    <- path.toOutputFileZIO(hadoopConf)
+      builder        = new ParquetWriter.Builder(outputFile, messageSchema)
                          .withWriteMode(writeMode)
                          .withCompressionCodec(compressionCodecName)
                          .withDictionaryEncoding(dictionaryEncodingEnabled)

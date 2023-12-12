@@ -2,7 +2,7 @@ package me.mnedokushev.zio.apache.parquet.core.hadoop
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{ Path => HadoopPath }
-import org.apache.parquet.hadoop.util.HadoopInputFile
+import org.apache.parquet.hadoop.util.{ HadoopInputFile, HadoopOutputFile }
 import zio._
 
 import java.io.IOException
@@ -25,6 +25,9 @@ case class Path(underlying: HadoopPath) {
 
   def toInputFileZIO(conf: Configuration): IO[IOException, HadoopInputFile] =
     ZIO.attemptBlockingIO(HadoopInputFile.fromPath(underlying, conf))
+
+  def toOutputFileZIO(conf: Configuration): IO[IOException, HadoopOutputFile] =
+    ZIO.attemptBlockingIO(HadoopOutputFile.fromPath(toHadoop, conf))
 
 }
 
