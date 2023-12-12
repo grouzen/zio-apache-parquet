@@ -24,7 +24,7 @@ final class ParquetReaderLive[A <: Product](conf: Configuration)(implicit decode
 
   override def readStream(path: Path): ZStream[Scope, Throwable, A] =
     for {
-      inputFile <- ZStream.fromZIO(ZIO.attemptBlockingIO(path.toInputFile(conf)))
+      inputFile <- ZStream.fromZIO(path.toInputFileZIO(conf))
       reader    <- ZStream.fromZIO(
                      ZIO.fromAutoCloseable(
                        ZIO.attemptBlockingIO(
@@ -45,7 +45,7 @@ final class ParquetReaderLive[A <: Product](conf: Configuration)(implicit decode
     val builder = Chunk.newBuilder[A]
 
     for {
-      inputFile <- ZIO.attemptBlockingIO(path.toInputFile(conf))
+      inputFile <- path.toInputFileZIO(conf)
       reader    <- ZIO.fromAutoCloseable(
                      ZIO.attemptBlockingIO(
                        new ParquetReader.Builder(inputFile).withConf(conf).build()
@@ -69,13 +69,14 @@ final class ParquetReaderLive[A <: Product](conf: Configuration)(implicit decode
       }
     } yield builder.result()
   }
+
 }
 
 object ParquetReader {
 
   final class Builder(file: InputFile) extends HadoopParquetReader.Builder[RecordValue](file) {
 
-    override def getReadSupport: HadoopReadSupport[RecordValue] =
+    override protected def getReadSupport: HadoopReadSupport[RecordValue] =
       new ReadSupport
 
   }

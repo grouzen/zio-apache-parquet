@@ -39,8 +39,7 @@ object ParquetIOSpec extends ZIOSpecDefault {
         for {
           writer <- ZIO.service[ParquetWriter[Record]]
           reader <- ZIO.service[ParquetReader[Record]]
-          _      <- writer.writeChunk(payload)
-          _      <- writer.close // force to flush parquet data on disk
+          _      <- writer.writeChunk(tmpPath, payload)
           result <- ZIO.scoped[Any](reader.readChunk(tmpPath))
         } yield assertTrue(result == payload)
       } @@ after(cleanTmpFile(tmpDir)),
@@ -53,13 +52,12 @@ object ParquetIOSpec extends ZIOSpecDefault {
         for {
           writer       <- ZIO.service[ParquetWriter[Record]]
           reader       <- ZIO.service[ParquetReader[Record]]
-          _            <- writer.writeStream(ZStream.fromChunk(payload))
-          _            <- writer.close // force to flush parquet data on disk
+          _            <- writer.writeStream(tmpPath, ZStream.fromChunk(payload))
           resultStream <- ZIO.scoped[Any](reader.readStream(tmpPath).runCollect)
         } yield assertTrue(resultStream == payload)
       } @@ after(cleanTmpFile(tmpDir))
     ).provide(
-      ParquetWriter.configured[Record](tmpPath),
+      ParquetWriter.configured[Record](),
       ParquetReader.configured[Record]()
     ) @@ sequential
 
