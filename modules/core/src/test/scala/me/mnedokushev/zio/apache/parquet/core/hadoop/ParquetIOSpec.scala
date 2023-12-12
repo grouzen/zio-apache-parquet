@@ -40,7 +40,7 @@ object ParquetIOSpec extends ZIOSpecDefault {
           writer <- ZIO.service[ParquetWriter[Record]]
           reader <- ZIO.service[ParquetReader[Record]]
           _      <- writer.writeChunk(tmpPath, payload)
-          result <- ZIO.scoped[Any](reader.readChunk(tmpPath))
+          result <- reader.readChunk(tmpPath)
         } yield assertTrue(result == payload)
       } @@ after(cleanTmpFile(tmpDir)),
       test("write and read - stream") {

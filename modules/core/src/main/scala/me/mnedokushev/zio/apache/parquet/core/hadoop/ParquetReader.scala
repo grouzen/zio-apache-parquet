@@ -16,7 +16,7 @@ trait ParquetReader[+A <: Product] {
 
   def readStream(path: Path): ZStream[Scope, Throwable, A]
 
-  def readChunk(path: Path): ZIO[Scope, Throwable, Chunk[A]]
+  def readChunk(path: Path): Task[Chunk[A]]
 
 }
 
@@ -35,27 +35,29 @@ final class ParquetReaderLive[A <: Product](hadoopConf: Configuration)(implicit 
                 )
     } yield value
 
-  override def readChunk(path: Path): ZIO[Scope, Throwable, Chunk[A]] =
-    for {
-      reader  <- build(path)
-      readNext = for {
-                   value  <- ZIO.attemptBlockingIO(reader.read())
-                   record <- if (value != null)
-                               decoder.decodeZIO(value)
-                             else
-                               ZIO.succeed(null.asInstanceOf[A])
-                 } yield record
-      builder  = Chunk.newBuilder[A]
-      initial <- readNext
-      _       <- {
-        var current = initial
+  override def readChunk(path: Path): Task[Chunk[A]] =
+    ZIO.scoped(
+      for {
+        reader  <- build(path)
+        readNext = for {
+                     value  <- ZIO.attemptBlockingIO(reader.read())
+                     record <- if (value != null)
+                                 decoder.decodeZIO(value)
+                               else
+                                 ZIO.succeed(null.asInstanceOf[A])
+                   } yield record
+        builder  = Chunk.newBuilder[A]
+        initial <- readNext
+        _       <- {
+          var current = initial
 
-        ZIO.whileLoop(current != null)(readNext) { next =>
-          builder.addOne(current)
-          current = next
+          ZIO.whileLoop(current != null)(readNext) { next =>
+            builder.addOne(current)
+            current = next
+          }
         }
-      }
-    } yield builder.result()
+      } yield builder.result()
+    )
 
   private def build(path: Path): ZIO[Scope, IOException, HadoopParquetReader[RecordValue]] =
     for {
