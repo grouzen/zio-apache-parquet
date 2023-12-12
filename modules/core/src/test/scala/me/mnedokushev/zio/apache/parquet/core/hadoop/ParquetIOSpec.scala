@@ -36,12 +36,13 @@ object ParquetIOSpec extends ZIOSpecDefault {
         )
 
         for {
-          writer <- ZIO.service[ParquetWriter[Record]]
-          reader <- ZIO.service[ParquetReader[Record]]
-          _      <- writer.write(payload)
-          _      <- writer.close // force to flush parquet data on disk
-          result <- ZIO.scoped[Any](reader.read(tmpPath).runCollect)
-        } yield assertTrue(result == payload)
+          writer       <- ZIO.service[ParquetWriter[Record]]
+          reader       <- ZIO.service[ParquetReader[Record]]
+          _            <- writer.write(payload)
+          _            <- writer.close // force to flush parquet data on disk
+          resultStream <- ZIO.scoped[Any](reader.readStream(tmpPath).runCollect)
+          resultChunk  <- ZIO.scoped[Any](reader.readChunk(tmpPath))
+        } yield assertTrue(resultStream == payload, resultChunk == payload)
       }.provide(
         ParquetWriter.configured[Record](tmpPath),
         ParquetReader.configured[Record]()

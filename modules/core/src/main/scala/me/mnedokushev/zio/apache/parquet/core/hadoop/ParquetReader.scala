@@ -13,14 +13,16 @@ import scala.annotation.nowarn
 
 trait ParquetReader[+A <: Product] {
 
-  def read(path: Path): ZStream[Scope, Throwable, A]
+  def readStream(path: Path): ZStream[Scope, Throwable, A]
+
+  def readChunk(path: Path): ZIO[Scope, Throwable, Chunk[A]]
 
 }
 
 final class ParquetReaderLive[A <: Product](conf: Configuration)(implicit decoder: ValueDecoder[A])
     extends ParquetReader[A] {
 
-  override def read(path: Path): ZStream[Scope, Throwable, A] =
+  override def readStream(path: Path): ZStream[Scope, Throwable, A] =
     for {
       inputFile <- ZStream.fromZIO(ZIO.attemptBlockingIO(path.toInputFile(conf)))
       reader    <- ZStream.fromZIO(
@@ -39,6 +41,34 @@ final class ParquetReaderLive[A <: Product](conf: Configuration)(implicit decode
                    )
     } yield value
 
+  override def readChunk(path: Path): ZIO[Scope, Throwable, Chunk[A]] = {
+    val builder = Chunk.newBuilder[A]
+
+    for {
+      inputFile <- ZIO.attemptBlockingIO(path.toInputFile(conf))
+      reader    <- ZIO.fromAutoCloseable(
+                     ZIO.attemptBlockingIO(
+                       new ParquetReader.Builder(inputFile).withConf(conf).build()
+                     )
+                   )
+      readNext   = for {
+                     value  <- ZIO.attemptBlockingIO(reader.read())
+                     record <- if (value != null)
+                                 decoder.decodeZIO(value)
+                               else
+                                 ZIO.succeed(null.asInstanceOf[A])
+                   } yield record
+      initial   <- readNext
+      _         <- {
+        var current = initial
+
+        ZIO.whileLoop(current != null)(readNext) { next =>
+          builder.addOne(current)
+          current = next
+        }
+      }
+    } yield builder.result()
+  }
 }
 
 object ParquetReader {
