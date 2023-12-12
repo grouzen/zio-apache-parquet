@@ -11,10 +11,13 @@ import org.apache.parquet.io.OutputFile
 import org.apache.parquet.schema.{ MessageType, Type }
 import zio._
 import zio.schema.Schema
+import zio.stream._
 
 trait ParquetWriter[-A <: Product] {
 
-  def write(data: Chunk[A]): Task[Unit]
+  def writeChunk(data: Chunk[A]): Task[Unit]
+
+  def writeStream[R](data: ZStream[R, Throwable, A]): RIO[R, Unit]
 
   def close: Task[Unit]
 
@@ -25,8 +28,16 @@ final class ParquetWriterLive[A <: Product](
 )(implicit encoder: ValueEncoder[A])
     extends ParquetWriter[A] {
 
-  override def write(data: Chunk[A]): Task[Unit] =
+  override def writeChunk(data: Chunk[A]): Task[Unit] =
     ZIO.foreachDiscard(data) { value =>
+      for {
+        record <- encoder.encodeZIO(value)
+        _      <- ZIO.attemptBlockingIO(underlying.write(record.asInstanceOf[RecordValue]))
+      } yield ()
+    }
+
+  override def writeStream[R](stream: ZStream[R, Throwable, A]): RIO[R, Unit] =
+    stream.runForeach { value =>
       for {
         record <- encoder.encodeZIO(value)
         _      <- ZIO.attemptBlockingIO(underlying.write(record.asInstanceOf[RecordValue]))
