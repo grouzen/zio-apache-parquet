@@ -31,7 +31,10 @@ object SchemaEncoderDeriver {
       `enum`: Schema.Enum[A],
       cases: => Chunk[Deriver.WrappedF[SchemaEncoder, _]],
       summoned: => Option[SchemaEncoder[A]]
-    ): SchemaEncoder[A] = ???
+    ): SchemaEncoder[A] = new SchemaEncoder[A] {
+      override def encode(schema: Schema[A], name: String, optional: Boolean): Type =
+        Schemas.string.optionality(optional).named(name)
+    }
 
     override def derivePrimitive[A](
       st: StandardType[A],

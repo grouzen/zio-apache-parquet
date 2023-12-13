@@ -2,9 +2,11 @@ package me.mnedokushev.zio.apache.parquet.core.codec
 
 //import me.mnedokushev.zio.apache.parquet.core.Value
 //import me.mnedokushev.zio.apache.parquet.core.Value.PrimitiveValue
+import me.mnedokushev.zio.apache.parquet.core.Value
 import zio._
 import zio.schema._
 import zio.test._
+import zio.test.Assertion._
 
 import java.util.UUID
 
@@ -13,6 +15,15 @@ import java.util.UUID
 //import scala.annotation.nowarn
 
 object ValueCodecDeriverSpec extends ZIOSpecDefault {
+
+  sealed trait MyEnum
+  object MyEnum {
+    case object Started    extends MyEnum
+    case object InProgress extends MyEnum
+    case object Done       extends MyEnum
+
+    implicit val schema: Schema[MyEnum] = DeriveSchema.gen[MyEnum]
+  }
 
   case class Record(a: Int, b: Boolean, c: Option[String], d: List[Int], e: Map[String, Int])
   object Record {
@@ -121,6 +132,19 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
           value  <- encoder.encodeZIO(payload)
           result <- decoder.decodeZIO(value)
         } yield assertTrue(result == payload)
+      },
+      test("enum") {
+        val encoder = Derive.derive[ValueEncoder, MyEnum](ValueEncoderDeriver.default)
+        val decoder = Derive.derive[ValueDecoder, MyEnum](ValueDecoderDeriver.default)
+        val payload = MyEnum.Started
+        val wrongId = Value.string("Gone")
+
+        for {
+          value       <- encoder.encodeZIO(payload)
+          result      <- decoder.decodeZIO(value)
+          wrongResult <- decoder.decodeZIO(wrongId).either
+        } yield assertTrue(result == payload) &&
+          assert(wrongResult)(isLeft(isSubtype[DecoderError](anything)))
       }
 //      test("summoned") {
       //        @nowarn

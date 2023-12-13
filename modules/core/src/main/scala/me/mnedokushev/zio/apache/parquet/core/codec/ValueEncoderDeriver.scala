@@ -34,7 +34,19 @@ object ValueEncoderDeriver {
       `enum`: Schema.Enum[A],
       cases: => Chunk[Deriver.WrappedF[ValueEncoder, _]],
       summoned: => Option[ValueEncoder[A]]
-    ): ValueEncoder[A] = ???
+    ): ValueEncoder[A] = new ValueEncoder[A] {
+      override def encode(value: A): Value = {
+        val casesMap = `enum`.cases.map { case0 =>
+          case0.schema.asInstanceOf[Schema.CaseClass0[A]].defaultConstruct() -> case0.id
+        }.toMap
+
+        derivePrimitive(StandardType.StringType, summoned = None)
+          .contramap[A] { case0 =>
+            casesMap.getOrElse(case0, throw EncoderError(s"Failed to encode enum for value $case0"))
+          }
+          .encode(value)
+      }
+    }
 
     override def derivePrimitive[A](
       st: StandardType[A],
