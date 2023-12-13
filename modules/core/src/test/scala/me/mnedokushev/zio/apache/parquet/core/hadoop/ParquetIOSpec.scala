@@ -3,6 +3,7 @@ package me.mnedokushev.zio.apache.parquet.core.hadoop
 import me.mnedokushev.zio.apache.parquet.core.codec._
 import zio._
 import zio.schema._
+import zio.stream._
 import zio.test.TestAspect._
 import zio.test._
 
@@ -29,7 +30,7 @@ object ParquetIOSpec extends ZIOSpecDefault {
 
   override def spec: Spec[TestEnvironment with Scope, Any] =
     suite("ParquetIOSpec")(
-      test("write and read") {
+      test("write and read - chunk") {
         val payload = Chunk(
           Record(1, "foo", None, List(1, 2), Map("first" -> 1, "second" -> 2)),
           Record(2, "bar", Some(3L), List.empty, Map("third" -> 3))
@@ -38,15 +39,27 @@ object ParquetIOSpec extends ZIOSpecDefault {
         for {
           writer <- ZIO.service[ParquetWriter[Record]]
           reader <- ZIO.service[ParquetReader[Record]]
-          _      <- writer.write(payload)
-          _      <- writer.close // force to flush parquet data on disk
-          result <- ZIO.scoped[Any](reader.read(tmpPath).runCollect)
+          _      <- writer.writeChunk(tmpPath, payload)
+          result <- reader.readChunk(tmpPath)
         } yield assertTrue(result == payload)
-      }.provide(
-        ParquetWriter.configured[Record](tmpPath),
-        ParquetReader.configured[Record]()
-      ) @@ after(cleanTmpFile(tmpDir))
-    )
+      } @@ after(cleanTmpFile(tmpDir)),
+      test("write and read - stream") {
+        val payload = Chunk(
+          Record(1, "foo", None, List(1, 2), Map("first" -> 1, "second" -> 2)),
+          Record(2, "bar", Some(3L), List.empty, Map("third" -> 3))
+        )
+
+        for {
+          writer       <- ZIO.service[ParquetWriter[Record]]
+          reader       <- ZIO.service[ParquetReader[Record]]
+          _            <- writer.writeStream(tmpPath, ZStream.fromChunk(payload))
+          resultStream <- ZIO.scoped[Any](reader.readStream(tmpPath).runCollect)
+        } yield assertTrue(resultStream == payload)
+      } @@ after(cleanTmpFile(tmpDir))
+    ).provide(
+      ParquetWriter.configured[Record](),
+      ParquetReader.configured[Record]()
+    ) @@ sequential
 
   private def cleanTmpFile(path: Path) =
     for {
