@@ -191,7 +191,7 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
         val encoder = Derive.derive[SchemaEncoder, MyEnum](SchemaEncoderDeriver.default)
         val tpe     = encoder.encode(Schema[MyEnum], name, optional = true)
 
-        assertTrue(tpe == Schemas.string.optional.named(name))
+        assertTrue(tpe == Schemas.enum0.optional.named(name))
       }
 //      test("summoned") {
       //        // @nowarn annotation is needed to avoid having 'variable is not used' compiler error

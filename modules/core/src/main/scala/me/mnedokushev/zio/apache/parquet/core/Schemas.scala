@@ -22,17 +22,19 @@ object Schemas {
 
   case class PrimitiveDef(
     typeName: PrimitiveTypeName,
-    annotation: LogicalTypeAnnotation,
+    annotation: Option[LogicalTypeAnnotation] = None,
     isOptional: Boolean = false,
     length: Int = 0
   ) extends Def[PrimitiveDef] {
 
-    def named(name: String): Type =
-      Types
-        .primitive(typeName, repetition(isOptional))
-        .as(annotation)
+    def named(name: String): Type = {
+      val builder = Types.primitive(typeName, repetition(isOptional))
+
+      annotation
+        .fold(builder)(builder.as)
         .length(length)
         .named(name)
+    }
 
     def length(len: Int): PrimitiveDef =
       this.copy(length = len)
@@ -104,13 +106,36 @@ object Schemas {
   import PrimitiveTypeName._
   import LogicalTypeAnnotation._
 
-  val string: PrimitiveDef  = PrimitiveDef(BINARY, stringType())
-  val boolean: PrimitiveDef = PrimitiveDef(INT32, intType(8, false))
-  val byte: PrimitiveDef    = PrimitiveDef(INT32, intType(8, false))
-  val short: PrimitiveDef   = PrimitiveDef(INT32, intType(16, true))
-  val int: PrimitiveDef     = PrimitiveDef(INT32, intType(32, true))
-  val long: PrimitiveDef    = PrimitiveDef(INT64, intType(64, true))
-  val uuid: PrimitiveDef    = PrimitiveDef(FIXED_LEN_BYTE_ARRAY, uuidType()).length(16)
+  def enum0: PrimitiveDef          = PrimitiveDef(BINARY, Some(enumType()))
+  val string: PrimitiveDef         = PrimitiveDef(BINARY, Some(stringType()))
+  val boolean: PrimitiveDef        = PrimitiveDef(INT32, Some(intType(8, false)))
+  val byte: PrimitiveDef           = PrimitiveDef(INT32, Some(intType(8, false)))
+  val short: PrimitiveDef          = PrimitiveDef(INT32, Some(intType(16, true)))
+  val int: PrimitiveDef            = PrimitiveDef(INT32, Some(intType(32, true)))
+  val long: PrimitiveDef           = PrimitiveDef(INT64, Some(intType(64, true)))
+  val float: PrimitiveDef          = PrimitiveDef(FLOAT)
+  val double: PrimitiveDef         = PrimitiveDef(DOUBLE)
+  val binary: PrimitiveDef         = PrimitiveDef(BINARY)
+  val char: PrimitiveDef           = PrimitiveDef(INT32, Some(intType(8, false)))
+  val uuid: PrimitiveDef           = PrimitiveDef(FIXED_LEN_BYTE_ARRAY, Some(uuidType())).length(16)
+  val bigDecimal: PrimitiveDef     = PrimitiveDef(INT64, Some(decimalType(11, 2)))
+  val bigInteger: PrimitiveDef     = PrimitiveDef(BINARY)
+  val dayOfWeek: PrimitiveDef      = PrimitiveDef(INT32, Some(intType(8, false)))
+  val monthType: PrimitiveDef      = PrimitiveDef(INT32, Some(intType(8, false)))
+  val monthDay: PrimitiveDef       = PrimitiveDef(INT32, Some(intType(8, false)))
+  val period: PrimitiveDef         = PrimitiveDef(FIXED_LEN_BYTE_ARRAY).length(12)
+  val year: PrimitiveDef           = PrimitiveDef(INT32, Some(intType(16, false)))
+  val yearMonth: PrimitiveDef      = PrimitiveDef(INT32, Some(intType(32, false)))
+  val zoneId: PrimitiveDef         = PrimitiveDef(BINARY, Some(stringType()))
+  val zoneOffset: PrimitiveDef     = PrimitiveDef(BINARY, Some(stringType()))
+  val duration: PrimitiveDef       = PrimitiveDef(INT64, Some(intType(64, false)))
+  val instant: PrimitiveDef        = PrimitiveDef(INT64, Some(intType(64, false)))
+  val localDate: PrimitiveDef      = PrimitiveDef(INT32, Some(dateType()))
+  val localTime: PrimitiveDef      = PrimitiveDef(INT32, Some(timeType(true, TimeUnit.MILLIS)))
+  val localDateTime: PrimitiveDef  = PrimitiveDef(INT64, Some(timestampType(true, TimeUnit.MILLIS)))
+  val offsetTime: PrimitiveDef     = PrimitiveDef(INT32, Some(timeType(false, TimeUnit.MILLIS)))
+  val offsetDateTime: PrimitiveDef = PrimitiveDef(INT64, Some(timestampType(false, TimeUnit.MILLIS)))
+  val zonedDateTime: PrimitiveDef  = PrimitiveDef(INT64, Some(timestampType(false, TimeUnit.MILLIS)))
 
   def record(fields: Chunk[Type]): RecordDef = RecordDef(fields)
   def list(element: Type): ListDef           = ListDef(element)
