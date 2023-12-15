@@ -1,12 +1,29 @@
 package me.mnedokushev.zio.apache.parquet.core.codec
 
-import me.mnedokushev.zio.apache.parquet.core.Value
+import me.mnedokushev.zio.apache.parquet.core.{ DECIMAL_SCALE, MICROS_FACTOR, MILLIS_PER_DAY, Value }
 import me.mnedokushev.zio.apache.parquet.core.Value.{ GroupValue, PrimitiveValue }
 import zio._
 import zio.schema._
 
-import java.nio.ByteBuffer
-import java.nio.charset.StandardCharsets
+import java.math.{ BigDecimal, BigInteger }
+import java.nio.{ ByteBuffer, ByteOrder }
+import java.time.{
+  DayOfWeek,
+  Instant,
+  LocalDate,
+  LocalDateTime,
+  LocalTime,
+  Month,
+  MonthDay,
+  OffsetDateTime,
+  OffsetTime,
+  Period,
+  Year,
+  YearMonth,
+  ZoneId,
+  ZoneOffset,
+  ZonedDateTime
+}
 import java.util.UUID
 
 object ValueDecoderDeriver {
@@ -63,32 +80,86 @@ object ValueDecoderDeriver {
       st: StandardType[A],
       summoned: => Option[ValueDecoder[A]]
     ): ValueDecoder[A] = new ValueDecoder[A] {
+
+      private def localTime(v: Int) =
+        LocalTime.ofNanoOfDay(v * MICROS_FACTOR)
+
+      private def localDateTime(v: Long) = {
+        val epochDay  = v / MILLIS_PER_DAY
+        val nanoOfDay = (v - (epochDay * MILLIS_PER_DAY)) * MICROS_FACTOR
+
+        LocalDateTime.of(LocalDate.ofEpochDay(epochDay), LocalTime.ofNanoOfDay(nanoOfDay))
+      }
+
       override def decode(value: Value): A =
         (st, value) match {
-          case (StandardType.StringType, PrimitiveValue.BinaryValue(v)) =>
-            new String(v.getBytes, StandardCharsets.UTF_8)
-          case (StandardType.BoolType, PrimitiveValue.BooleanValue(v))  =>
+          case (StandardType.StringType, PrimitiveValue.BinaryValue(v))        =>
+            v.toStringUsingUTF8
+          case (StandardType.BoolType, PrimitiveValue.BooleanValue(v))         =>
             v
-          case (StandardType.ByteType, PrimitiveValue.Int32Value(v))    =>
+          case (StandardType.ByteType, PrimitiveValue.Int32Value(v))           =>
             v.toByte
-          case (StandardType.ShortType, PrimitiveValue.Int32Value(v))   =>
+          case (StandardType.ShortType, PrimitiveValue.Int32Value(v))          =>
             v.toShort
-          case (StandardType.IntType, PrimitiveValue.Int32Value(v))     =>
+          case (StandardType.IntType, PrimitiveValue.Int32Value(v))            =>
             v
-          case (StandardType.LongType, PrimitiveValue.Int64Value(v))    =>
+          case (StandardType.LongType, PrimitiveValue.Int64Value(v))           =>
             v
-          case (StandardType.FloatType, PrimitiveValue.FloatValue(v))   =>
+          case (StandardType.FloatType, PrimitiveValue.FloatValue(v))          =>
             v
-          case (StandardType.DoubleType, PrimitiveValue.DoubleValue(v)) =>
+          case (StandardType.DoubleType, PrimitiveValue.DoubleValue(v))        =>
             v
-          case (StandardType.BinaryType, PrimitiveValue.BinaryValue(v)) =>
+          case (StandardType.BinaryType, PrimitiveValue.BinaryValue(v))        =>
             Chunk.fromArray(v.getBytes)
-          case (StandardType.CharType, PrimitiveValue.Int32Value(v))    =>
+          case (StandardType.CharType, PrimitiveValue.Int32Value(v))           =>
             v.toChar
-          case (StandardType.UUIDType, PrimitiveValue.BinaryValue(v))   =>
+          case (StandardType.UUIDType, PrimitiveValue.BinaryValue(v))          =>
             val bb = ByteBuffer.wrap(v.getBytes)
+
             new UUID(bb.getLong, bb.getLong)
-          case (other, _)                                               =>
+          case (StandardType.BigDecimalType, PrimitiveValue.Int64Value(v))     =>
+            BigDecimal.valueOf(v, DECIMAL_SCALE)
+          case (StandardType.BigIntegerType, PrimitiveValue.BinaryValue(v))    =>
+            new BigInteger(v.getBytes)
+          case (StandardType.DayOfWeekType, PrimitiveValue.Int32Value(v))      =>
+            DayOfWeek.of(v)
+          case (StandardType.MonthType, PrimitiveValue.Int32Value(v))          =>
+            Month.of(v)
+          case (StandardType.MonthDayType, PrimitiveValue.BinaryValue(v))      =>
+            val bb = ByteBuffer.wrap(v.getBytes).order(ByteOrder.LITTLE_ENDIAN)
+
+            MonthDay.of(bb.get.toInt, bb.get.toInt)
+          case (StandardType.PeriodType, PrimitiveValue.BinaryValue(v))        =>
+            val bb = ByteBuffer.wrap(v.getBytes).order(ByteOrder.LITTLE_ENDIAN)
+
+            Period.of(bb.getInt, bb.getInt, bb.getInt)
+          case (StandardType.YearType, PrimitiveValue.Int32Value(v))           =>
+            Year.of(v)
+          case (StandardType.YearMonthType, PrimitiveValue.BinaryValue(v))     =>
+            val bb = ByteBuffer.wrap(v.getBytes).order(ByteOrder.LITTLE_ENDIAN)
+
+            YearMonth.of(bb.getShort.toInt, bb.getShort.toInt)
+          case (StandardType.ZoneIdType, PrimitiveValue.BinaryValue(v))        =>
+            ZoneId.of(v.toStringUsingUTF8)
+          case (StandardType.ZoneOffsetType, PrimitiveValue.BinaryValue(v))    =>
+            ZoneOffset.of(v.toStringUsingUTF8)
+          case (StandardType.DurationType, PrimitiveValue.Int64Value(v))       =>
+            Duration.fromMillis(v)
+          case (StandardType.InstantType, PrimitiveValue.Int64Value(v))        =>
+            Instant.ofEpochMilli(v)
+          case (StandardType.LocalDateType, PrimitiveValue.Int32Value(v))      =>
+            LocalDate.ofEpochDay(v.toLong)
+          case (StandardType.LocalTimeType, PrimitiveValue.Int32Value(v))      =>
+            localTime(v)
+          case (StandardType.LocalDateTimeType, PrimitiveValue.Int64Value(v))  =>
+            localDateTime(v)
+          case (StandardType.OffsetTimeType, PrimitiveValue.Int32Value(v))     =>
+            OffsetTime.of(localTime(v), ZoneOffset.UTC)
+          case (StandardType.OffsetDateTimeType, PrimitiveValue.Int64Value(v)) =>
+            OffsetDateTime.of(localDateTime(v), ZoneOffset.UTC)
+          case (StandardType.ZonedDateTimeType, PrimitiveValue.Int64Value(v))  =>
+            ZonedDateTime.of(localDateTime(v), ZoneId.of("Z"))
+          case (other, _)                                                      =>
             throw DecoderError(s"Unsupported ZIO Schema StandartType $other")
         }
     }
