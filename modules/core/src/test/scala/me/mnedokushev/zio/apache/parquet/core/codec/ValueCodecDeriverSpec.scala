@@ -5,10 +5,9 @@ package me.mnedokushev.zio.apache.parquet.core.codec
 import me.mnedokushev.zio.apache.parquet.core.{ NANOS_FACTOR, NANOS_PER_DAY, Value }
 import zio._
 import zio.schema._
-import zio.test._
 import zio.test.Assertion._
+import zio.test._
 
-import java.util.UUID
 import java.math.{ BigDecimal, BigInteger }
 import java.time.{
   DayOfWeek,
@@ -27,6 +26,7 @@ import java.time.{
   ZoneOffset,
   ZonedDateTime
 }
+import java.util.UUID
 
 //import java.nio.ByteBuffer
 //import java.util.UUID

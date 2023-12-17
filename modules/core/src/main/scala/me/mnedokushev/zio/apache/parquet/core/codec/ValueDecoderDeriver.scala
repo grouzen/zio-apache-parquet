@@ -1,7 +1,7 @@
 package me.mnedokushev.zio.apache.parquet.core.codec
 
-import me.mnedokushev.zio.apache.parquet.core.{ DECIMAL_SCALE, MICROS_FACTOR, MILLIS_PER_DAY, Value }
 import me.mnedokushev.zio.apache.parquet.core.Value.{ GroupValue, PrimitiveValue }
+import me.mnedokushev.zio.apache.parquet.core.{ DECIMAL_SCALE, MICROS_FACTOR, MILLIS_PER_DAY, Value }
 import zio._
 import zio.schema._
 
