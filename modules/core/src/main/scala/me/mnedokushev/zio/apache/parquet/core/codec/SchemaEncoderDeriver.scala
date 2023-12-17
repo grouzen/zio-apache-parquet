@@ -1,6 +1,7 @@
 package me.mnedokushev.zio.apache.parquet.core.codec
 
 import me.mnedokushev.zio.apache.parquet.core.Schemas
+import me.mnedokushev.zio.apache.parquet.core.Schemas.PrimitiveDef
 import org.apache.parquet.schema.Type
 import zio.Chunk
 import zio.schema.{ Deriver, Schema, StandardType }
@@ -31,32 +32,83 @@ object SchemaEncoderDeriver {
       `enum`: Schema.Enum[A],
       cases: => Chunk[Deriver.WrappedF[SchemaEncoder, _]],
       summoned: => Option[SchemaEncoder[A]]
-    ): SchemaEncoder[A] = ???
+    ): SchemaEncoder[A] = new SchemaEncoder[A] {
+      override def encode(schema: Schema[A], name: String, optional: Boolean): Type =
+        Schemas.enum0.optionality(optional).named(name)
+    }
 
     override def derivePrimitive[A](
       st: StandardType[A],
       summoned: => Option[SchemaEncoder[A]]
     ): SchemaEncoder[A] =
       new SchemaEncoder[A] {
-        override def encode(schema: Schema[A], name: String, optional: Boolean): Type =
+        override def encode(schema: Schema[A], name: String, optional: Boolean): Type = {
+          def tpe(prim: PrimitiveDef) =
+            prim.optionality(optional).named(name)
+
           st match {
-            case StandardType.StringType =>
-              Schemas.string.optionality(optional).named(name)
-            case StandardType.BoolType   =>
-              Schemas.boolean.optionality(optional).named(name)
-            case StandardType.ByteType   =>
-              Schemas.byte.optionality(optional).named(name)
-            case StandardType.ShortType  =>
-              Schemas.short.optionality(optional).named(name)
-            case StandardType.IntType    =>
-              Schemas.int.optionality(optional).named(name)
-            case StandardType.LongType   =>
-              Schemas.long.optionality(optional).named(name)
-            // TODO: add the other types
-            case StandardType.UUIDType   =>
-              Schemas.uuid.optionality(optional).named(name)
-            case _                       => ???
+            case StandardType.StringType         =>
+              tpe(Schemas.string)
+            case StandardType.BoolType           =>
+              tpe(Schemas.boolean)
+            case StandardType.ByteType           =>
+              tpe(Schemas.byte)
+            case StandardType.ShortType          =>
+              tpe(Schemas.short)
+            case StandardType.IntType            =>
+              tpe(Schemas.int)
+            case StandardType.LongType           =>
+              tpe(Schemas.long)
+            case StandardType.FloatType          =>
+              tpe(Schemas.float)
+            case StandardType.DoubleType         =>
+              tpe(Schemas.double)
+            case StandardType.BinaryType         =>
+              tpe(Schemas.binary)
+            case StandardType.CharType           =>
+              tpe(Schemas.char)
+            case StandardType.UUIDType           =>
+              tpe(Schemas.uuid)
+            case StandardType.BigDecimalType     =>
+              tpe(Schemas.bigDecimal)
+            case StandardType.BigIntegerType     =>
+              tpe(Schemas.bigInteger)
+            case StandardType.DayOfWeekType      =>
+              tpe(Schemas.dayOfWeek)
+            case StandardType.MonthType          =>
+              tpe(Schemas.monthType)
+            case StandardType.MonthDayType       =>
+              tpe(Schemas.monthDay)
+            case StandardType.PeriodType         =>
+              tpe(Schemas.period)
+            case StandardType.YearType           =>
+              tpe(Schemas.year)
+            case StandardType.YearMonthType      =>
+              tpe(Schemas.yearMonth)
+            case StandardType.ZoneIdType         =>
+              tpe(Schemas.zoneId)
+            case StandardType.ZoneOffsetType     =>
+              tpe(Schemas.zoneOffset)
+            case StandardType.DurationType       =>
+              tpe(Schemas.duration)
+            case StandardType.InstantType        =>
+              tpe(Schemas.instant)
+            case StandardType.LocalDateType      =>
+              tpe(Schemas.localDate)
+            case StandardType.LocalTimeType      =>
+              tpe(Schemas.localTime)
+            case StandardType.LocalDateTimeType  =>
+              tpe(Schemas.localDateTime)
+            case StandardType.OffsetTimeType     =>
+              tpe(Schemas.offsetTime)
+            case StandardType.OffsetDateTimeType =>
+              tpe(Schemas.offsetDateTime)
+            case StandardType.ZonedDateTimeType  =>
+              tpe(Schemas.zonedDateTime)
+            case StandardType.UnitType           =>
+              throw EncoderError("Unit type is unsupported")
           }
+        }
       }
 
     override def deriveOption[A](

@@ -36,4 +36,7 @@ object Path {
   def apply(path: JPath): Path =
     Path(new HadoopPath(new URI("file", null, path.toAbsolutePath.toString, null, null)))
 
+  def apply(uri: URI): Path =
+    Path(new HadoopPath(uri))
+
 }
