@@ -7,9 +7,9 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.api.{ InitContext, ReadSupport => HadoopReadSupport }
 import org.apache.parquet.io.api.{ GroupConverter, RecordMaterializer }
 import org.apache.parquet.schema.MessageType
+import zio.Tag
 import zio.prelude._
 import zio.schema.Schema
-import zio.Tag
 
 class ReadSupport[A](
   schema: Option[Schema[A]] = None,
