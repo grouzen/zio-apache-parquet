@@ -1,5 +1,6 @@
 package me.mnedokushev.zio.apache.parquet.core.hadoop
 
+import me.mnedokushev.zio.apache.parquet.core.Schemas
 import me.mnedokushev.zio.apache.parquet.core.Value.GroupValue.RecordValue
 import me.mnedokushev.zio.apache.parquet.core.codec.{ SchemaEncoder, ValueEncoder }
 import org.apache.hadoop.conf.Configuration
@@ -7,7 +8,7 @@ import org.apache.parquet.hadoop.api.{ WriteSupport => HadoopWriteSupport }
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.apache.parquet.hadoop.{ ParquetFileWriter, ParquetWriter => HadoopParquetWriter }
 import org.apache.parquet.io.OutputFile
-import org.apache.parquet.schema.{ MessageType, Type }
+import org.apache.parquet.schema.MessageType
 import zio._
 import zio.schema.Schema
 import zio.stream._
@@ -55,20 +56,10 @@ final class ParquetWriterLive[A <: Product](
       _      <- ZIO.attemptBlockingIO(writer.write(record.asInstanceOf[RecordValue]))
     } yield ()
 
-  private def build(path: Path): RIO[Scope, HadoopParquetWriter[RecordValue]] = {
-
-    def castToMessageSchema(schema: Type) =
-      ZIO.attempt {
-        val groupSchema = schema.asGroupType()
-        val name        = groupSchema.getName
-        val fields      = groupSchema.getFields
-
-        new MessageType(name, fields)
-      }
-
+  private def build(path: Path): RIO[Scope, HadoopParquetWriter[RecordValue]] =
     for {
       schema        <- schemaEncoder.encodeZIO(schema, tag.tag.shortName, optional = false)
-      messageSchema <- castToMessageSchema(schema)
+      messageSchema <- ZIO.attempt(Schemas.asMessageType(schema))
       outputFile    <- path.toOutputFileZIO(hadoopConf)
       builder        = new ParquetWriter.Builder(outputFile, messageSchema)
                          .withWriteMode(writeMode)
@@ -82,7 +73,6 @@ final class ParquetWriterLive[A <: Product](
                          .withConf(hadoopConf)
       writer        <- ZIO.fromAutoCloseable(ZIO.attemptBlockingIO(builder.build()))
     } yield writer
-  }
 
 }
 
