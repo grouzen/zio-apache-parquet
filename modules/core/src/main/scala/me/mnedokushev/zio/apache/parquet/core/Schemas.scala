@@ -103,6 +103,14 @@ object Schemas {
   def repetition(optional: Boolean): Repetition =
     if (optional) Repetition.OPTIONAL else Repetition.REQUIRED
 
+  def asMessageType(schema: Type): MessageType = {
+    val groupSchema = schema.asGroupType()
+    val name        = groupSchema.getName
+    val fields      = groupSchema.getFields
+
+    new MessageType(name, fields)
+  }
+
   import PrimitiveTypeName._
   import LogicalTypeAnnotation._
 

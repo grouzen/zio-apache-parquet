@@ -1,16 +1,16 @@
 package me.mnedokushev.zio.apache.parquet.core.hadoop
 
 import me.mnedokushev.zio.apache.parquet.core.Value.GroupValue.RecordValue
-import me.mnedokushev.zio.apache.parquet.core.codec.ValueDecoder
+import me.mnedokushev.zio.apache.parquet.core.codec.{ SchemaEncoder, ValueDecoder }
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.api.{ ReadSupport => HadoopReadSupport }
 import org.apache.parquet.hadoop.{ ParquetReader => HadoopParquetReader }
 import org.apache.parquet.io.InputFile
 import zio._
+import zio.schema.Schema
 import zio.stream._
 
 import java.io.IOException
-import scala.annotation.nowarn
 
 trait ParquetReader[+A <: Product] {
 
@@ -20,7 +20,11 @@ trait ParquetReader[+A <: Product] {
 
 }
 
-final class ParquetReaderLive[A <: Product](hadoopConf: Configuration)(implicit decoder: ValueDecoder[A])
+final class ParquetReaderLive[A <: Product: Tag](
+  hadoopConf: Configuration,
+  schema: Option[Schema[A]] = None,
+  schemaEncoder: Option[SchemaEncoder[A]] = None
+)(implicit decoder: ValueDecoder[A])
     extends ParquetReader[A] {
 
   override def readStream(path: Path): ZStream[Scope, Throwable, A] =
@@ -64,7 +68,7 @@ final class ParquetReaderLive[A <: Product](hadoopConf: Configuration)(implicit 
       inputFile <- path.toInputFileZIO(hadoopConf)
       reader    <- ZIO.fromAutoCloseable(
                      ZIO.attemptBlockingIO(
-                       new ParquetReader.Builder(inputFile).withConf(hadoopConf).build()
+                       new ParquetReader.Builder(inputFile, schema, schemaEncoder).withConf(hadoopConf).build()
                      )
                    )
     } yield reader
@@ -73,16 +77,25 @@ final class ParquetReaderLive[A <: Product](hadoopConf: Configuration)(implicit 
 
 object ParquetReader {
 
-  final class Builder(file: InputFile) extends HadoopParquetReader.Builder[RecordValue](file) {
+  final class Builder[A: Tag](
+    file: InputFile,
+    schema: Option[Schema[A]] = None,
+    schemaEncoder: Option[SchemaEncoder[A]] = None
+  ) extends HadoopParquetReader.Builder[RecordValue](file) {
 
     override protected def getReadSupport: HadoopReadSupport[RecordValue] =
-      new ReadSupport
+      new ReadSupport(schema, schemaEncoder)
 
   }
 
   def configured[A <: Product: ValueDecoder](
     hadoopConf: Configuration = new Configuration()
-  )(implicit @nowarn tag: Tag[A]): ULayer[ParquetReader[A]] =
+  )(implicit tag: Tag[A]): ULayer[ParquetReader[A]] =
     ZLayer.succeed(new ParquetReaderLive[A](hadoopConf))
+
+  def projected[A <: Product: ValueDecoder](
+    hadoopConf: Configuration = new Configuration()
+  )(implicit schema: Schema[A], schemaEncoder: SchemaEncoder[A], tag: Tag[A]): ULayer[ParquetReader[A]] =
+    ZLayer.succeed(new ParquetReaderLive[A](hadoopConf, Some(schema), Some(schemaEncoder)))
 
 }
