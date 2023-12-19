@@ -88,14 +88,14 @@ object ParquetReader {
 
   }
 
-  def configured[A <: Product: ValueDecoder](
+  def configured[A <: Product: ValueDecoder: Tag](
     hadoopConf: Configuration = new Configuration()
-  )(implicit tag: Tag[A]): ULayer[ParquetReader[A]] =
+  ): ULayer[ParquetReader[A]] =
     ZLayer.succeed(new ParquetReaderLive[A](hadoopConf))
 
-  def projected[A <: Product: ValueDecoder](
+  def projected[A <: Product: ValueDecoder: Tag](
     hadoopConf: Configuration = new Configuration()
-  )(implicit schema: Schema[A], schemaEncoder: SchemaEncoder[A], tag: Tag[A]): ULayer[ParquetReader[A]] =
+  )(implicit schema: Schema[A], schemaEncoder: SchemaEncoder[A]): ULayer[ParquetReader[A]] =
     ZLayer.succeed(new ParquetReaderLive[A](hadoopConf, Some(schema), Some(schemaEncoder)))
 
 }
