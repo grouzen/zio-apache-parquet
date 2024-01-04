@@ -11,12 +11,14 @@ import zio.schema.Schema
 import zio.stream._
 
 import java.io.IOException
+import me.mnedokushev.zio.apache.parquet.core.filter.Expr
+import org.apache.parquet.filter2.compat.FilterCompat
 
 trait ParquetReader[+A <: Product] {
 
   def readStream(path: Path): ZStream[Scope, Throwable, A]
 
-  def readChunk(path: Path): Task[Chunk[A]]
+  def readChunk[B](path: Path, filter: Option[Expr.Predicate[B]] = None): Task[Chunk[A]]
 
 }
 
@@ -39,10 +41,10 @@ final class ParquetReaderLive[A <: Product: Tag](
                 )
     } yield value
 
-  override def readChunk(path: Path): Task[Chunk[A]] =
+  override def readChunk[B](path: Path, filter: Option[Expr.Predicate[B]] = None): Task[Chunk[A]] =
     ZIO.scoped(
       for {
-        reader  <- build(path)
+        reader  <- build(path, filter)
         readNext = for {
                      value  <- ZIO.attemptBlockingIO(reader.read())
                      record <- if (value != null)
@@ -63,14 +65,25 @@ final class ParquetReaderLive[A <: Product: Tag](
       } yield builder.result()
     )
 
-  private def build(path: Path): ZIO[Scope, IOException, HadoopParquetReader[RecordValue]] =
+  private def build[B](
+    path: Path,
+    filter: Option[Expr.Predicate[B]] = None
+  ): ZIO[Scope, IOException, HadoopParquetReader[RecordValue]] =
     for {
-      inputFile <- path.toInputFileZIO(hadoopConf)
-      reader    <- ZIO.fromAutoCloseable(
-                     ZIO.attemptBlockingIO(
-                       new ParquetReader.Builder(inputFile, schema, schemaEncoder).withConf(hadoopConf).build()
-                     )
-                   )
+      inputFile      <- path.toInputFileZIO(hadoopConf)
+      compiledFilter <- ZIO.foreach(filter) { pred =>
+                          ZIO
+                            .fromEither(Expr.compile(pred))
+                            .mapError(new IOException(_))
+                        }
+      reader         <- ZIO.fromAutoCloseable(
+                          ZIO.attemptBlockingIO {
+                            val builder = new ParquetReader.Builder(inputFile, schema, schemaEncoder)
+
+                            compiledFilter.foreach(pred => builder.withFilter(FilterCompat.get(pred)))
+                            builder.withConf(hadoopConf).build()
+                          }
+                        )
     } yield reader
 
 }
@@ -88,14 +101,17 @@ object ParquetReader {
 
   }
 
-  def configured[A <: Product: ValueDecoder](
+  def configured[A <: Product: ValueDecoder: Tag](
     hadoopConf: Configuration = new Configuration()
-  )(implicit tag: Tag[A]): ULayer[ParquetReader[A]] =
+  ): ULayer[ParquetReader[A]] =
     ZLayer.succeed(new ParquetReaderLive[A](hadoopConf))
 
-  def projected[A <: Product: ValueDecoder](
+  def projected[A <: Product: ValueDecoder: Tag](
     hadoopConf: Configuration = new Configuration()
-  )(implicit schema: Schema[A], schemaEncoder: SchemaEncoder[A], tag: Tag[A]): ULayer[ParquetReader[A]] =
+  )(implicit
+    schema: Schema[A],
+    schemaEncoder: SchemaEncoder[A]
+  ): ULayer[ParquetReader[A]] =
     ZLayer.succeed(new ParquetReaderLive[A](hadoopConf, Some(schema), Some(schemaEncoder)))
 
 }
