@@ -9,10 +9,10 @@ object Operator {
   object Binary {
     final case class Eq[A: OperatorSupport.EqNotEq]()              extends Binary[A]
     final case class NotEq[A: OperatorSupport.EqNotEq]()           extends Binary[A]
-    final case class LessThen[A: OperatorSupport.LessGreater]()    extends Binary[A]
-    final case class LessEq[A: OperatorSupport.LessGreater]()      extends Binary[A]
-    final case class GreaterThen[A: OperatorSupport.LessGreater]() extends Binary[A]
-    final case class GreaterEq[A: OperatorSupport.LessGreater]()   extends Binary[A]
+    final case class LessThen[A: OperatorSupport.LtGt]()    extends Binary[A]
+    final case class LessEq[A: OperatorSupport.LtGt]()      extends Binary[A]
+    final case class GreaterThen[A: OperatorSupport.LtGt]() extends Binary[A]
+    final case class GreaterEq[A: OperatorSupport.LtGt]()   extends Binary[A]
 
   }
 

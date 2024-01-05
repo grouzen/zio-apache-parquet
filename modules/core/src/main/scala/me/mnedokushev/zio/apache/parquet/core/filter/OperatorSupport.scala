@@ -1,30 +1,29 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
-sealed trait OperatorSupport[A] {
-  def typeTag: TypeTag[A]
-}
+import scala.annotation.implicitNotFound
+
+sealed trait OperatorSupport[A]
 
 object OperatorSupport {
 
-  abstract class LessGreater[A: TypeTag] extends OperatorSupport[A] {
-    override def typeTag: TypeTag[A] = implicitly[TypeTag[A]]
+  @implicitNotFound("You can't use this operator for the type ${A}")
+  abstract class LtGt[A: TypeTag] extends OperatorSupport[A]
+
+  object LtGt {
+    implicit case object SByte  extends LtGt[Byte]
+    implicit case object SShort extends LtGt[Short]
+    implicit case object SInt   extends LtGt[Int]
   }
 
-  object LessGreater {
-    implicit case object Byte  extends LessGreater[Byte]
-    implicit case object Short extends LessGreater[Short]
-    implicit case object Int   extends LessGreater[Int]
-  }
-
-  abstract class EqNotEq[A: TypeTag] extends OperatorSupport[A] {
-    override def typeTag: TypeTag[A] = implicitly[TypeTag[A]]
-  }
+  @implicitNotFound("You can't use this operator for the type ${A}")
+  abstract class EqNotEq[A: TypeTag] extends OperatorSupport[A]
 
   object EqNotEq {
-    implicit case object String  extends EqNotEq[String]
-    implicit case object Boolean extends EqNotEq[Boolean]
-    implicit case object Byte    extends EqNotEq[Byte]
-    implicit case object Short   extends EqNotEq[Short]
+    implicit case object SString  extends EqNotEq[String]
+    implicit case object SBoolean extends EqNotEq[Boolean]
+    implicit case object SByte    extends EqNotEq[Byte]
+    implicit case object SShort   extends EqNotEq[Short]
+    implicit case object SInt     extends EqNotEq[Int]
   }
 
 }

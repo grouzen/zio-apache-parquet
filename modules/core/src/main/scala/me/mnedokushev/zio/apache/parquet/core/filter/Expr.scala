@@ -2,25 +2,33 @@ package me.mnedokushev.zio.apache.parquet.core.filter
 
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.filter2.predicate.FilterApi
-import me.mnedokushev.zio.apache.parquet.core.Value
+// import me.mnedokushev.zio.apache.parquet.core.Value
 import zio.prelude._
+import org.apache.parquet.filter2.predicate.Operators
 
 sealed trait Expr[-A]
 
 object Expr {
 
-  final case class Column[A](path: String)(implicit val typeTag: TypeTag[A]) extends Expr[A] { self =>
+  sealed trait Column[A] extends Expr[A] { self =>
+    def typeTag: TypeTag[A]
+    def path: String
 
-    def /[B: TypeTag](column: Column[B]): Column[B] =
-      Column(s"$path.${column.path}")
+    def /[B: TypeTag.LtGt](column: ColumnLtGt[B]): ColumnLtGt[B] =
+      ColumnLtGt(s"$path.${column.path}")
 
-    def >(value: A)(implicit ev: OperatorSupport.LessGreater[A]): Predicate[A] =
+    def >(value: A)(implicit ev: OperatorSupport.LtGt[A]): Predicate[A] =
       Predicate.Binary(self, value, Operator.Binary.GreaterThen())
 
     def ===(value: A)(implicit ev: OperatorSupport.EqNotEq[A]): Predicate[A] =
       Predicate.Binary(self, value, Operator.Binary.Eq())
-
   }
+
+  final case class ColumnDummy[A](path: String)(implicit val typeTag: TypeTag.Dummy[A]) extends Column[A]
+
+  final case class ColumnEqNotEq[A](path: String)(implicit val typeTag: TypeTag.EqNotEq[A]) extends Column[A]
+
+  final case class ColumnLtGt[A](path: String)(implicit val typeTag: TypeTag.LtGt[A]) extends Column[A]
 
   sealed trait Predicate[A] extends Expr[A] { self =>
 
@@ -37,7 +45,7 @@ object Expr {
 
   object Predicate {
 
-    final case class Binary[A](column: Column[A], value: A, op: Operator.Binary[A]) extends Predicate[A]
+    final case class Binary[A, C <: Column[A]](column: C, value: A, op: Operator.Binary[A]) extends Predicate[A]
 
     final case class Unary[A](predicate: Predicate[A], op: Operator.Unary[A]) extends Predicate[A]
 
@@ -46,14 +54,47 @@ object Expr {
 
   }
 
-  def compile[A](predicate: Predicate[A]): Either[String, FilterPredicate] =
+  def compile[A](predicate: Predicate[A]): Either[String, FilterPredicate] = {
+
+    def handleEqNotEq[T <: Comparable[T], C <: Operators.Column[T] with Operators.SupportsEqNotEq](
+      column0: C,
+      value0: T,
+      op: Operator.Binary[_]
+    ) = op match {
+      case Operator.Binary.Eq()    =>
+        Right(FilterApi.eq(column0, value0))
+      case Operator.Binary.NotEq() =>
+        Right(FilterApi.notEq(column0, value0))
+      case _                       =>
+        Left("")
+    }
+
+    def handleLtGt[T <: Comparable[T], C <: Operators.Column[T] with Operators.SupportsLtGt](
+      column0: C,
+      value0: T,
+      op: Operator.Binary[_]
+    ) = op match {
+      case Operator.Binary.Eq()          =>
+        Right(FilterApi.eq(column0, value0))
+      case Operator.Binary.NotEq()       =>
+        Right(FilterApi.notEq(column0, value0))
+      case Operator.Binary.LessThen()    =>
+        Right(FilterApi.lt(column0, value0))
+      case Operator.Binary.LessEq()      =>
+        Right(FilterApi.ltEq(column0, value0))
+      case Operator.Binary.GreaterThen() =>
+        Right(FilterApi.gt(column0, value0))
+      case Operator.Binary.GreaterEq()   =>
+        Right(FilterApi.gtEq(column0, value0))
+    }
+
     predicate match {
-      case Predicate.Unary(predicate0, op)    =>
+      case Predicate.Unary(predicate0, op)     =>
         op match {
           case Operator.Unary.Not() =>
             compile(predicate0).map(FilterApi.not)
         }
-      case Predicate.Logical(left, right, op) =>
+      case Predicate.Logical(left, right, op)  =>
         (compile(left) <*> compile(right)).map { case (left0, right0) =>
           op match {
             case Operator.Logical.And() =>
@@ -63,30 +104,19 @@ object Expr {
           }
         }
       case Predicate.Binary(column, value, op) =>
-        (column.typeTag, value) match {
-          case (TypeTag.String, v: String) =>
-            val column0 = FilterApi.binaryColumn(column.path)
-            val value0  = Value.string(v).value
-
-            op match {
-              case Operator.Binary.Eq()    =>
-                Right(FilterApi.eq(column0, value0))
-              case Operator.Binary.NotEq() =>
-                Right(FilterApi.notEq(column0, value0))
-              case _                       => ???
-            }
-          case (TypeTag.Int, v: Int)       =>
-            val column0 = FilterApi.intColumn(column.path)
-            val value0  = Int.box(Value.int(v).value)
-
-            op match {
-              case Operator.Binary.GreaterThen() =>
-                Right(FilterApi.gt(column0, value0))
-              case _                             => ???
-            }
-          case _                           => ???
+        (column, column.typeTag, value) match {
+          case (c: ColumnEqNotEq[A], TypeTag.TString, v: String)   =>
+            handleEqNotEq(c.typeTag.column(column.path), c.typeTag.value(v), op)
+          case (c: ColumnEqNotEq[A], TypeTag.TBoolean, v: Boolean) =>
+            handleEqNotEq(c.typeTag.column(column.path), c.typeTag.value(v), op)
+          case (c: ColumnLtGt[A], TypeTag.TByte, v: Byte)          =>
+            handleLtGt(c.typeTag.column(column.path), c.typeTag.value(v), op)
+          case (c: ColumnLtGt[A], TypeTag.TInt, v: Int)            =>
+            handleLtGt(c.typeTag.column(column.path), c.typeTag.value(v), op)
+          case _                                                   => ???
         }
 
     }
+  }
 
 }

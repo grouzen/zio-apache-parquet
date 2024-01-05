@@ -13,10 +13,13 @@ trait Filter[Columns0] {
 
 object Filter {
 
-  def columns[A](implicit schema: Schema.Record[A]): schema.Accessors[Lens, Prism, Traversal] =
+  def columns[A](implicit
+    schema: Schema.Record[A],
+    typeTag: TypeTag[A]
+  ): schema.Accessors[Lens, Prism, Traversal] =
     new Filter[schema.Accessors[Lens, Prism, Traversal]] {
 
-      val accessorBuilder = new ExprAccessorBuilder
+      val accessorBuilder = new ExprAccessorBuilder(typeTag.asInstanceOf[TypeTag.Record[A]].columns)
 
       override type Columns = schema.Accessors[accessorBuilder.Lens, accessorBuilder.Prism, accessorBuilder.Traversal]
 
