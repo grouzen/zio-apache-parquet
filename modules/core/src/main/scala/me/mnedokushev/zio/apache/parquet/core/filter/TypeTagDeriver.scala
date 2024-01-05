@@ -8,7 +8,7 @@ import zio.schema.Schema
 
 object TypeTagDeriver {
 
-  def default: Deriver[TypeTag] = new Deriver[TypeTag] {
+  val default: Deriver[TypeTag] = new Deriver[TypeTag] {
 
     override def deriveRecord[A](
       record: Schema.Record[A],
@@ -26,7 +26,8 @@ object TypeTagDeriver {
       enum: Schema.Enum[A],
       cases: => Chunk[Deriver.WrappedF[TypeTag, _]],
       summoned: => Option[TypeTag[A]]
-    ): TypeTag[A] = TypeTag.dummy[A]
+    ): TypeTag[A] = 
+      TypeTag.dummy[A]
 
     override def derivePrimitive[A](
       st: StandardType[A],
@@ -46,28 +47,34 @@ object TypeTagDeriver {
       option: Schema.Optional[A],
       inner: => TypeTag[A],
       summoned: => Option[TypeTag[Option[A]]]
-    ): TypeTag[Option[A]] = TypeTag.dummy[Option[A]]
+    ): TypeTag[Option[A]] = 
+      TypeTag.dummy[Option[A]]
 
     override def deriveSequence[C[_], A](
       sequence: Schema.Sequence[C[A], A, _],
       inner: => TypeTag[A],
       summoned: => Option[TypeTag[C[A]]]
-    ): TypeTag[C[A]] = TypeTag.dummy[C[A]]
+    ): TypeTag[C[A]] = 
+      TypeTag.dummy[C[A]]
 
     override def deriveMap[K, V](
       map: Schema.Map[K, V],
       key: => TypeTag[K],
       value: => TypeTag[V],
       summoned: => Option[TypeTag[Map[K, V]]]
-    ): TypeTag[Map[K, V]] = TypeTag.dummy[Map[K, V]]
+    ): TypeTag[Map[K, V]] = 
+      TypeTag.dummy[Map[K, V]]
 
     override def deriveTransformedRecord[A, B](
       record: Schema.Record[A],
       transform: Schema.Transform[A, B, _],
       fields: => Chunk[Deriver.WrappedF[TypeTag, _]],
       summoned: => Option[TypeTag[B]]
-    ): TypeTag[B] = TypeTag.dummy[B]
+    ): TypeTag[B] = 
+      TypeTag.dummy[B]
 
   }.cached
+
+  val summoned: Deriver[TypeTag] = default.autoAcceptSummoned
 
 }

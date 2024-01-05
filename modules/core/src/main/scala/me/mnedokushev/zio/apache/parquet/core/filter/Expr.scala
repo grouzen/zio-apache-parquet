@@ -2,33 +2,22 @@ package me.mnedokushev.zio.apache.parquet.core.filter
 
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.filter2.predicate.FilterApi
-// import me.mnedokushev.zio.apache.parquet.core.Value
 import zio.prelude._
 import org.apache.parquet.filter2.predicate.Operators
 
-sealed trait Expr[-A]
+sealed trait Expr[+A]
 
 object Expr {
 
-  sealed trait Column[A] extends Expr[A] { self =>
-    def typeTag: TypeTag[A]
-    def path: String
-
-    def /[B: TypeTag.LtGt](column: ColumnLtGt[B]): ColumnLtGt[B] =
-      ColumnLtGt(s"$path.${column.path}")
+  final case class Column[A](path: String, typeTag: TypeTag[A]) extends Expr[A] { self =>
 
     def >(value: A)(implicit ev: OperatorSupport.LtGt[A]): Predicate[A] =
       Predicate.Binary(self, value, Operator.Binary.GreaterThen())
 
     def ===(value: A)(implicit ev: OperatorSupport.EqNotEq[A]): Predicate[A] =
       Predicate.Binary(self, value, Operator.Binary.Eq())
+
   }
-
-  final case class ColumnDummy[A](path: String)(implicit val typeTag: TypeTag.Dummy[A]) extends Column[A]
-
-  final case class ColumnEqNotEq[A](path: String)(implicit val typeTag: TypeTag.EqNotEq[A]) extends Column[A]
-
-  final case class ColumnLtGt[A](path: String)(implicit val typeTag: TypeTag.LtGt[A]) extends Column[A]
 
   sealed trait Predicate[A] extends Expr[A] { self =>
 
@@ -45,7 +34,7 @@ object Expr {
 
   object Predicate {
 
-    final case class Binary[A, C <: Column[A]](column: C, value: A, op: Operator.Binary[A]) extends Predicate[A]
+    final case class Binary[A](column: Column[A], value: A, op: Operator.Binary[A]) extends Predicate[A]
 
     final case class Unary[A](predicate: Predicate[A], op: Operator.Unary[A]) extends Predicate[A]
 
@@ -104,16 +93,16 @@ object Expr {
           }
         }
       case Predicate.Binary(column, value, op) =>
-        (column, column.typeTag, value) match {
-          case (c: ColumnEqNotEq[A], TypeTag.TString, v: String)   =>
-            handleEqNotEq(c.typeTag.column(column.path), c.typeTag.value(v), op)
-          case (c: ColumnEqNotEq[A], TypeTag.TBoolean, v: Boolean) =>
-            handleEqNotEq(c.typeTag.column(column.path), c.typeTag.value(v), op)
-          case (c: ColumnLtGt[A], TypeTag.TByte, v: Byte)          =>
-            handleLtGt(c.typeTag.column(column.path), c.typeTag.value(v), op)
-          case (c: ColumnLtGt[A], TypeTag.TInt, v: Int)            =>
-            handleLtGt(c.typeTag.column(column.path), c.typeTag.value(v), op)
-          case _                                                   => ???
+        (column.typeTag, column.typeTag, value) match {
+          case (tt: TypeTag.EqNotEq[A], TypeTag.TString, v: String)   =>
+            handleEqNotEq(tt.column(column.path), tt.value(v), op)
+          case (tt: TypeTag.EqNotEq[A], TypeTag.TBoolean, v: Boolean) =>
+            handleEqNotEq(tt.column(column.path), tt.value(v), op)
+          case (tt: TypeTag.LtGt[A], TypeTag.TByte, v: Byte)          =>
+            handleLtGt(tt.column(column.path), tt.value(v), op)
+          case (tt: TypeTag.LtGt[A], TypeTag.TInt, v: Int)            =>
+            handleLtGt(tt.column(column.path), tt.value(v), op)
+          case _                                                      => ???
         }
 
     }

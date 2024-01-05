@@ -12,20 +12,9 @@ final class ExprAccessorBuilder(typeTags: Map[String, TypeTag[_]]) extends Acces
   override type Traversal[S, A] = Unit
 
   override def makeLens[F, S, A](product: Schema.Record[S], term: Schema.Field[S, A]): Expr.Column[A] = {
-    // val typeTag = TypeTag.deriveTypeTag(term.schema).get
-    // val typeTag = Derive.derive[TypeTag, A](TypeTagDeriver.default)(term.schema)
-    val typeTag = typeTags.get(term.name.toString).map(_.asInstanceOf[TypeTag[A]])
+    val typeTag = typeTags(term.name.toString).asInstanceOf[TypeTag[A]]
 
-    val r: Expr.Column[A] = typeTag match {
-      case Some(t: TypeTag.EqNotEq[A]) =>
-        Expr.ColumnEqNotEq[A](term.name.toString)(t)
-      case Some(t: TypeTag.LtGt[A])    =>
-        Expr.ColumnLtGt[A](term.name.toString)(t)
-      case _                           =>
-        Expr.ColumnDummy[A](term.name.toString)(TypeTag.dummy[A])
-    }
-
-    r
+    Expr.Column(term.name.toString, typeTag)
   }
 
   override def makePrism[F, S, A](sum: Schema.Enum[S], term: Schema.Case[S, A]): Prism[F, S, A] =
