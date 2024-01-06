@@ -2,7 +2,6 @@ package me.mnedokushev.zio.apache.parquet.core.filter
 
 import org.apache.parquet.filter2.predicate.{ FilterApi, FilterPredicate, Operators }
 import zio.prelude._
-// import zio.Tag
 
 sealed trait Expr[+A]
 
@@ -27,9 +26,6 @@ object Expr {
       Predicate.Logical(self, other, Operator.Logical.Or[A, B]())
 
   }
-
-  def not[A](pred: Predicate[A]): Predicate[A] =
-    Predicate.Unary(pred, Operator.Unary.Not[A]())
 
   object Predicate {
 

@@ -27,4 +27,7 @@ object Filter {
 
     }.columns
 
+  def not[A](pred: Expr.Predicate[A]): Expr.Predicate[A] =
+    Expr.Predicate.Unary(pred, Operator.Unary.Not[A]())
+
 }

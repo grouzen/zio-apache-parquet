@@ -148,12 +148,12 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
 
         // TODO: fails when the current time is after midnight
         val expectedOffsetTimeUTC = {
-          val timeNanos       = offsetTimePayload.toLocalTime.toNanoOfDay
-          val offsetNanos     = offsetTimePayload.getOffset.getTotalSeconds * NANOS_FACTOR
+          val timeNanos       = offsetTimePayload.toLocalTime.toNanoOfDay.toInt
+          val offsetNanos     = (offsetTimePayload.getOffset.getTotalSeconds * NANOS_FACTOR).toInt
           val timeOffsetNanos = timeNanos - offsetNanos
-          val nanoOfDay        = if(timeOffsetNanos < 0) NANOS_PER_DAY - timeOffsetNanos else timeOffsetNanos
+          val nanoOfDay: Long = if (timeOffsetNanos < 0) NANOS_PER_DAY - timeOffsetNanos else timeOffsetNanos
 
-          OffsetTime.of(LocalTime.ofNanoOfDay(nanoOfDay), ZoneOffset.UTC)
+          OffsetTime.of(LocalTime.ofNanoOfDay(nanoOfDay.toInt), ZoneOffset.UTC)
         }
 
         val expectedOffsetDateTimeUTC = {

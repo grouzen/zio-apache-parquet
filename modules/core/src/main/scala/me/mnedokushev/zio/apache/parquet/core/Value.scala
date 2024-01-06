@@ -301,27 +301,32 @@ object Value {
   }
 
   def offsetTime(v: OffsetTime) = {
-    val timeMillis   = v.toLocalTime.toNanoOfDay / MICROS_FACTOR
-    val offsetMillis = v.getOffset.getTotalSeconds * MILLIS_FACTOR
-    val dayMillis    = timeMillis - offsetMillis
+    val timeMillis       = v.toLocalTime.toNanoOfDay / MICROS_FACTOR
+    val offsetMillis     = v.getOffset.getTotalSeconds * MILLIS_FACTOR
+    val timeOffsetMillis = timeMillis - offsetMillis
+    val dayMillis        = if (timeOffsetMillis < 0) MILLIS_PER_DAY - timeOffsetMillis else timeOffsetMillis
 
     int(dayMillis.toInt)
   }
 
   def offsetDateTime(v: OffsetDateTime) = {
-    val dateMillis   = v.toLocalDate.toEpochDay * MILLIS_PER_DAY
-    val timeMillis   = v.toLocalTime.toNanoOfDay / MICROS_FACTOR
-    val offsetMillis = v.getOffset.getTotalSeconds * MILLIS_FACTOR
-    val epochMillis  = dateMillis + timeMillis - offsetMillis
+    val dateMillis       = v.toLocalDate.toEpochDay * MILLIS_PER_DAY
+    val timeMillis       = v.toLocalTime.toNanoOfDay / MICROS_FACTOR
+    val offsetMillis     = v.getOffset.getTotalSeconds * MILLIS_FACTOR
+    val timeOffsetMillis = timeMillis - offsetMillis
+    val dayMillis        = if (timeOffsetMillis < 0) MILLIS_PER_DAY - timeOffsetMillis else timeOffsetMillis
+    val epochMillis      = dateMillis + dayMillis
 
     long(epochMillis)
   }
 
   def zonedDateTime(v: ZonedDateTime) = {
-    val dateMillis   = v.toLocalDate.toEpochDay * MILLIS_PER_DAY
-    val timeMillis   = v.toLocalTime.toNanoOfDay / MICROS_FACTOR
-    val offsetMillis = v.getOffset.getTotalSeconds * MILLIS_FACTOR
-    val epochMillis  = dateMillis + timeMillis - offsetMillis
+    val dateMillis       = v.toLocalDate.toEpochDay * MILLIS_PER_DAY
+    val timeMillis       = v.toLocalTime.toNanoOfDay / MICROS_FACTOR
+    val offsetMillis     = v.getOffset.getTotalSeconds * MILLIS_FACTOR
+    val timeOffsetMillis = timeMillis - offsetMillis
+    val dayMillis        = if (timeOffsetMillis < 0) MILLIS_PER_DAY - timeOffsetMillis else timeOffsetMillis
+    val epochMillis      = dateMillis + dayMillis
 
     long(epochMillis)
   }
