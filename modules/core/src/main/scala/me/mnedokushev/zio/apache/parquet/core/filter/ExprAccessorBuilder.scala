@@ -1,7 +1,6 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
-import zio.schema.AccessorBuilder
-import zio.schema.Schema
+import zio.schema.{ AccessorBuilder, Schema }
 
 final class ExprAccessorBuilder(typeTags: Map[String, TypeTag[_]]) extends AccessorBuilder {
 

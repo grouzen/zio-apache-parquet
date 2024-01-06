@@ -1,10 +1,7 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
-import zio.schema.Deriver
 import zio.Chunk
-import zio.schema.Schema
-import zio.schema.StandardType
-import zio.schema.Schema
+import zio.schema.{ Deriver, Schema, StandardType }
 
 object TypeTagDeriver {
 
@@ -23,10 +20,10 @@ object TypeTagDeriver {
       )
 
     override def deriveEnum[A](
-      enum: Schema.Enum[A],
+      `enum`: Schema.Enum[A],
       cases: => Chunk[Deriver.WrappedF[TypeTag, _]],
       summoned: => Option[TypeTag[A]]
-    ): TypeTag[A] = 
+    ): TypeTag[A] =
       TypeTag.dummy[A]
 
     override def derivePrimitive[A](
@@ -47,14 +44,14 @@ object TypeTagDeriver {
       option: Schema.Optional[A],
       inner: => TypeTag[A],
       summoned: => Option[TypeTag[Option[A]]]
-    ): TypeTag[Option[A]] = 
+    ): TypeTag[Option[A]] =
       TypeTag.dummy[Option[A]]
 
     override def deriveSequence[C[_], A](
       sequence: Schema.Sequence[C[A], A, _],
       inner: => TypeTag[A],
       summoned: => Option[TypeTag[C[A]]]
-    ): TypeTag[C[A]] = 
+    ): TypeTag[C[A]] =
       TypeTag.dummy[C[A]]
 
     override def deriveMap[K, V](
@@ -62,7 +59,7 @@ object TypeTagDeriver {
       key: => TypeTag[K],
       value: => TypeTag[V],
       summoned: => Option[TypeTag[Map[K, V]]]
-    ): TypeTag[Map[K, V]] = 
+    ): TypeTag[Map[K, V]] =
       TypeTag.dummy[Map[K, V]]
 
     override def deriveTransformedRecord[A, B](
@@ -70,7 +67,7 @@ object TypeTagDeriver {
       transform: Schema.Transform[A, B, _],
       fields: => Chunk[Deriver.WrappedF[TypeTag, _]],
       summoned: => Option[TypeTag[B]]
-    ): TypeTag[B] = 
+    ): TypeTag[B] =
       TypeTag.dummy[B]
 
   }.cached

@@ -1,7 +1,7 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
-import zio.schema._
 import me.mnedokushev.zio.apache.parquet.core._
+import zio.schema._
 
 trait Filter[Columns0] {
 

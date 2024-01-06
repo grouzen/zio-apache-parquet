@@ -7,7 +7,9 @@ sealed trait OperatorSupport[A]
 object OperatorSupport {
 
   @implicitNotFound("You can't use this operator for the type ${A}")
-  abstract class LtGt[A: TypeTag] extends OperatorSupport[A]
+  abstract class LtGt[A: TypeTag] extends OperatorSupport[A] {
+    val typeTag: TypeTag[A] = implicitly[TypeTag[A]]
+  }
 
   object LtGt {
     implicit case object SByte  extends LtGt[Byte]
@@ -16,7 +18,9 @@ object OperatorSupport {
   }
 
   @implicitNotFound("You can't use this operator for the type ${A}")
-  abstract class EqNotEq[A: TypeTag] extends OperatorSupport[A]
+  abstract class EqNotEq[A: TypeTag] extends OperatorSupport[A] {
+    val typeTag: TypeTag[A] = implicitly[TypeTag[A]]
+  }
 
   object EqNotEq {
     implicit case object SString  extends EqNotEq[String]

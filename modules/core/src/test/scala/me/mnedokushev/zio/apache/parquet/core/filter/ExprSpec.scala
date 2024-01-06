@@ -1,17 +1,23 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
-import zio.test._
+import me.mnedokushev.zio.apache.parquet.core.Value
+import org.apache.parquet.filter2.predicate.FilterApi
 import zio._
 import zio.schema._
-import org.apache.parquet.filter2.predicate.FilterApi
-import me.mnedokushev.zio.apache.parquet.core.Value
+import zio.test._
 
 object ExprSpec extends ZIOSpecDefault {
 
   case class MyRecord(a: String, b: Int)
   object MyRecord {
-    implicit val recordSchema = DeriveSchema.gen[MyRecord]
-    implicit val typeTag      = Derive.derive[TypeTag, MyRecord](TypeTagDeriver.default)
+    // TODO: figure out how to avoid specifying the type explicitly in scala 2.13 and 3
+    type A = "a"
+    type B = "b"
+    implicit val recordSchema: Schema.CaseClass2.WithFields[A, B, String, Int, MyRecord] =
+      DeriveSchema.gen[MyRecord]
+    // implicit val recordSchema = DeriveSchema.gen[MyRecord]
+
+    implicit val typeTag: TypeTag[MyRecord] = Derive.derive[TypeTag, MyRecord](TypeTagDeriver.default)
 
     val (a0, b0) = Filter.columns[MyRecord]
   }

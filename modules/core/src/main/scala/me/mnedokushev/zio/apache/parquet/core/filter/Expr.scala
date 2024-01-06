@@ -1,9 +1,8 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
-import org.apache.parquet.filter2.predicate.FilterPredicate
-import org.apache.parquet.filter2.predicate.FilterApi
+import org.apache.parquet.filter2.predicate.{ FilterApi, FilterPredicate, Operators }
 import zio.prelude._
-import org.apache.parquet.filter2.predicate.Operators
+// import zio.Tag
 
 sealed trait Expr[+A]
 
@@ -21,16 +20,16 @@ object Expr {
 
   sealed trait Predicate[A] extends Expr[A] { self =>
 
-    def not: Predicate[A] =
-      Predicate.Unary(self, Operator.Unary.Not[A]())
-
     def and[B](other: Predicate[B]): Predicate[A] =
-      Predicate.Logical(self, other, Operator.Logical.And[A, B])
+      Predicate.Logical(self, other, Operator.Logical.And[A, B]())
 
     def or[B](other: Predicate[B]): Predicate[A] =
-      Predicate.Logical(self, other, Operator.Logical.Or[A, B])
+      Predicate.Logical(self, other, Operator.Logical.Or[A, B]())
 
   }
+
+  def not[A](pred: Predicate[A]): Predicate[A] =
+    Predicate.Unary(pred, Operator.Unary.Not[A]())
 
   object Predicate {
 
@@ -94,14 +93,18 @@ object Expr {
         }
       case Predicate.Binary(column, value, op) =>
         (column.typeTag, column.typeTag, value) match {
-          case (tt: TypeTag.EqNotEq[A], TypeTag.TString, v: String)   =>
-            handleEqNotEq(tt.column(column.path), tt.value(v), op)
-          case (tt: TypeTag.EqNotEq[A], TypeTag.TBoolean, v: Boolean) =>
-            handleEqNotEq(tt.column(column.path), tt.value(v), op)
-          case (tt: TypeTag.LtGt[A], TypeTag.TByte, v: Byte)          =>
-            handleLtGt(tt.column(column.path), tt.value(v), op)
-          case (tt: TypeTag.LtGt[A], TypeTag.TInt, v: Int)            =>
-            handleLtGt(tt.column(column.path), tt.value(v), op)
+          case (tt: TypeTag.EqNotEq[_], TypeTag.TString, v: String)   =>
+            val tt0 = tt.cast[A]
+            handleEqNotEq(tt0.column(column.path), tt0.value(v), op)
+          case (tt: TypeTag.EqNotEq[_], TypeTag.TBoolean, v: Boolean) =>
+            val tt0 = tt.cast[A]
+            handleEqNotEq(tt0.column(column.path), tt0.value(v), op)
+          case (tt: TypeTag.LtGt[_], TypeTag.TByte, v: Byte)          =>
+            val tt0 = tt.cast[A]
+            handleLtGt(tt0.column(column.path), tt0.value(v), op)
+          case (tt: TypeTag.LtGt[_], TypeTag.TInt, v: Int)            =>
+            val tt0 = tt.cast[A]
+            handleLtGt(tt0.column(column.path), tt0.value(v), op)
           case _                                                      => ???
         }
 

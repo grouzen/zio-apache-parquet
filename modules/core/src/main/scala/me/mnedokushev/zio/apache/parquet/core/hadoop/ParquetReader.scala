@@ -2,7 +2,9 @@ package me.mnedokushev.zio.apache.parquet.core.hadoop
 
 import me.mnedokushev.zio.apache.parquet.core.Value.GroupValue.RecordValue
 import me.mnedokushev.zio.apache.parquet.core.codec.{ SchemaEncoder, ValueDecoder }
+import me.mnedokushev.zio.apache.parquet.core.filter.Expr
 import org.apache.hadoop.conf.Configuration
+import org.apache.parquet.filter2.compat.FilterCompat
 import org.apache.parquet.hadoop.api.{ ReadSupport => HadoopReadSupport }
 import org.apache.parquet.hadoop.{ ParquetReader => HadoopParquetReader }
 import org.apache.parquet.io.InputFile
@@ -11,8 +13,6 @@ import zio.schema.Schema
 import zio.stream._
 
 import java.io.IOException
-import me.mnedokushev.zio.apache.parquet.core.filter.Expr
-import org.apache.parquet.filter2.compat.FilterCompat
 
 trait ParquetReader[+A <: Product] {
 

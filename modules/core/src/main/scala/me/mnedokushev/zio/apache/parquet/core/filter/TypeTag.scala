@@ -1,17 +1,17 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
-// import zio.schema.Schema
-// import zio.schema.StandardType
-import org.apache.parquet.filter2.predicate.Operators.Column
-import org.apache.parquet.filter2.predicate.Operators.SupportsEqNotEq
-import org.apache.parquet.filter2.predicate.FilterApi
-import org.apache.parquet.io.api.Binary
-import org.apache.parquet.filter2.predicate.Operators.BinaryColumn
 import me.mnedokushev.zio.apache.parquet.core.Value
-import org.apache.parquet.filter2.predicate.Operators.BooleanColumn
-import org.apache.parquet.filter2.predicate.Operators.SupportsLtGt
-import org.apache.parquet.filter2.predicate.Operators.IntColumn
-import org.apache.parquet.filter2.predicate.Operators.LongColumn
+import org.apache.parquet.filter2.predicate.FilterApi
+import org.apache.parquet.filter2.predicate.Operators.{
+  BinaryColumn,
+  BooleanColumn,
+  Column,
+  IntColumn,
+  LongColumn,
+  SupportsEqNotEq,
+  SupportsLtGt
+}
+import org.apache.parquet.io.api.Binary
 
 sealed trait TypeTag[+A]
 
@@ -21,17 +21,21 @@ object TypeTag {
 
   final case class Record[A](columns: Map[String, TypeTag[_]]) extends TypeTag[A]
 
-  sealed trait EqNotEq[A] extends TypeTag[A] {
+  sealed trait EqNotEq[A] extends TypeTag[A] { self =>
     type T <: Comparable[T]
     type C <: Column[T] with SupportsEqNotEq
+
+    def cast[A0]: EqNotEq[A0] = self.asInstanceOf[EqNotEq[A0]]
 
     def column(path: String): C
     def value(v: A): T
   }
 
-  sealed trait LtGt[A] extends TypeTag[A] {
+  sealed trait LtGt[A] extends TypeTag[A] { self =>
     type T <: Comparable[T]
     type C <: Column[T] with SupportsLtGt
+
+    def cast[A0]: LtGt[A0] = self.asInstanceOf[LtGt[A0]]
 
     def column(path: String): C
     def value(v: A): T
@@ -110,24 +114,5 @@ object TypeTag {
       Value.long(v).value
 
   }
-
-  // def deriveTypeTag[A](schema: Schema[A]): Option[TypeTag[A]] =
-  //   schema match {
-  //     case s: Schema.Lazy[_]                 => deriveTypeTag(s.schema)
-  //     case s: Schema.Optional[_]             => deriveTypeTag(s.schema.asInstanceOf[Schema[A]])
-  //     case Schema.Primitive(standartType, _) => deriveTypeTag(standartType)
-  //     case _                                 => None
-  //   }
-
-  // def deriveTypeTag[A](standartType: StandardType[A]): Option[TypeTag[A]] =
-  //   standartType match {
-  //     case StandardType.StringType => Some(TypeTag.TString)
-  //     case StandardType.BoolType   => Some(TypeTag.TBoolean)
-  //     case StandardType.ByteType   => Some(TypeTag.TByte)
-  //     case StandardType.ShortType  => Some(TypeTag.TShort)
-  //     case StandardType.IntType    => Some(TypeTag.TInt)
-  //     case StandardType.LongType   => Some(TypeTag.TLong)
-  //     case _                       => None
-  //   }
 
 }
