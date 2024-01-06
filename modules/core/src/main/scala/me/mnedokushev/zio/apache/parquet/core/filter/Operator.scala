@@ -28,6 +28,19 @@ object Operator {
       override def operatorSupport: OperatorSupport[A] = implicitly[OperatorSupport.LtGt[A]]
     }
 
+    sealed trait Set[A] extends Binary[A]
+
+    object Set {
+
+      final case class In[A: OperatorSupport.EqNotEq]()    extends Set[A] {
+        override def operatorSupport: OperatorSupport[A] = implicitly[OperatorSupport.EqNotEq[A]]
+      }
+      final case class NotIn[A: OperatorSupport.EqNotEq]() extends Set[A] {
+        override def operatorSupport: OperatorSupport[A] = implicitly[OperatorSupport.EqNotEq[A]]
+      }
+
+    }
+
   }
 
   sealed trait Unary[A] extends Operator

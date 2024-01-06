@@ -13,11 +13,16 @@ import org.apache.parquet.filter2.predicate.Operators.{
 }
 import org.apache.parquet.io.api.Binary
 
+import scala.jdk.CollectionConverters._
+
 sealed trait TypeTag[+A]
 
 object TypeTag {
 
   trait Dummy[A] extends TypeTag[A]
+
+  def dummy[A]: TypeTag.Dummy[A] =
+    new Dummy[A] {}
 
   final case class Record[A](columns: Map[String, TypeTag[_]]) extends TypeTag[A]
 
@@ -29,6 +34,8 @@ object TypeTag {
 
     def column(path: String): C
     def value(v: A): T
+    def values(vs: Set[A]): java.util.Set[T] =
+      vs.map(value).asJava
   }
 
   sealed trait LtGt[A] extends TypeTag[A] { self =>
@@ -39,10 +46,9 @@ object TypeTag {
 
     def column(path: String): C
     def value(v: A): T
+    def values(vs: Set[A]): java.util.Set[T] =
+      vs.map(value).asJava
   }
-
-  def dummy[A]: TypeTag.Dummy[A] =
-    new Dummy[A] {}
 
   implicit case object TString extends TypeTag.EqNotEq[String] {
     override type T = Binary
