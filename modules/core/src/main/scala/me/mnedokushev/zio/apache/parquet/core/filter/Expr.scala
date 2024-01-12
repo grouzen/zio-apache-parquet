@@ -1,6 +1,6 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
-import org.apache.parquet.filter2.predicate.{FilterApi, FilterPredicate, Operators}
+import org.apache.parquet.filter2.predicate.{ FilterApi, FilterPredicate, Operators }
 import zio.prelude._
 
 sealed trait Expr[+A]
@@ -12,8 +12,20 @@ object Expr {
     def >(value: A)(implicit ev: OperatorSupport.LtGt[A]): Predicate[A] =
       Predicate.Binary(self, value, Operator.Binary.GreaterThen())
 
+    def <(value: A)(implicit ev: OperatorSupport.LtGt[A]): Predicate[A] =
+      Predicate.Binary(self, value, Operator.Binary.LessThen())
+
+    def >=(value: A)(implicit ev: OperatorSupport.LtGt[A]): Predicate[A] =
+      Predicate.Binary(self, value, Operator.Binary.GreaterEq())
+
+    def <=(value: A)(implicit ev: OperatorSupport.LtGt[A]): Predicate[A] =
+      Predicate.Binary(self, value, Operator.Binary.LessEq())
+
     def ===(value: A)(implicit ev: OperatorSupport.EqNotEq[A]): Predicate[A] =
       Predicate.Binary(self, value, Operator.Binary.Eq())
+
+    def =!=(value: A)(implicit ev: OperatorSupport.EqNotEq[A]): Predicate[A] =
+      Predicate.Binary(self, value, Operator.Binary.NotEq())
 
     def in(values: Set[A])(implicit ev: OperatorSupport.EqNotEq[A]): Predicate[A] =
       Predicate.BinarySet(self, values, Operator.Binary.Set.In())
@@ -25,11 +37,11 @@ object Expr {
 
   sealed trait Predicate[A] extends Expr[A] { self =>
 
-    def &&[B](other: Predicate[B]): Predicate[A] =
-      Predicate.Logical(self, other, Operator.Logical.And[A, B]())
+    def and[B](other: Predicate[B]): Predicate[A with B] =
+      Predicate.Logical[A, B](self, other, Operator.Logical.And[A, B]())
 
-    def ||[B](other: Predicate[B]): Predicate[A] =
-      Predicate.Logical(self, other, Operator.Logical.Or[A, B]())
+    def or[B](other: Predicate[B]): Predicate[A with B] =
+      Predicate.Logical[A, B](self, other, Operator.Logical.Or[A, B]())
 
   }
 
@@ -42,8 +54,7 @@ object Expr {
     final case class Unary[A](predicate: Predicate[A], op: Operator.Unary[A]) extends Predicate[A]
 
     final case class Logical[A, B](left: Predicate[A], right: Predicate[B], op: Operator.Logical[A, B])
-        extends Predicate[A]
-
+        extends Predicate[A with B]
   }
 
   def compile[A](predicate: Predicate[A]): Either[String, FilterPredicate] = {
