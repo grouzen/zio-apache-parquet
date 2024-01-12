@@ -5,12 +5,11 @@ import org.apache.parquet.filter2.predicate.FilterApi
 import zio._
 import zio.schema._
 import zio.test._
+import zio.test.Assertion._
 
 import scala.jdk.CollectionConverters._
 
 object ExprSpec extends ZIOSpecDefault {
-
-  import Filter._
 
   case class MyRecord(a: String, b: Int)
   object MyRecord {
@@ -23,26 +22,53 @@ object ExprSpec extends ZIOSpecDefault {
     // implicit val recordSchema = DeriveSchema.gen[MyRecord]
 
     implicit val typeTag: TypeTag[MyRecord] = Derive.derive[TypeTag, MyRecord](TypeTagDeriver.default)
-
-    val (a0, b0) = Filter.columns[MyRecord]
   }
 
   override def spec: Spec[TestEnvironment with Scope, Any] =
     suite("ExprSpec")(
       test("foo") {
-        val result   = Expr.compile(not(MyRecord.a0 === "bar" && MyRecord.b0 > 1 && (MyRecord.b0 notIn Set(1, 2, 3))))
+        val (a, b) = Filter.columns[MyRecord]
+
+        val result = Expr.compile(
+          Filter.not(
+            (b >= 3 or b <= 100 and a.in(Set("foo", "bar"))) or
+              (a === "foo" and (b === 20 or b.notIn(Set(1, 2, 3)))) or
+              (a =!= "foo" and b > 2 and b < 10)
+          )
+        )
+
+        val acol     = FilterApi.binaryColumn("a")
+        val bcol     = FilterApi.intColumn("b")
         val expected =
           FilterApi.not(
-            FilterApi.and(
-              FilterApi.and(
-                FilterApi.eq(FilterApi.binaryColumn("a"), Value.string("bar").value),
-                FilterApi.gt(FilterApi.intColumn("b"), Int.box(Value.int(1).value))
+            FilterApi.or(
+              FilterApi.or(
+                FilterApi.and(
+                  FilterApi.or(
+                    FilterApi.gtEq(bcol, Int.box(Value.int(3).value)),
+                    FilterApi.ltEq(bcol, Int.box(Value.int(100).value))
+                  ),
+                  FilterApi.in(acol, Set(Value.string("foo").value, Value.string("bar").value).asJava)
+                ),
+                FilterApi.and(
+                  FilterApi.eq(acol, Value.string("foo").value),
+                  FilterApi.or(
+                    FilterApi.eq(bcol, Int.box(Value.int(20).value)),
+                    FilterApi.notIn(bcol, Set(1, 2, 3).map(i => Int.box(Value.int(i).value)).asJava)
+                  )
+                )
               ),
-              FilterApi.notIn(FilterApi.intColumn("b"), Set(1, 2, 3).map(i => Int.box(Value.int(i).value)).asJava)
+              FilterApi.and(
+                FilterApi.and(
+                  FilterApi.notEq(acol, Value.string("foo").value),
+                  FilterApi.gt(bcol, Int.box(Value.int(2).value))
+                ),
+                FilterApi.lt(bcol, Int.box(Value.int(10).value))
+              )
             )
           )
 
-        assertTrue(result.contains(expected))
+        assert(result)(isRight(equalTo(expected)))
       }
     )
 
