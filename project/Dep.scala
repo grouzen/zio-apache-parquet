@@ -6,7 +6,7 @@ object Dep {
     val zio                   = "2.0.19"
     val zioSchema             = "0.4.16"
     val scalaCollectionCompat = "2.11.0"
-    val apacheParquet         = "1.13.0"
+    val apacheParquet         = "1.13.1"
     val apacheHadoop          = "3.3.6"
   }
 
