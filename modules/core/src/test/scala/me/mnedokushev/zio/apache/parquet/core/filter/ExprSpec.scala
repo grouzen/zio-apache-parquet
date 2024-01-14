@@ -15,7 +15,7 @@ object ExprSpec extends ZIOSpecDefault {
 
   override def spec: Spec[TestEnvironment with Scope, Any] =
     suite("ExprSpec")(
-      test("compile") {
+      test("compile all operators") {
         val (a, b, _) = Filter.columns[MyRecord]
 
         val result = Expr.compile(

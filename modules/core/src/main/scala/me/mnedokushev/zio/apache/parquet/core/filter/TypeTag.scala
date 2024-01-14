@@ -1,18 +1,39 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
+import _root_.java.time.Instant
 import me.mnedokushev.zio.apache.parquet.core.Value
 import org.apache.parquet.filter2.predicate.FilterApi
 import org.apache.parquet.filter2.predicate.Operators.{
   BinaryColumn,
   BooleanColumn,
   Column,
+  DoubleColumn,
+  FloatColumn,
   IntColumn,
   LongColumn,
   SupportsEqNotEq,
   SupportsLtGt
 }
 import org.apache.parquet.io.api.Binary
+import zio.{ Chunk, Duration }
 
+import java.time.{
+  DayOfWeek,
+  LocalDate,
+  LocalDateTime,
+  LocalTime,
+  Month,
+  MonthDay,
+  OffsetDateTime,
+  OffsetTime,
+  Period,
+  Year,
+  YearMonth,
+  ZoneId,
+  ZoneOffset,
+  ZonedDateTime
+}
+import java.util.UUID
 import scala.jdk.CollectionConverters._
 
 trait TypeTag[+A]
@@ -93,35 +114,151 @@ object TypeTag {
 
     }
 
-  implicit val string: TypeTag.EqNotEq[String]   =
+  implicit val string: TypeTag.EqNotEq[String]                =
     eqnoteq[String, Binary, BinaryColumn](
       FilterApi.binaryColumn,
       Value.string(_).value
     )
-  implicit val boolean: TypeTag.EqNotEq[Boolean] =
+  implicit val boolean: TypeTag.EqNotEq[Boolean]              =
     eqnoteq[Boolean, java.lang.Boolean, BooleanColumn](
       FilterApi.booleanColumn,
       Value.boolean(_).value
     )
-  implicit val byte: TypeTag.LtGt[Byte]          =
+  implicit val byte: TypeTag.LtGt[Byte]                       =
     ltgt[Byte, java.lang.Integer, IntColumn](
       FilterApi.intColumn,
       Value.byte(_).value
     )
-  implicit val short: TypeTag.LtGt[Short]        =
+  implicit val short: TypeTag.LtGt[Short]                     =
     ltgt[Short, java.lang.Integer, IntColumn](
       FilterApi.intColumn,
       Value.short(_).value
     )
-  implicit val int: TypeTag.LtGt[Int]            =
+  implicit val int: TypeTag.LtGt[Int]                         =
     ltgt[Int, java.lang.Integer, IntColumn](
       FilterApi.intColumn,
       Value.int(_).value
     )
-  implicit val long: TypeTag.LtGt[Long]          =
+  implicit val long: TypeTag.LtGt[Long]                       =
     ltgt[Long, java.lang.Long, LongColumn](
       FilterApi.longColumn,
       Value.long(_).value
+    )
+  implicit val float: TypeTag.LtGt[Float]                     =
+    ltgt[Float, java.lang.Float, FloatColumn](
+      FilterApi.floatColumn,
+      Value.float(_).value
+    )
+  implicit val double: TypeTag.LtGt[Double]                   =
+    ltgt[Double, java.lang.Double, DoubleColumn](
+      FilterApi.doubleColumn,
+      Value.double(_).value
+    )
+  implicit val binary: TypeTag.EqNotEq[Chunk[Byte]]           =
+    eqnoteq[Chunk[Byte], Binary, BinaryColumn](
+      FilterApi.binaryColumn,
+      Value.binary(_).value
+    )
+  implicit val char: TypeTag.EqNotEq[Char]                    =
+    eqnoteq[Char, java.lang.Integer, IntColumn](
+      FilterApi.intColumn,
+      Value.char(_).value
+    )
+  implicit val uuid: TypeTag.EqNotEq[UUID]                    =
+    eqnoteq[UUID, Binary, BinaryColumn](
+      FilterApi.binaryColumn,
+      Value.uuid(_).value
+    )
+  implicit val bigDecimal: TypeTag.LtGt[java.math.BigDecimal] =
+    ltgt[java.math.BigDecimal, java.lang.Long, LongColumn](
+      FilterApi.longColumn,
+      Value.bigDecimal(_).value
+    )
+  implicit val bigInteger: TypeTag.LtGt[java.math.BigInteger] =
+    ltgt[java.math.BigInteger, Binary, BinaryColumn](
+      FilterApi.binaryColumn,
+      Value.bigInteger(_).value
+    )
+  implicit val dayOfWeek: TypeTag.LtGt[DayOfWeek]             =
+    ltgt[DayOfWeek, java.lang.Integer, IntColumn](
+      FilterApi.intColumn,
+      Value.dayOfWeek(_).value
+    )
+  implicit val month: TypeTag.LtGt[Month]                     =
+    ltgt[Month, java.lang.Integer, IntColumn](
+      FilterApi.intColumn,
+      Value.month(_).value
+    )
+  implicit val monthDay: TypeTag.LtGt[MonthDay]               =
+    ltgt[MonthDay, Binary, BinaryColumn](
+      FilterApi.binaryColumn,
+      Value.monthDay(_).value
+    )
+  implicit val period: TypeTag.LtGt[Period]                   =
+    ltgt[Period, Binary, BinaryColumn](
+      FilterApi.binaryColumn,
+      Value.period(_).value
+    )
+  implicit val year: TypeTag.LtGt[Year]                       =
+    ltgt[Year, java.lang.Integer, IntColumn](
+      FilterApi.intColumn,
+      Value.year(_).value
+    )
+  implicit val yearMonth: TypeTag.LtGt[YearMonth]             =
+    ltgt[YearMonth, Binary, BinaryColumn](
+      FilterApi.binaryColumn,
+      Value.yearMonth(_).value
+    )
+  // NOTE: it is not implicit to make scalac happy since ZoneOffset is a subtype of ZoneId
+  val zoneId: TypeTag.EqNotEq[ZoneId]                         =
+    eqnoteq[ZoneId, Binary, BinaryColumn](
+      FilterApi.binaryColumn,
+      Value.zoneId(_).value
+    )
+  implicit val zoneOffset: TypeTag.EqNotEq[ZoneOffset]        =
+    eqnoteq[ZoneOffset, Binary, BinaryColumn](
+      FilterApi.binaryColumn,
+      Value.zoneOffset(_).value
+    )
+  implicit val duration: TypeTag.LtGt[Duration]               =
+    ltgt[Duration, java.lang.Long, LongColumn](
+      FilterApi.longColumn,
+      Value.duration(_).value
+    )
+  implicit val instant: TypeTag.LtGt[Instant]                 =
+    ltgt[Instant, java.lang.Long, LongColumn](
+      FilterApi.longColumn,
+      Value.instant(_).value
+    )
+  implicit val localDate: TypeTag.LtGt[LocalDate]             =
+    ltgt[LocalDate, java.lang.Integer, IntColumn](
+      FilterApi.intColumn,
+      Value.localDate(_).value
+    )
+  implicit val localTime: TypeTag.LtGt[LocalTime]             =
+    ltgt[LocalTime, java.lang.Integer, IntColumn](
+      FilterApi.intColumn,
+      Value.localTime(_).value
+    )
+  implicit val localDateTime: TypeTag.LtGt[LocalDateTime]     =
+    ltgt[LocalDateTime, java.lang.Long, LongColumn](
+      FilterApi.longColumn,
+      Value.localDateTime(_).value
+    )
+  implicit val offsetTime: TypeTag.LtGt[OffsetTime]           =
+    ltgt[OffsetTime, java.lang.Integer, IntColumn](
+      FilterApi.intColumn,
+      Value.offsetTime(_).value
+    )
+  implicit val offsetDateTime: TypeTag.LtGt[OffsetDateTime]   =
+    ltgt[OffsetDateTime, java.lang.Long, LongColumn](
+      FilterApi.longColumn,
+      Value.offsetDateTime(_).value
+    )
+  implicit val zonedDateTime: TypeTag.LtGt[ZonedDateTime]     =
+    ltgt[ZonedDateTime, java.lang.Long, LongColumn](
+      FilterApi.longColumn,
+      Value.zonedDateTime(_).value
     )
 
 }
