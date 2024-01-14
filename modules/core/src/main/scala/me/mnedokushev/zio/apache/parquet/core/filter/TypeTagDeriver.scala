@@ -31,12 +31,12 @@ object TypeTagDeriver {
       summoned: => Option[TypeTag[A]]
     ): TypeTag[A] =
       st match {
-        case StandardType.StringType => TypeTag.TString
-        case StandardType.BoolType   => TypeTag.TBoolean
-        case StandardType.ByteType   => TypeTag.TByte
-        case StandardType.ShortType  => TypeTag.TShort
-        case StandardType.IntType    => TypeTag.TInt
-        case StandardType.LongType   => TypeTag.TLong
+        case StandardType.StringType => TypeTag.string
+        case StandardType.BoolType   => TypeTag.boolean
+        case StandardType.ByteType   => TypeTag.byte
+        case StandardType.ShortType  => TypeTag.short
+        case StandardType.IntType    => TypeTag.int
+        case StandardType.LongType   => TypeTag.long
         case _                       => TypeTag.dummy[A]
       }
 

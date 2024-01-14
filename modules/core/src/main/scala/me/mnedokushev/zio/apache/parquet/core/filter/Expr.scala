@@ -65,6 +65,9 @@ object Expr {
 
   def compile[A](predicate: Predicate[A]): Either[String, FilterPredicate] = {
 
+    def error(op: Operator) =
+      Left(s"Operator $op is not supported by $predicate")
+
     def binarySet[T <: Comparable[T], C <: Operators.Column[T] with Operators.SupportsEqNotEq](
       column: C,
       values: java.util.Set[T],
@@ -105,7 +108,7 @@ object Expr {
               case Operator.Binary.NotEq() =>
                 Right(FilterApi.notEq(column0, value0))
               case _                       =>
-                Left("missing eqnoteq")
+                error(op)
             }
           case typeTag: TypeTag.LtGt[_]    =>
             val typeTag0 = typeTag.cast[A]
@@ -126,10 +129,10 @@ object Expr {
               case Operator.Binary.GreaterEq()   =>
                 Right(FilterApi.gtEq(column0, value0))
               case _                             =>
-                Left("missing ltgt")
+                error(op)
             }
           case _                           =>
-            Left("missing binaryset")
+            error(op)
         }
       case Predicate.BinarySet(column, values, op) =>
         column.typeTag match {
@@ -146,7 +149,7 @@ object Expr {
 
             binarySet(column0, values0, op)
           case _                           =>
-            Left("missing binaryset")
+            error(op)
         }
     }
 

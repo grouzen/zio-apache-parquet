@@ -9,6 +9,8 @@ import zio.test._
 
 import scala.jdk.CollectionConverters._
 
+import Fixtures._
+
 object ExprSpec extends ZIOSpecDefault {
 
   override def spec: Spec[TestEnvironment with Scope, Any] =
@@ -54,6 +56,22 @@ object ExprSpec extends ZIOSpecDefault {
               )
             )
           )
+
+        assert(result)(isRight(equalTo(expected)))
+      },
+      test("compile summoned") {
+        val (a, b) = Filter.columns[MyRecordSummoned]
+
+        val result = Expr.compile(
+          a === 3 and b === "foo"
+        )
+
+        val acol     = FilterApi.binaryColumn("a")
+        val bcol     = FilterApi.binaryColumn("b")
+        val expected = FilterApi.and(
+          FilterApi.eq(acol, Value.string("3").value),
+          FilterApi.eq(bcol, Value.string("foo").value)
+        )
 
         assert(result)(isRight(equalTo(expected)))
       },
