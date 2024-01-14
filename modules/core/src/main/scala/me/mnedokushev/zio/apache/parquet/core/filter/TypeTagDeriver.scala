@@ -31,13 +31,36 @@ object TypeTagDeriver {
       summoned: => Option[TypeTag[A]]
     ): TypeTag[A] =
       st match {
-        case StandardType.StringType => TypeTag.string
-        case StandardType.BoolType   => TypeTag.boolean
-        case StandardType.ByteType   => TypeTag.byte
-        case StandardType.ShortType  => TypeTag.short
-        case StandardType.IntType    => TypeTag.int
-        case StandardType.LongType   => TypeTag.long
-        case _                       => TypeTag.dummy[A]
+        case StandardType.StringType         => TypeTag.string
+        case StandardType.BoolType           => TypeTag.boolean
+        case StandardType.ByteType           => TypeTag.byte
+        case StandardType.ShortType          => TypeTag.short
+        case StandardType.IntType            => TypeTag.int
+        case StandardType.LongType           => TypeTag.long
+        case StandardType.FloatType          => TypeTag.float
+        case StandardType.DoubleType         => TypeTag.double
+        case StandardType.BinaryType         => TypeTag.binary
+        case StandardType.CharType           => TypeTag.char
+        case StandardType.UUIDType           => TypeTag.uuid
+        case StandardType.BigDecimalType     => TypeTag.bigDecimal
+        case StandardType.BigIntegerType     => TypeTag.bigInteger
+        case StandardType.DayOfWeekType      => TypeTag.dayOfWeek
+        case StandardType.MonthType          => TypeTag.month
+        case StandardType.MonthDayType       => TypeTag.monthDay
+        case StandardType.PeriodType         => TypeTag.period
+        case StandardType.YearType           => TypeTag.year
+        case StandardType.YearMonthType      => TypeTag.yearMonth
+        case StandardType.ZoneIdType         => TypeTag.zoneId
+        case StandardType.ZoneOffsetType     => TypeTag.zoneOffset
+        case StandardType.DurationType       => TypeTag.duration
+        case StandardType.InstantType        => TypeTag.instant
+        case StandardType.LocalDateType      => TypeTag.localDate
+        case StandardType.LocalTimeType      => TypeTag.localTime
+        case StandardType.LocalDateTimeType  => TypeTag.localDateTime
+        case StandardType.OffsetTimeType     => TypeTag.offsetTime
+        case StandardType.OffsetDateTimeType => TypeTag.offsetDateTime
+        case StandardType.ZonedDateTimeType  => TypeTag.zonedDateTime
+        case _                               => TypeTag.dummy[A]
       }
 
     override def deriveOption[A](
