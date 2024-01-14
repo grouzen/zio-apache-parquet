@@ -7,7 +7,13 @@ sealed trait Expr[+A]
 
 object Expr {
 
-  final case class Column[A](path: String, typeTag: TypeTag[A]) extends Expr[A] { self =>
+  final case class Column[A: TypeTag](path: String) extends Expr[A] { self =>
+
+    val typeTag: TypeTag[A] = implicitly[TypeTag[A]]
+
+    // TODO: validate parent/child relation via macros
+    def /[B: TypeTag](child: Column[B]): Column[B] =
+      Column[B](path = s"$path.${child.path}")
 
     def >(value: A)(implicit ev: OperatorSupport.LtGt[A]): Predicate[A] =
       Predicate.Binary(self, value, Operator.Binary.GreaterThen())

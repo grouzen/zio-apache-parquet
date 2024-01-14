@@ -45,7 +45,7 @@ object TypeTagDeriver {
       inner: => TypeTag[A],
       summoned: => Option[TypeTag[Option[A]]]
     ): TypeTag[Option[A]] =
-      TypeTag.dummy[Option[A]]
+      TypeTag.optional[A](inner)
 
     override def deriveSequence[C[_], A](
       sequence: Schema.Sequence[C[A], A, _],

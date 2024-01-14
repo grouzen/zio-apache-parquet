@@ -24,6 +24,13 @@ object TypeTag {
   def dummy[A]: TypeTag.Dummy[A] =
     new Dummy[A] {}
 
+  final case class Optional[A: TypeTag]() extends TypeTag[Option[A]] {
+    val typeTag: TypeTag[A] = implicitly[TypeTag[A]]
+  }
+
+  implicit def optional[A: TypeTag]: TypeTag[Option[A]] =
+    Optional[A]()
+
   final case class Record[A](columns: Map[String, TypeTag[_]]) extends TypeTag[A]
 
   sealed trait EqNotEq[A] extends TypeTag[A] { self =>

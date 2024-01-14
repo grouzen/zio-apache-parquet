@@ -1,6 +1,7 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
 import me.mnedokushev.zio.apache.parquet.core.Value
+import me.mnedokushev.zio.apache.parquet.core.filter.TypeTag._
 import org.apache.parquet.filter2.predicate.FilterApi
 import zio._
 import zio.test.Assertion._
@@ -12,8 +13,8 @@ object ExprSpec extends ZIOSpecDefault {
 
   override def spec: Spec[TestEnvironment with Scope, Any] =
     suite("ExprSpec")(
-      test("foo") {
-        val (a, b) = Filter.columns[MyRecord]
+      test("compile") {
+        val (a, b, _) = Filter.columns[MyRecord]
 
         val result = Expr.compile(
           Filter.not(
@@ -55,6 +56,16 @@ object ExprSpec extends ZIOSpecDefault {
           )
 
         assert(result)(isRight(equalTo(expected)))
+      },
+      test("path") {
+        val (a, b, child) = Filter.columns[MyRecord]
+        val (c, d)        = Filter.columns[MyRecord.Child]
+
+        assert(a.path)(equalTo("a")) &&
+        assert(b.path)(equalTo("b")) &&
+        assert((child / c).path)(equalTo("child.c")) &&
+        assert((child / d).path)(equalTo("child.d")) &&
+        assert((d / child).path)(equalTo("d.child")) // TODO: must fail
       }
     )
 
