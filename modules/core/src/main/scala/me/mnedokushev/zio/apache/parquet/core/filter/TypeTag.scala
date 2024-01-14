@@ -15,25 +15,25 @@ import org.apache.parquet.io.api.Binary
 
 import scala.jdk.CollectionConverters._
 
-sealed trait TypeTag[+A]
+trait TypeTag[+A]
 
 object TypeTag {
 
-  trait Dummy[A] extends TypeTag[A]
+  trait Dummy[+A] extends TypeTag[A]
 
   def dummy[A]: TypeTag.Dummy[A] =
     new Dummy[A] {}
 
-  final case class Optional[A: TypeTag]() extends TypeTag[Option[A]] {
+  final case class Optional[+A: TypeTag]() extends TypeTag[Option[A]] {
     val typeTag: TypeTag[A] = implicitly[TypeTag[A]]
   }
 
   implicit def optional[A: TypeTag]: TypeTag[Option[A]] =
     Optional[A]()
 
-  final case class Record[A](columns: Map[String, TypeTag[_]]) extends TypeTag[A]
+  final case class Record[+A](columns: Map[String, TypeTag[_]]) extends TypeTag[A]
 
-  sealed trait EqNotEq[A] extends TypeTag[A] { self =>
+  trait EqNotEq[A] extends TypeTag[A] { self =>
     type T <: Comparable[T]
     type C <: Column[T] with SupportsEqNotEq
 
@@ -45,7 +45,7 @@ object TypeTag {
       vs.map(value).asJava
   }
 
-  sealed trait LtGt[A] extends TypeTag[A] { self =>
+  trait LtGt[A] extends TypeTag[A] { self =>
     type T <: Comparable[T]
     type C <: Column[T] with SupportsLtGt
 
@@ -57,75 +57,71 @@ object TypeTag {
       vs.map(value).asJava
   }
 
-  implicit case object TString extends TypeTag.EqNotEq[String] {
-    override type T = Binary
-    override type C = BinaryColumn
+  def eqnoteq[A, T0 <: Comparable[T0], C0 <: Column[T0] with SupportsEqNotEq](
+    column0: String => C0,
+    value0: A => T0
+  ): TypeTag.EqNotEq[A] =
+    new TypeTag.EqNotEq[A] {
 
-    override def column(path: String): C =
-      FilterApi.binaryColumn(path)
+      override type T = T0
 
-    override def value(v: String): T =
-      Value.string(v).value
+      override type C = C0
 
-  }
+      override def column(path: String): C =
+        column0(path)
 
-  implicit case object TBoolean extends TypeTag.EqNotEq[Boolean] {
-    override type T = java.lang.Boolean
-    override type C = BooleanColumn
+      override def value(v: A): T =
+        value0(v)
 
-    override def column(path: String): C =
-      FilterApi.booleanColumn(path)
+    }
 
-    override def value(v: Boolean): T =
-      Value.boolean(v).value
+  def ltgt[A, T0 <: Comparable[T0], C0 <: Column[T0] with SupportsLtGt](
+    column0: String => C0,
+    value0: A => T0
+  ): TypeTag.LtGt[A] =
+    new TypeTag.LtGt[A] {
 
-  }
+      override type T = T0
 
-  implicit case object TByte extends TypeTag.LtGt[Byte] {
-    override type T = java.lang.Integer
-    override type C = IntColumn
+      override type C = C0
 
-    override def column(path: String): C =
-      FilterApi.intColumn(path)
+      override def column(path: String): C =
+        column0(path)
 
-    override def value(v: Byte): T =
-      Value.byte(v).value
+      override def value(v: A): T =
+        value0(v)
 
-  }
+    }
 
-  implicit case object TShort extends TypeTag.LtGt[Short] {
-    override type T = java.lang.Integer
-    override type C = IntColumn
-
-    override def column(path: String): C =
-      FilterApi.intColumn(path)
-
-    override def value(v: Short): T =
-      Value.short(v).value
-
-  }
-  implicit case object TInt extends TypeTag.LtGt[Int] {
-    override type T = java.lang.Integer
-    override type C = IntColumn
-
-    override def column(path: String): C =
-      FilterApi.intColumn(path)
-
-    override def value(v: Int): T =
-      Value.int(v).value
-
-  }
-
-  implicit case object TLong extends TypeTag.LtGt[Long] {
-    override type T = java.lang.Long
-    override type C = LongColumn
-
-    override def column(path: String): C =
-      FilterApi.longColumn(path)
-
-    override def value(v: Long): T =
-      Value.long(v).value
-
-  }
+  implicit val string: TypeTag.EqNotEq[String]   =
+    eqnoteq[String, Binary, BinaryColumn](
+      FilterApi.binaryColumn,
+      Value.string(_).value
+    )
+  implicit val boolean: TypeTag.EqNotEq[Boolean] =
+    eqnoteq[Boolean, java.lang.Boolean, BooleanColumn](
+      FilterApi.booleanColumn,
+      Value.boolean(_).value
+    )
+  implicit val byte: TypeTag.LtGt[Byte]          =
+    ltgt[Byte, java.lang.Integer, IntColumn](
+      FilterApi.intColumn,
+      Value.byte(_).value
+    )
+  implicit val short: TypeTag.LtGt[Short]        =
+    ltgt[Short, java.lang.Integer, IntColumn](
+      FilterApi.intColumn,
+      Value.short(_).value
+    )
+  implicit val int: TypeTag.LtGt[Int]            =
+    ltgt[Int, java.lang.Integer, IntColumn](
+      FilterApi.intColumn,
+      Value.int(_).value
+    )
+  implicit val long: TypeTag.LtGt[Long]          =
+    ltgt[Long, java.lang.Long, LongColumn](
+      FilterApi.longColumn,
+      Value.long(_).value
+    )
 
 }
