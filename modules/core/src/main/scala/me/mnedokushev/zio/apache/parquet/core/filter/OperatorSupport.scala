@@ -62,6 +62,8 @@ object OperatorSupport {
   }
 
   object EqNotEq {
+    implicit def enum0[A: TypeTag]: EqNotEq[A] = new EqNotEq[A] {}
+
     implicit case object string         extends EqNotEq[String]
     implicit case object boolean        extends EqNotEq[Boolean]
     implicit case object byte           extends EqNotEq[Byte]

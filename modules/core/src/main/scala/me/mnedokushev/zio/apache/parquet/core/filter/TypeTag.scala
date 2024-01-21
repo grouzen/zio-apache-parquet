@@ -114,6 +114,12 @@ object TypeTag {
 
     }
 
+  implicit def enum0[A](casesMap: Map[A, String]): TypeTag.EqNotEq[A] =
+    eqnoteq[A, Binary, BinaryColumn](
+      FilterApi.binaryColumn,
+      v => Value.string(casesMap.getOrElse(v, throw FilterError(s"Failed to encode enum for value $v"))).value
+    )
+
   implicit val string: TypeTag.EqNotEq[String]                =
     eqnoteq[String, Binary, BinaryColumn](
       FilterApi.binaryColumn,

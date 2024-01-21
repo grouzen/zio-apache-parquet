@@ -12,7 +12,7 @@ import java.util.UUID
 
 object Fixtures {
 
-  case class MyRecord(a: String, b: Int, child: MyRecord.Child)
+  case class MyRecord(a: String, b: Int, child: MyRecord.Child, enm: MyRecord.Enum)
 
   object MyRecord {
     implicit val schema                     =
@@ -26,6 +26,18 @@ object Fixtures {
         DeriveSchema.gen[Child]
       implicit val typeTag: TypeTag[Child] =
         Derive.derive[TypeTag, Child](TypeTagDeriver.default)
+    }
+
+    sealed trait Enum
+    object Enum {
+      case object Started    extends Enum
+      case object InProgress extends Enum
+      case object Done       extends Enum
+
+      implicit val schema: Schema[Enum]   =
+        DeriveSchema.gen[Enum]
+      implicit val typeTag: TypeTag[Enum] =
+        Derive.derive[TypeTag, Enum](TypeTagDeriver.default)
     }
 
   }

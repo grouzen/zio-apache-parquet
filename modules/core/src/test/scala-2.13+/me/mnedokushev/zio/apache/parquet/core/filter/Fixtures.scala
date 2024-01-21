@@ -12,12 +12,13 @@ import java.util.UUID
 
 object Fixtures {
 
-  case class MyRecord(a: String, b: Int, child: MyRecord.Child)
+  case class MyRecord(a: String, b: Int, child: MyRecord.Child, enm: MyRecord.Enum)
 
   object MyRecord {
-    implicit val schema: Schema.CaseClass3.WithFields["a", "b", "child", String, Int, MyRecord.Child, MyRecord] =
+    implicit val schema
+      : Schema.CaseClass4.WithFields["a", "b", "child", "enm", String, Int, MyRecord.Child, MyRecord.Enum, MyRecord] =
       DeriveSchema.gen[MyRecord]
-    implicit val typeTag: TypeTag[MyRecord]                                                                     =
+    implicit val typeTag: TypeTag[MyRecord] =
       Derive.derive[TypeTag, MyRecord](TypeTagDeriver.default)
 
     case class Child(c: Int, d: Option[Long])
@@ -26,7 +27,18 @@ object Fixtures {
         DeriveSchema.gen[Child]
       implicit val typeTag: TypeTag[Child]                                                           =
         Derive.derive[TypeTag, Child](TypeTagDeriver.default)
+    }
 
+    sealed trait Enum
+    object Enum {
+      case object Started    extends Enum
+      case object InProgress extends Enum
+      case object Done       extends Enum
+
+      implicit val schema: Schema[Enum]   =
+        DeriveSchema.gen[Enum]
+      implicit val typeTag: TypeTag[Enum] =
+        Derive.derive[TypeTag, Enum](TypeTagDeriver.default)
     }
   }
 
