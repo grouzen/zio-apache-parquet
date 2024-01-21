@@ -18,7 +18,7 @@ object ExprSpec extends ZIOSpecDefault {
   override def spec: Spec[TestEnvironment with Scope, Any] =
     suite("ExprSpec")(
       test("compile all operators") {
-        val (a, b, _) = Filter.columns[MyRecord]
+        val (a, b, _, _) = Filter.columns[MyRecord]
 
         val result = Expr.compile(
           Filter.not(
@@ -77,7 +77,7 @@ object ExprSpec extends ZIOSpecDefault {
 
         assert(result)(isRight(equalTo(expected)))
       },
-      test("type tag compilation") {
+      test("compile all primitive types") {
         val (
           string,
           boolean,
@@ -307,9 +307,17 @@ object ExprSpec extends ZIOSpecDefault {
         assert(result1)(isRight(equalTo(expected1))) &&
         assert(result2)(isRight(equalTo(expected2)))
       },
+      test("compile enum") {
+        val (_, _, _, enm) = Filter.columns[MyRecord]
+
+        val result   = Expr.compile(enm === MyRecord.Enum.Done)
+        val expected = FilterApi.eq(FilterApi.binaryColumn("enm"), Value.string("Done").value)
+
+        assert(result)(isRight(equalTo(expected)))
+      },
       test("column path concatenation") {
-        val (a, b, child) = Filter.columns[MyRecord]
-        val (c, d)        = Filter.columns[MyRecord.Child]
+        val (a, b, child, _) = Filter.columns[MyRecord]
+        val (c, d)           = Filter.columns[MyRecord.Child]
 
         assert(a.path)(equalTo("a")) &&
         assert(b.path)(equalTo("b")) &&

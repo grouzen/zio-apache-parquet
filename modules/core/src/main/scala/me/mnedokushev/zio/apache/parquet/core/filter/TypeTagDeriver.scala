@@ -23,8 +23,13 @@ object TypeTagDeriver {
       `enum`: Schema.Enum[A],
       cases: => Chunk[Deriver.WrappedF[TypeTag, _]],
       summoned: => Option[TypeTag[A]]
-    ): TypeTag[A] =
-      TypeTag.dummy[A]
+    ): TypeTag[A] = {
+      val casesMap = `enum`.cases.map { case0 =>
+        case0.schema.asInstanceOf[Schema.CaseClass0[A]].defaultConstruct() -> case0.id
+      }.toMap
+
+      TypeTag.enum0(casesMap)
+    }
 
     override def derivePrimitive[A](
       st: StandardType[A],
