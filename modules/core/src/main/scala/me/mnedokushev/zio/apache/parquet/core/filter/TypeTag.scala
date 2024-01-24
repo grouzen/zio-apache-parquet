@@ -35,8 +35,24 @@ import java.time.{
 }
 import java.util.UUID
 import scala.jdk.CollectionConverters._
+import me.mnedokushev.zio.apache.parquet.core.filter.TypeTag.Dummy
+import me.mnedokushev.zio.apache.parquet.core.filter.TypeTag.EqNotEq
+import me.mnedokushev.zio.apache.parquet.core.filter.TypeTag.LtGt
+import me.mnedokushev.zio.apache.parquet.core.filter.TypeTag.Optional
+import me.mnedokushev.zio.apache.parquet.core.filter.TypeTag.Record
 
-trait TypeTag[+A]
+sealed trait TypeTag[+A] { self =>
+  
+  override def toString: String =
+    self match {
+      case _: Dummy[_]    => "Dummy[A]"
+      case _: Optional[_] => "Optional[A]"
+      case _: Record[_]   => "Record[A]"
+      case _: EqNotEq[_]  => "EqNotEq[A]"
+      case _: LtGt[_]     => "LtGt[A]"
+    }
+
+}
 
 object TypeTag {
 

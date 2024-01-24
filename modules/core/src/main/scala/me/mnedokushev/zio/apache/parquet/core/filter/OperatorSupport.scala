@@ -26,12 +26,21 @@ sealed trait OperatorSupport[A]
 
 object OperatorSupport {
 
+  final class Optional[A: TypeTag: OperatorSupport] extends OperatorSupport[Option[A]] {
+    val typeTag: TypeTag[A]                 = implicitly[TypeTag[A]]
+    val operatorSupport: OperatorSupport[A] = implicitly[OperatorSupport[A]]
+  }
+
   @implicitNotFound("You can't use this operator for the type ${A}")
   abstract class LtGt[A: TypeTag] extends OperatorSupport[A] {
     val typeTag: TypeTag[A] = implicitly[TypeTag[A]]
   }
 
   object LtGt {
+
+    implicit def optional[A: TypeTag: LtGt]: LtGt[Option[A]] =
+      new LtGt[Option[A]] {}
+
     implicit case object byte           extends LtGt[Byte]
     implicit case object short          extends LtGt[Short]
     implicit case object int            extends LtGt[Int]
@@ -54,6 +63,7 @@ object OperatorSupport {
     implicit case object offsetTime     extends LtGt[OffsetTime]
     implicit case object offsetDateTime extends LtGt[OffsetDateTime]
     implicit case object zonedDateTime  extends LtGt[ZonedDateTime]
+
   }
 
   @implicitNotFound("You can't use this operator for the type ${A}")
@@ -62,7 +72,11 @@ object OperatorSupport {
   }
 
   object EqNotEq {
+
     implicit def enum0[A: TypeTag]: EqNotEq[A] = new EqNotEq[A] {}
+
+    implicit def optional[A: TypeTag: EqNotEq]: EqNotEq[Option[A]] =
+      new EqNotEq[Option[A]] {}
 
     implicit case object string         extends EqNotEq[String]
     implicit case object boolean        extends EqNotEq[Boolean]
@@ -93,6 +107,7 @@ object OperatorSupport {
     implicit case object offsetTime     extends EqNotEq[OffsetTime]
     implicit case object offsetDateTime extends EqNotEq[OffsetDateTime]
     implicit case object zonedDateTime  extends EqNotEq[ZonedDateTime]
+
   }
 
 }

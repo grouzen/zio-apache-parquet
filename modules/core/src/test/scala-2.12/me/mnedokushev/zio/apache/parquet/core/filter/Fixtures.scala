@@ -12,7 +12,7 @@ import java.util.UUID
 
 object Fixtures {
 
-  case class MyRecord(a: String, b: Int, child: MyRecord.Child, enm: MyRecord.Enum)
+  case class MyRecord(a: String, b: Int, child: MyRecord.Child, enm: MyRecord.Enum, opt: Option[Int])
 
   object MyRecord {
     implicit val schema                     =
