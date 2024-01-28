@@ -1,7 +1,5 @@
 package me.mnedokushev.zio.apache.parquet
 
-import me.mnedokushev.zio.apache.parquet.core.filter.Expr
-
 package object core {
 
   val MILLIS_PER_DAY    = 86400000L
@@ -12,7 +10,7 @@ package object core {
   val DECIMAL_PRECISION = 11
   val DECIMAL_SCALE     = 2
 
-  type Lens[F, S, A]   = Expr.Column[A]
+  type Lens[F, S, A]   = filter.Column[A]
   type Prism[F, S, A]  = Unit
   type Traversal[S, A] = Unit
 

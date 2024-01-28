@@ -15,10 +15,21 @@ object Fixtures {
   case class MyRecord(a: String, b: Int, child: MyRecord.Child, enm: MyRecord.Enum, opt: Option[Int])
 
   object MyRecord {
-    implicit val schema
-      : Schema.CaseClass5.WithFields["a", "b", "child", "enm", "opt", String, Int, MyRecord.Child, MyRecord.Enum, Option[Int], MyRecord] =
+    implicit val schema: Schema.CaseClass5.WithFields[
+      "a",
+      "b",
+      "child",
+      "enm",
+      "opt",
+      String,
+      Int,
+      MyRecord.Child,
+      MyRecord.Enum,
+      Option[Int],
+      MyRecord
+    ] =
       DeriveSchema.gen[MyRecord]
-    implicit val typeTag: TypeTag[MyRecord]      =
+    implicit val typeTag: TypeTag[MyRecord] =
       Derive.derive[TypeTag, MyRecord](TypeTagDeriver.default)
 
     case class Child(c: Int, d: Option[Long])
