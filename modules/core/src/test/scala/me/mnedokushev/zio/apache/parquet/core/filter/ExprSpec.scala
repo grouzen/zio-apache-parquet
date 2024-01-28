@@ -310,7 +310,7 @@ object ExprSpec extends ZIOSpecDefault {
       test("compile option") {
         val (_, _, _, _, opt) = Filter.columns[MyRecord]
 
-        val result   = Filter.compile(opt.nullable > 3)
+        val result   = compile(opt.nullable > 3)
         val expected = FilterApi.gt(FilterApi.intColumn("opt"), Int.box(Value.int(3).value))
 
         assert(result)(isRight(equalTo(expected)))

@@ -3,7 +3,7 @@ package me.mnedokushev.zio.apache.parquet.core.filter
 import _root_.java.time.Instant
 import me.mnedokushev.zio.apache.parquet.core.Value
 import me.mnedokushev.zio.apache.parquet.core.filter.TypeTag.{ Dummy, EqNotEq, LtGt, Optional, Record }
-import org.apache.parquet.filter2.predicate.{FilterApi, Operators}
+import org.apache.parquet.filter2.predicate.{ FilterApi, Operators }
 import org.apache.parquet.io.api.Binary
 import zio.{ Chunk, Duration }
 

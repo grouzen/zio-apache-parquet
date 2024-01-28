@@ -1,7 +1,7 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
 import me.mnedokushev.zio.apache.parquet.core._
-import org.apache.parquet.filter2.predicate.{FilterApi, FilterPredicate, Operators}
+import org.apache.parquet.filter2.predicate.{ FilterApi, FilterPredicate, Operators }
 import zio.prelude._
 import zio.schema._
 
@@ -32,7 +32,7 @@ object Filter {
 
     }.columns
 
-  def compile[A](predicate: Predicate[A]): Either[String, FilterPredicate] = {
+  private[zio] def compile[A](predicate: Predicate[A]): Either[String, FilterPredicate] = {
 
     def error(op: Operator) =
       Left(s"Operator $op is not supported by $predicate")
