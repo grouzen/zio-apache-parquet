@@ -2,7 +2,7 @@ package me.mnedokushev.zio.apache.parquet.core.hadoop
 
 import me.mnedokushev.zio.apache.parquet.core.Value.GroupValue.RecordValue
 import me.mnedokushev.zio.apache.parquet.core.codec.{ SchemaEncoder, ValueDecoder }
-import me.mnedokushev.zio.apache.parquet.core.filter.Expr
+import me.mnedokushev.zio.apache.parquet.core.filter.{Filter, Predicate}
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.filter2.compat.FilterCompat
 import org.apache.parquet.hadoop.api.{ ReadSupport => HadoopReadSupport }
@@ -18,7 +18,7 @@ trait ParquetReader[+A <: Product] {
 
   def readStream(path: Path): ZStream[Scope, Throwable, A]
 
-  def readChunk[B](path: Path, filter: Option[Expr.Predicate[B]] = None): Task[Chunk[A]]
+  def readChunk[B](path: Path, filter: Option[Predicate[B]] = None): Task[Chunk[A]]
 
 }
 
@@ -41,7 +41,7 @@ final class ParquetReaderLive[A <: Product: Tag](
                 )
     } yield value
 
-  override def readChunk[B](path: Path, filter: Option[Expr.Predicate[B]] = None): Task[Chunk[A]] =
+  override def readChunk[B](path: Path, filter: Option[Predicate[B]] = None): Task[Chunk[A]] =
     ZIO.scoped(
       for {
         reader  <- build(path, filter)
@@ -67,13 +67,13 @@ final class ParquetReaderLive[A <: Product: Tag](
 
   private def build[B](
     path: Path,
-    filter: Option[Expr.Predicate[B]] = None
+    filter: Option[Predicate[B]] = None
   ): ZIO[Scope, IOException, HadoopParquetReader[RecordValue]] =
     for {
       inputFile      <- path.toInputFileZIO(hadoopConf)
       compiledFilter <- ZIO.foreach(filter) { pred =>
                           ZIO
-                            .fromEither(Expr.compile(pred))
+                            .fromEither(Filter.compile(pred))
                             .mapError(new IOException(_))
                         }
       reader         <- ZIO.fromAutoCloseable(

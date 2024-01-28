@@ -11,7 +11,15 @@ object BuildHelper {
     semanticdbEnabled := true,
     semanticdbVersion := scalafixSemanticdb.revision,
     Test / fork       := true,
-    Test / unmanagedSourceDirectories ++= crossVersionSources(scalaVersion.value, "test", baseDirectory.value)
+    Test / unmanagedSourceDirectories ++= crossVersionSources(scalaVersion.value, "test", baseDirectory.value),
+    Test / unmanagedSourceDirectories ++= crossVersionSources(scalaVersion.value, "main", baseDirectory.value),
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, _)) =>
+          Seq(Dep.scalaReflect.value)
+        case _            => Seq.empty
+      }
+    }
   )
 
   val Scala212 = "2.12.19"
@@ -27,11 +35,11 @@ object BuildHelper {
   def crossVersionSources(scalaVersion: String, conf: String, baseDirectory: File): List[File] = {
     val versions = CrossVersion.partialVersion(scalaVersion) match {
       case Some((2, 12)) =>
-        List("2.12")
+        List("2", "2.12")
       case Some((2, 13)) =>
-        List("2.13+")
+        List("2", "2.13", "2.13+")
       case Some((3, _))  =>
-        List("2.13+")
+        List("2", "2.13+", "3")
       case _             =>
         List.empty
     }

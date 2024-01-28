@@ -1,7 +1,6 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
 import me.mnedokushev.zio.apache.parquet.core.Value
-// import me.mnedokushev.zio.apache.parquet.core.filter.OperatorSupport._
 import me.mnedokushev.zio.apache.parquet.core.filter.TypeTag._
 import org.apache.parquet.filter2.predicate.FilterApi
 import zio._
@@ -21,7 +20,7 @@ object ExprSpec extends ZIOSpecDefault {
       test("compile all operators") {
         val (a, b, _, _, _) = Filter.columns[MyRecord]
 
-        val result = Expr.compile(
+        val result = Filter.compile(
           Filter.not(
             (b >= 3 or b <= 100 and a.in(Set("foo", "bar"))) or
               (a === "foo" and (b === 20 or b.notIn(Set(1, 2, 3)))) or
@@ -65,7 +64,7 @@ object ExprSpec extends ZIOSpecDefault {
       test("compile summoned") {
         val (a, b) = Filter.columns[MyRecordSummoned]
 
-        val result = Expr.compile(
+        val result = Filter.compile(
           a === 3 and b === "foo"
         )
 
@@ -144,7 +143,7 @@ object ExprSpec extends ZIOSpecDefault {
         val offsetDateTimePayload = OffsetDateTime.ofInstant(instantPayload, zoneIdPayload)
         val zonedDateTimePayload  = ZonedDateTime.ofInstant(localDateTimePayload, zoneOffsetPayload, zoneIdPayload)
 
-        val result1   = Expr.compile(
+        val result1   = Filter.compile(
           string === stringPayload or
             boolean === booleanPayload or
             byte === bytePayload or
@@ -262,7 +261,7 @@ object ExprSpec extends ZIOSpecDefault {
             FilterApi.eq(FilterApi.binaryColumn("zoneOffset"), Value.zoneOffset(zoneOffsetPayload).value)
           )
 
-        val result2   = Expr.compile(
+        val result2   = Filter.compile(
           duration === durationPayload or
             instant === instantPayload or
             localDate === localDatePayload or
@@ -311,29 +310,29 @@ object ExprSpec extends ZIOSpecDefault {
       test("compile option") {
         val (_, _, _, _, opt) = Filter.columns[MyRecord]
 
-        val result   = Expr.compile(opt > Some(3))
-        val expected = FilterApi.eq(FilterApi.intColumn("opt"), Int.box(Value.int(3).value))
+        val result   = Filter.compile(opt.nullable > 3)
+        val expected = FilterApi.gt(FilterApi.intColumn("opt"), Int.box(Value.int(3).value))
 
         assert(result)(isRight(equalTo(expected)))
       },
       test("compile enum") {
         val (_, _, _, enm, _) = Filter.columns[MyRecord]
 
-        val result   = Expr.compile(enm === MyRecord.Enum.Done)
+        val result   = Filter.compile(enm === MyRecord.Enum.Done)
         val expected = FilterApi.eq(FilterApi.binaryColumn("enm"), Value.string("Done").value)
 
         assert(result)(isRight(equalTo(expected)))
       },
-      // test("column path concatenation") {
-      //   val (a, b, child, _, _) = Filter.columns[MyRecord]
-      //   val (c, d)              = Filter.columns[MyRecord.Child]
+      test("column path concatenation") {
+        val (a, b, child, _, _) = Filter.columns[MyRecord]
+        val (c, d)              = Filter.columns[MyRecord.Child]
 
-      //   assert(a.path)(equalTo("a")) &&
-      //   assert(b.path)(equalTo("b")) &&
-      //   assert((child / c).path)(equalTo("child.c")) &&
-      //   assert((child / d).path)(equalTo("child.d")) &&
-      //   assert((d / child).path)(equalTo("d.child")) // TODO: must fail
-      // }
+        assert(a.path)(equalTo("a")) &&
+        assert(b.path)(equalTo("b")) &&
+        assert((child / c).path)(equalTo("child.c")) &&
+        assert((child / d).path)(equalTo("child.d")) &&
+        assert((d / child).path)(equalTo("d.child")) // TODO: must fail
+      }
     )
 
 }

@@ -4,17 +4,17 @@ import zio.schema.{ AccessorBuilder, Schema }
 
 final class ExprAccessorBuilder(typeTags: Map[String, TypeTag[_]]) extends AccessorBuilder {
 
-  override type Lens[F, S, A] = Expr.Column[A]
+  override type Lens[F, S, A] = Column[A]
 
   override type Prism[F, S, A] = Unit
 
   override type Traversal[S, A] = Unit
 
-  override def makeLens[F, S, A](product: Schema.Record[S], term: Schema.Field[S, A]): Expr.Column[A] = {
+  override def makeLens[F, S, A](product: Schema.Record[S], term: Schema.Field[S, A]): Column[A] = {
     val name             = term.name.toString
     implicit val typeTag = typeTags(name).asInstanceOf[TypeTag[A]]
 
-    Expr.Column(name)
+    Column(name)
   }
 
   override def makePrism[F, S, A](sum: Schema.Enum[S], term: Schema.Case[S, A]): Prism[F, S, A] =
