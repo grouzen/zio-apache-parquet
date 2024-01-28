@@ -2,7 +2,7 @@ package me.mnedokushev.zio.apache.parquet.core.hadoop
 
 import me.mnedokushev.zio.apache.parquet.core.Value.GroupValue.RecordValue
 import me.mnedokushev.zio.apache.parquet.core.codec.{ SchemaEncoder, ValueDecoder }
-import me.mnedokushev.zio.apache.parquet.core.filter.{Filter, Predicate}
+import me.mnedokushev.zio.apache.parquet.core.filter.{ Filter, Predicate }
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.filter2.compat.FilterCompat
 import org.apache.parquet.hadoop.api.{ ReadSupport => HadoopReadSupport }
