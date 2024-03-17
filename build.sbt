@@ -20,7 +20,8 @@ inThisBuild(
         "scm:git:git@github.com:grouzen/zio-apache-parquet.git"
       )
     ),
-    crossScalaVersions                  := Seq(Scala212, Scala213, Scala3),
+    crossScalaVersions                  := Seq(Scala213, Scala212, Scala3),
+    ThisBuild / scalaVersion            := Scala213,
     githubWorkflowJavaVersions ++= Seq(JavaSpec.temurin("11"), JavaSpec.temurin("17")),
     githubWorkflowPublishTargetBranches := Seq(),
     githubWorkflowBuildPreamble         := Seq(
