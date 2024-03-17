@@ -4,23 +4,28 @@ import me.mnedokushev.zio.apache.parquet.core._
 import org.apache.parquet.filter2.predicate.{ FilterApi, FilterPredicate, Operators }
 import zio.prelude._
 import zio.schema._
+import me.mnedokushev.zio.apache.parquet.core.Prism
+import me.mnedokushev.zio.apache.parquet.core.Traversal
 
-trait Filter[Columns0] {
+trait Filter {
 
   type Columns
 
-  val columns: Columns0
+  val columns: Columns
 
 }
 
 object Filter {
 
-  def columns[A](implicit
+  type Aux[Columns0] = Filter {
+    type Columns = Columns0
+  }
+
+  def apply[A](implicit
     schema: Schema[A],
     typeTag: TypeTag[A]
-  ): schema.Accessors[Lens, Prism, Traversal] =
-    new Filter[schema.Accessors[Lens, Prism, Traversal]] {
-
+  ): Filter.Aux[schema.Accessors[Lens, Prism, Traversal]] =
+    new Filter {
       val accessorBuilder =
         new ExprAccessorBuilder(typeTag.asInstanceOf[TypeTag.Record[A]].columns)
 
@@ -29,8 +34,7 @@ object Filter {
 
       override val columns: Columns =
         schema.makeAccessors(accessorBuilder)
-
-    }.columns
+    }
 
   private[zio] def compile[A](predicate: Predicate[A]): Either[String, FilterPredicate] = {
 

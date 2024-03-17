@@ -18,7 +18,7 @@ object ExprSpec extends ZIOSpecDefault {
   override def spec: Spec[TestEnvironment with Scope, Any] =
     suite("ExprSpec")(
       test("compile all operators") {
-        val (a, b, _, _, _) = Filter.columns[MyRecord]
+        val (a, b, _, _, _) = Filter[MyRecord].columns
 
         val result = Filter.compile(
           Filter.not(
@@ -62,7 +62,7 @@ object ExprSpec extends ZIOSpecDefault {
         assert(result)(isRight(equalTo(expected)))
       },
       test("compile summoned") {
-        val (a, b) = Filter.columns[MyRecordSummoned]
+        val (a, b) = Filter[MyRecordSummoned].columns
 
         val result = Filter.compile(
           a === 3 and b === "foo"
@@ -100,7 +100,7 @@ object ExprSpec extends ZIOSpecDefault {
           yearMonth,
           zoneId,
           zoneOffset
-        ) = Filter.columns[MyRecordAllTypes1]
+        ) = Filter[MyRecordAllTypes1].columns
 
         val (
           duration,
@@ -111,7 +111,7 @@ object ExprSpec extends ZIOSpecDefault {
           offsetTime,
           offsetDateTime,
           zonedDateTime
-        ) = Filter.columns[MyRecordAllTypes2]
+        ) = Filter[MyRecordAllTypes2].columns
 
         val stringPayload         = "foo"
         val booleanPayload        = true
@@ -308,7 +308,7 @@ object ExprSpec extends ZIOSpecDefault {
         assert(result2)(isRight(equalTo(expected2)))
       },
       test("compile option") {
-        val (_, _, _, _, opt) = Filter.columns[MyRecord]
+        val (_, _, _, _, opt) = Filter[MyRecord].columns
 
         val result   = compile(opt.nullable > 3)
         val expected = FilterApi.gt(FilterApi.intColumn("opt"), Int.box(Value.int(3).value))
@@ -316,7 +316,7 @@ object ExprSpec extends ZIOSpecDefault {
         assert(result)(isRight(equalTo(expected)))
       },
       test("compile enum") {
-        val (_, _, _, enm, _) = Filter.columns[MyRecord]
+        val (_, _, _, enm, _) = Filter[MyRecord].columns
 
         val result   = Filter.compile(enm === MyRecord.Enum.Done)
         val expected = FilterApi.eq(FilterApi.binaryColumn("enm"), Value.string("Done").value)
@@ -324,8 +324,8 @@ object ExprSpec extends ZIOSpecDefault {
         assert(result)(isRight(equalTo(expected)))
       },
       test("column path concatenation") {
-        val (a, b, child, _, _) = Filter.columns[MyRecord]
-        val (c, d)              = Filter.columns[MyRecord.Child]
+        val (a, b, child, _, _) = Filter[MyRecord].columns
+        val (c, d)              = Filter[MyRecord.Child].columns
 
         assert(a.path)(equalTo("a")) &&
         assert(b.path)(equalTo("b")) &&

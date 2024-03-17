@@ -7,14 +7,6 @@ import scala.reflect.macros.blackbox
 class CompilePredicateMacro(val c: blackbox.Context) {
   import c.universe._
 
-  private def debugEnabled: Boolean = true
-
-  implicit class Debugged[A](self: A) {
-    def debugged(): Unit =
-      if (debugEnabled)
-        c.info(c.enclosingPosition, s"tree=${showRaw(self)}", force = true)
-  }
-
   def compileImpl[A](predicate: Expr[Predicate[A]]): Tree = {
     val containsOptionalValue = predicate.tree.exists {
       case q"scala.Some" =>
