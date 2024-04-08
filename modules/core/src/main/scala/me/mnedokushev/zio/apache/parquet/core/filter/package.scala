@@ -1,6 +1,7 @@
 package me.mnedokushev.zio.apache.parquet.core
 
 import me.mnedokushev.zio.apache.parquet.core.filter.internal.CompilePredicateMacro
+import me.mnedokushev.zio.apache.parquet.core.filter.internal.ColumnPathConcatMacro
 import org.apache.parquet.filter2.predicate.FilterPredicate
 
 package object filter {
@@ -12,5 +13,8 @@ package object filter {
 
   def compile[A](predicate: Predicate[A]): Either[String, FilterPredicate] =
     macro CompilePredicateMacro.compileImpl[A]
+
+  def concat[A, B](parent: Column[A], child: Column[B]): Column[B] =
+    macro ColumnPathConcatMacro.concatImpl[A, B]
 
 }

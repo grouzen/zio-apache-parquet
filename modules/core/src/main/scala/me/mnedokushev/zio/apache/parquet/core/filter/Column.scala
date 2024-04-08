@@ -1,8 +1,5 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
-import me.mnedokushev.zio.apache.parquet.core.filter.internal.ColumnPathConcatMacro
-
-
 trait Column[A] { self =>
 
   type Identity
@@ -11,9 +8,8 @@ trait Column[A] { self =>
   val typeTag: TypeTag[A]
 
   // TODO: validate parent/child relation via macros
-  def /[B: TypeTag](child: Column[B]): Column[B] =
-    macro ColumnPathConcatMacro.concatImpl[B]
-    // Column[B](path = s"$path.${child.path}")
+  // def /[B](child: Column[B]): Column[B] = ???
+    // me.mnedokushev.zio.apache.parquet.core.filter.concatPaths[A, B](self, child)
 
   def >(value: A)(implicit ev: OperatorSupport.LtGt[A]): Predicate[A] =
     Predicate.Binary(self, value, Operator.Binary.GreaterThen())
@@ -43,7 +39,7 @@ trait Column[A] { self =>
 
 object Column {
 
-  type Aux[A, Identity0] = Column[A] { 
+  type Aux[A, Identity0] = Column[A] {
     type Identity = Identity0
   }
 

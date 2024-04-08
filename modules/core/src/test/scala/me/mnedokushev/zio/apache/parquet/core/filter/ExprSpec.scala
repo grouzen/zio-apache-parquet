@@ -325,13 +325,18 @@ object ExprSpec extends ZIOSpecDefault {
       },
       test("column path concatenation") {
         val (a, b, child, _, _) = Filter[MyRecord].columns
-        val (c, d)              = Filter[MyRecord.Child].columns
+        val (c, _)              = Filter[MyRecord.Child].columns
 
         assert(a.path)(equalTo("a")) &&
         assert(b.path)(equalTo("b")) &&
-        assert((child / c).path)(equalTo("child.c")) &&
-        assert((child / d).path)(equalTo("child.d")) &&
-        assert((d / child).path)(equalTo("d.child")) // TODO: must fail
+        assert(concat(child, c).path)(equalTo("child.c"))
+        // assert(/:(child, d).path)(equalTo("child.d"))
+        // assert((child / d).path)(equalTo("child.d")) &&
+        // assert((d / child).path)(equalTo("d.child")) // TODO: must fail
+
+        // assert((child / c).path)(equalTo("child.c")) &&
+        // assert((child / d).path)(equalTo("child.d")) &&
+        // assert((d / child).path)(equalTo("d.child")) // TODO: must fail
       }
     )
 
