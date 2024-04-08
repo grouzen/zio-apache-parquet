@@ -143,169 +143,186 @@ object ExprSpec extends ZIOSpecDefault {
         val offsetDateTimePayload = OffsetDateTime.ofInstant(instantPayload, zoneIdPayload)
         val zonedDateTimePayload  = ZonedDateTime.ofInstant(localDateTimePayload, zoneOffsetPayload, zoneIdPayload)
 
-        val result1   = Filter.compile(
-          string === stringPayload or
-            boolean === booleanPayload or
-            byte === bytePayload or
-            short === shortPayload or
-            int === intPayload or
-            long === longPayload or
-            float === floatPayload or
-            double === doublePayload or
-            binary === binaryPayload or
-            char === charPayload or
-            uuid === uuidPayload or
-            bigDecimal === bigDecimalPayload or
-            bigInteger === bigIntegerPayload or
-            dayOfWeek === dayOfWeekPayload or
-            month === monthPayload or
-            monthDay === monthDayPayload or
-            period === periodPayload or
-            year === yearPayload or
-            yearMonth === yearMonthPayload or
-            zoneId === zoneIdPayload or
-            zoneOffset === zoneOffsetPayload
+        val stringExpected         = FilterApi.eq(
+          FilterApi.binaryColumn("string"),
+          Value.string(stringPayload).value
         )
-        val expected1 =
-          FilterApi.or(
-            FilterApi.or(
-              FilterApi.or(
-                FilterApi.or(
-                  FilterApi.or(
-                    FilterApi.or(
-                      FilterApi.or(
-                        FilterApi.or(
-                          FilterApi.or(
-                            FilterApi.or(
-                              FilterApi.or(
-                                FilterApi.or(
-                                  FilterApi.or(
-                                    FilterApi.or(
-                                      FilterApi.or(
-                                        FilterApi.or(
-                                          FilterApi.or(
-                                            FilterApi.or(
-                                              FilterApi.or(
-                                                FilterApi.or(
-                                                  FilterApi
-                                                    .eq(
-                                                      FilterApi.binaryColumn("string"),
-                                                      Value.string(stringPayload).value
-                                                    ),
-                                                  FilterApi
-                                                    .eq(
-                                                      FilterApi.booleanColumn("boolean"),
-                                                      Boolean.box(Value.boolean(booleanPayload).value)
-                                                    )
-                                                ),
-                                                FilterApi
-                                                  .eq(
-                                                    FilterApi.intColumn("byte"),
-                                                    Int.box(Value.byte(bytePayload).value)
-                                                  )
-                                              ),
-                                              FilterApi
-                                                .eq(
-                                                  FilterApi.intColumn("short"),
-                                                  Int.box(Value.short(shortPayload).value)
-                                                )
-                                            ),
-                                            FilterApi
-                                              .eq(FilterApi.intColumn("int"), Int.box(Value.int(intPayload).value))
-                                          ),
-                                          FilterApi
-                                            .eq(FilterApi.longColumn("long"), Long.box(Value.long(longPayload).value))
-                                        ),
-                                        FilterApi
-                                          .eq(
-                                            FilterApi.floatColumn("float"),
-                                            Float.box(Value.float(floatPayload).value)
-                                          )
-                                      ),
-                                      FilterApi
-                                        .eq(
-                                          FilterApi.doubleColumn("double"),
-                                          Double.box(Value.double(doublePayload).value)
-                                        )
-                                    ),
-                                    FilterApi.eq(FilterApi.binaryColumn("binary"), Value.binary(binaryPayload).value)
-                                  ),
-                                  FilterApi.eq(FilterApi.intColumn("char"), Int.box(Value.char(charPayload).value))
-                                ),
-                                FilterApi.eq(FilterApi.binaryColumn("uuid"), Value.uuid(uuidPayload).value)
-                              ),
-                              FilterApi
-                                .eq(
-                                  FilterApi.longColumn("bigDecimal"),
-                                  Long.box(Value.bigDecimal(bigDecimalPayload).value)
-                                )
-                            ),
-                            FilterApi
-                              .eq(FilterApi.binaryColumn("bigInteger"), Value.bigInteger(bigIntegerPayload).value)
-                          ),
-                          FilterApi
-                            .eq(FilterApi.intColumn("dayOfWeek"), Int.box(Value.dayOfWeek(dayOfWeekPayload).value))
-                        ),
-                        FilterApi.eq(FilterApi.intColumn("month"), Int.box(Value.month(monthPayload).value))
-                      ),
-                      FilterApi.eq(FilterApi.binaryColumn("monthDay"), Value.monthDay(monthDayPayload).value)
-                    ),
-                    FilterApi.eq(FilterApi.binaryColumn("period"), Value.period(periodPayload).value)
-                  ),
-                  FilterApi.eq(FilterApi.intColumn("year"), Int.box(Value.year(yearPayload).value))
-                ),
-                FilterApi.eq(FilterApi.binaryColumn("yearMonth"), Value.yearMonth(yearMonthPayload).value)
-              ),
-              FilterApi.eq(FilterApi.binaryColumn("zoneId"), Value.zoneId(zoneIdPayload).value)
-            ),
-            FilterApi.eq(FilterApi.binaryColumn("zoneOffset"), Value.zoneOffset(zoneOffsetPayload).value)
-          )
-
-        val result2   = Filter.compile(
-          duration === durationPayload or
-            instant === instantPayload or
-            localDate === localDatePayload or
-            localTime === localTimePayload or
-            localDateTime === localDateTimePayload or
-            offsetTime === offsetTimePayload or
-            offsetDateTime === offsetDateTimePayload or
-            zonedDateTime === zonedDateTimePayload
+        val booleanExpected        = FilterApi.eq(
+          FilterApi.booleanColumn("boolean"),
+          Boolean.box(Value.boolean(booleanPayload).value)
         )
-        val expected2 =
-          FilterApi.or(
-            FilterApi.or(
-              FilterApi.or(
-                FilterApi.or(
-                  FilterApi.or(
-                    FilterApi.or(
-                      FilterApi.or(
-                        FilterApi.eq(FilterApi.longColumn("duration"), Long.box(Value.duration(durationPayload).value)),
-                        FilterApi.eq(FilterApi.longColumn("instant"), Long.box(Value.instant(instantPayload).value))
-                      ),
-                      FilterApi.eq(FilterApi.intColumn("localDate"), Int.box(Value.localDate(localDatePayload).value))
-                    ),
-                    FilterApi.eq(FilterApi.intColumn("localTime"), Int.box(Value.localTime(localTimePayload).value))
-                  ),
-                  FilterApi.eq(
-                    FilterApi.longColumn("localDateTime"),
-                    Long.box(Value.localDateTime(localDateTimePayload).value)
-                  )
-                ),
-                FilterApi.eq(FilterApi.intColumn("offsetTime"), Int.box(Value.offsetTime(offsetTimePayload).value))
-              ),
-              FilterApi.eq(
-                FilterApi.longColumn("offsetDateTime"),
-                Long.box(Value.offsetDateTime(offsetDateTimePayload).value)
-              )
-            ),
-            FilterApi.eq(
-              FilterApi.longColumn("zonedDateTime"),
-              Long.box(Value.zonedDateTime(zonedDateTimePayload).value)
-            )
-          )
+        val byteExpected           = FilterApi.eq(
+          FilterApi.intColumn("byte"),
+          Int.box(Value.byte(bytePayload).value)
+        )
+        val shortExpected          = FilterApi.eq(
+          FilterApi.intColumn("short"),
+          Int.box(Value.short(shortPayload).value)
+        )
+        val intExpected            = FilterApi.eq(
+          FilterApi.intColumn("int"),
+          Int.box(Value.int(intPayload).value)
+        )
+        val longExpected           = FilterApi.eq(
+          FilterApi.longColumn("long"),
+          Long.box(Value.long(longPayload).value)
+        )
+        val floatExpected          = FilterApi.eq(
+          FilterApi.floatColumn("float"),
+          Float.box(Value.float(floatPayload).value)
+        )
+        val doubleExpected         = FilterApi.eq(
+          FilterApi.doubleColumn("double"),
+          Double.box(Value.double(doublePayload).value)
+        )
+        val binaryExpected         = FilterApi.eq(
+          FilterApi.binaryColumn("binary"),
+          Value.binary(binaryPayload).value
+        )
+        val charExpected           = FilterApi.eq(
+          FilterApi.intColumn("char"),
+          Int.box(Value.char(charPayload).value)
+        )
+        val uuidExpected           = FilterApi.eq(
+          FilterApi.binaryColumn("uuid"),
+          Value.uuid(uuidPayload).value
+        )
+        val bigDecimalExpected     = FilterApi.eq(
+          FilterApi.longColumn("bigDecimal"),
+          Long.box(Value.bigDecimal(bigDecimalPayload).value)
+        )
+        val bigIntegerExpected     = FilterApi.eq(
+          FilterApi.binaryColumn("bigInteger"),
+          Value.bigInteger(bigIntegerPayload).value
+        )
+        val dayOfWeekExpected      = FilterApi.eq(
+          FilterApi.intColumn("dayOfWeek"),
+          Int.box(Value.dayOfWeek(dayOfWeekPayload).value)
+        )
+        val monthExpected          = FilterApi.eq(
+          FilterApi.intColumn("month"),
+          Int.box(Value.month(monthPayload).value)
+        )
+        val monthDayExpected       = FilterApi.eq(
+          FilterApi.binaryColumn("monthDay"),
+          Value.monthDay(monthDayPayload).value
+        )
+        val periodExpected         = FilterApi.eq(
+          FilterApi.binaryColumn("period"),
+          Value.period(periodPayload).value
+        )
+        val yearExpected           = FilterApi.eq(
+          FilterApi.intColumn("year"),
+          Int.box(Value.year(yearPayload).value)
+        )
+        val yearMonthExpected      = FilterApi.eq(
+          FilterApi.binaryColumn("yearMonth"),
+          Value.yearMonth(yearMonthPayload).value
+        )
+        val zoneIdExpected         = FilterApi.eq(
+          FilterApi.binaryColumn("zoneId"),
+          Value.zoneId(zoneIdPayload).value
+        )
+        val zoneOffsetExpected     = FilterApi.eq(
+          FilterApi.binaryColumn("zoneOffset"),
+          Value.zoneOffset(zoneOffsetPayload).value
+        )
+        val durationExpected       = FilterApi.eq(
+          FilterApi.longColumn("duration"),
+          Long.box(Value.duration(durationPayload).value)
+        )
+        val instantExpected        = FilterApi.eq(
+          FilterApi.longColumn("instant"),
+          Long.box(Value.instant(instantPayload).value)
+        )
+        val localDateExpected      = FilterApi.eq(
+          FilterApi.intColumn("localDate"),
+          Int.box(Value.localDate(localDatePayload).value)
+        )
+        val localTimeExpected      = FilterApi.eq(
+          FilterApi.intColumn("localTime"),
+          Int.box(Value.localTime(localTimePayload).value)
+        )
+        val localDateTimeExpected  = FilterApi.eq(
+          FilterApi.longColumn("localDateTime"),
+          Long.box(Value.localDateTime(localDateTimePayload).value)
+        )
+        val offsetTimeExpected     = FilterApi.eq(
+          FilterApi.intColumn("offsetTime"),
+          Int.box(Value.offsetTime(offsetTimePayload).value)
+        )
+        val offsetDateTimeExpected = FilterApi.eq(
+          FilterApi.longColumn("offsetDateTime"),
+          Long.box(Value.offsetDateTime(offsetDateTimePayload).value)
+        )
+        val zonedDateTimeExpected  = FilterApi.eq(
+          FilterApi.longColumn("zonedDateTime"),
+          Long.box(Value.zonedDateTime(zonedDateTimePayload).value)
+        )
 
-        assert(result1)(isRight(equalTo(expected1))) &&
-        assert(result2)(isRight(equalTo(expected2)))
+        ZIO.fromEither(
+          for {
+            stringResul          <- Filter.compile(string === stringPayload)
+            booleanResult        <- Filter.compile(boolean === booleanPayload)
+            byteResult           <- Filter.compile(byte === bytePayload)
+            shortResult          <- Filter.compile(short === shortPayload)
+            intResult            <- Filter.compile(int === intPayload)
+            longResult           <- Filter.compile(long === longPayload)
+            floatResult          <- Filter.compile(float === floatPayload)
+            doubleResult         <- Filter.compile(double === doublePayload)
+            binaryResult         <- Filter.compile(binary === binaryPayload)
+            charResult           <- Filter.compile(char === charPayload)
+            uuidResult           <- Filter.compile(uuid === uuidPayload)
+            bigDecimalResult     <- Filter.compile(bigDecimal === bigDecimalPayload)
+            bigIntegerResult     <- Filter.compile(bigInteger === bigIntegerPayload)
+            dayOfWeekResult      <- Filter.compile(dayOfWeek === dayOfWeekPayload)
+            monthResult          <- Filter.compile(month === monthPayload)
+            monthDayResult       <- Filter.compile(monthDay === monthDayPayload)
+            periodResult         <- Filter.compile(period === periodPayload)
+            yearResult           <- Filter.compile(year === yearPayload)
+            yearMonthResult      <- Filter.compile(yearMonth === yearMonthPayload)
+            zoneIdResult         <- Filter.compile(zoneId === zoneIdPayload)
+            zoneOffsetResult     <- Filter.compile(zoneOffset === zoneOffsetPayload)
+            durationResult       <- Filter.compile(duration === durationPayload)
+            instantResult        <- Filter.compile(instant === instantPayload)
+            localDateResult      <- Filter.compile(localDate === localDatePayload)
+            localTimeResult      <- Filter.compile(localTime === localTimePayload)
+            localDateTimeResult  <- Filter.compile(localDateTime === localDateTimePayload)
+            offsetTimeResult     <- Filter.compile(offsetTime === offsetTimePayload)
+            offsetDateTimeResult <- Filter.compile(offsetDateTime === offsetDateTimePayload)
+            zonedDateTimeResult  <- Filter.compile(zonedDateTime === zonedDateTimePayload)
+          } yield assertTrue(
+            stringResul == stringExpected,
+            booleanResult == booleanExpected,
+            byteResult == byteExpected,
+            shortResult == shortExpected,
+            intResult == intExpected,
+            longResult == longExpected,
+            floatResult == floatExpected,
+            doubleResult == doubleExpected,
+            binaryResult == binaryExpected,
+            charResult == charExpected,
+            uuidResult == uuidExpected,
+            bigDecimalResult == bigDecimalExpected,
+            bigIntegerResult == bigIntegerExpected,
+            dayOfWeekResult == dayOfWeekExpected,
+            monthResult == monthExpected,
+            monthDayResult == monthDayExpected,
+            periodResult == periodExpected,
+            yearResult == yearExpected,
+            yearMonthResult == yearMonthExpected,
+            zoneIdResult == zoneIdExpected,
+            zoneOffsetResult == zoneOffsetExpected,
+            durationResult == durationExpected,
+            instantResult == instantExpected,
+            localDateResult == localDateExpected,
+            localTimeResult == localTimeExpected,
+            localDateTimeResult == localDateTimeExpected,
+            offsetTimeResult == offsetTimeExpected,
+            offsetDateTimeResult == offsetDateTimeExpected,
+            zonedDateTimeResult == zonedDateTimeExpected
+          )
+        )
       },
       test("compile option") {
         val (_, _, _, _, opt) = Filter[MyRecord].columns
