@@ -6,15 +6,14 @@ import me.mnedokushev.zio.apache.parquet.core.filter.Column
 class ColumnPathConcatMacro(val c: blackbox.Context) extends MacroUtils(c) {
   import c.universe._
 
-  def concatImpl[A, B](parent: Expr[Column[A]], child: Expr[Column[B]])(implicit ptt: c.WeakTypeTag[A]): Tree = {
-    val childField   = getIdentName(child)
+  def concatImpl[A, B, F](parent: Expr[Column[A]], child: Expr[Column.Named[B, F]])(implicit
+    ptt: c.WeakTypeTag[A],
+    ftt: c.WeakTypeTag[F]
+  ): Tree = {
+    val childField   = getSingletonTypeName(ftt.tpe)
     val parentFields = ptt.tpe.members.collect {
       case p: TermSymbol if p.isCaseAccessor && !p.isMethod => p.name.toString.trim
     }.toList
-
-    // childField.debugged()
-    // parentFields.debugged()
-    // parentFields.contains(childField).debugged()
 
     if (parentFields.exists(_ == childField)) {
       val pathTermName     = "path"
@@ -24,15 +23,13 @@ class ColumnPathConcatMacro(val c: blackbox.Context) extends MacroUtils(c) {
 
       q"_root_.me.mnedokushev.zio.apache.parquet.core.filter.Column.Named($concatExpr)"
     } else
-      c.abort(c.enclosingPosition, "parent/child relation is wrong")
+      c.abort(c.enclosingPosition, s"Parent column doesn't contain a column named $childField")
   }
 
-  def getIdentName[A](arg: Expr[A]): String =
-    arg.tree match {
-      case Ident(TermName(name)) =>
-        name
-      case _                     =>
-        c.abort(c.enclosingPosition, s"Couldn't get a name of identifier: ${arg.tree}")
+  private def getSingletonTypeName(tpe: Type): String =
+    tpe match {
+      case ConstantType(Constant(name)) => name.toString
+      case _                            => c.abort(c.enclosingPosition, s"Couldn't get a name of a singleton type ${showRaw(tpe)}")
     }
 
 }

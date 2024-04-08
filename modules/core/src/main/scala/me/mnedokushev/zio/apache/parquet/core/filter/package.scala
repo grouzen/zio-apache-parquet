@@ -14,7 +14,7 @@ package object filter {
   def compile[A](predicate: Predicate[A]): Either[String, FilterPredicate] =
     macro CompilePredicateMacro.compileImpl[A]
 
-  def concat[A, B](parent: Column[A], child: Column[B]): Column[B] =
-    macro ColumnPathConcatMacro.concatImpl[A, B]
+  def concat[A, B, F](parent: Column[A], child: Column.Named[B, F]): Column[B] =
+    macro ColumnPathConcatMacro.concatImpl[A, B, F]
 
 }

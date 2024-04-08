@@ -325,11 +325,14 @@ object ExprSpec extends ZIOSpecDefault {
       },
       test("column path concatenation") {
         val (a, b, child, _, _) = Filter[MyRecord].columns
-        val (c, _)              = Filter[MyRecord.Child].columns
+        // Show that the macro determines the names of the child fields no matter how we name
+        // the variables that represent the child columns
+        val (c0, d0)            = Filter[MyRecord.Child].columns
 
         assert(a.path)(equalTo("a")) &&
         assert(b.path)(equalTo("b")) &&
-        assert(concat(child, c).path)(equalTo("child.c"))
+        assert(concat(child, c0).path)(equalTo("child.c")) &&
+        assert(concat(child, d0).path)(equalTo("child.d"))
         // assert(/:(child, d).path)(equalTo("child.d"))
         // assert((child / d).path)(equalTo("child.d")) &&
         // assert((d / child).path)(equalTo("d.child")) // TODO: must fail

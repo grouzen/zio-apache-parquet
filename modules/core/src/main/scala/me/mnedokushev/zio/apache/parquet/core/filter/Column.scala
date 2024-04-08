@@ -7,9 +7,12 @@ trait Column[A] { self =>
   val path: String
   val typeTag: TypeTag[A]
 
-  // TODO: validate parent/child relation via macros
-  // def /[B](child: Column[B]): Column[B] = ???
-    // me.mnedokushev.zio.apache.parquet.core.filter.concatPaths[A, B](self, child)
+  // TODO: overcome the limitation of scala macros for having a better API
+  // I found out the compiler throws an error that macro is not found as 
+  // the macro itself depends on Column. The only option is to move the definition 
+  // of "concat" outside the Column class.
+  // def /[B](child: Column[B]): Column[B] = 
+  //   ColumnPathConcatMacro.concatImpl[A, B]
 
   def >(value: A)(implicit ev: OperatorSupport.LtGt[A]): Predicate[A] =
     Predicate.Binary(self, value, Operator.Binary.GreaterThen())
@@ -38,10 +41,6 @@ trait Column[A] { self =>
 }
 
 object Column {
-
-  type Aux[A, Identity0] = Column[A] {
-    type Identity = Identity0
-  }
 
   final case class Named[A: TypeTag, Identity0](path: String) extends Column[A] {
     override type Identity = Identity0
