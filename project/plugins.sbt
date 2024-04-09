@@ -8,7 +8,7 @@ addSbtPlugin("com.github.cb372" % "sbt-explicit-dependencies" % "0.3.1")
 
 // Versioning and release
 addSbtPlugin("com.eed3si9n"   % "sbt-buildinfo"      % "0.12.0")
-addSbtPlugin("org.typelevel"  % "sbt-tpolecat"       % "0.5.0")
+addSbtPlugin("org.typelevel"  % "sbt-tpolecat"       % "0.5.1")
 addSbtPlugin("com.github.sbt" % "sbt-ci-release"     % "1.5.12")
 addSbtPlugin("com.github.sbt" % "sbt-github-actions" % "0.23.0")
 
