@@ -1,7 +1,8 @@
 package me.mnedokushev.zio.apache.parquet.core.filter.internal
 
-import scala.reflect.macros.blackbox
 import me.mnedokushev.zio.apache.parquet.core.filter.Column
+
+import scala.reflect.macros.blackbox
 
 class ColumnPathConcatMacro(val c: blackbox.Context) extends MacroUtils(c) {
   import c.universe._

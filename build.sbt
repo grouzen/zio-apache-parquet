@@ -41,6 +41,9 @@ lazy val root =
     .in(file("."))
     .aggregate(core)
     .settings(publish / skip := true)
+    .settings(
+      addCommandAlias("fmtAll", "+scalafmtAll; +scalafixAll")
+    )
 
 lazy val core =
   project

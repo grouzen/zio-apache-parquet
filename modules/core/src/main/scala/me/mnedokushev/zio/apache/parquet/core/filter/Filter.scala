@@ -1,11 +1,9 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
-import me.mnedokushev.zio.apache.parquet.core._
+import me.mnedokushev.zio.apache.parquet.core.{ Lens, Prism, Traversal }
 import org.apache.parquet.filter2.predicate.{ FilterApi, FilterPredicate, Operators }
 import zio.prelude._
 import zio.schema._
-import me.mnedokushev.zio.apache.parquet.core.Prism
-import me.mnedokushev.zio.apache.parquet.core.Traversal
 
 trait Filter {
 

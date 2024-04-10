@@ -8,10 +8,10 @@ trait Column[A] { self =>
   val typeTag: TypeTag[A]
 
   // TODO: overcome the limitation of scala macros for having a better API
-  // I found out the compiler throws an error that macro is not found as 
-  // the macro itself depends on Column. The only option is to move the definition 
+  // I found out the compiler throws an error that macro is not found as
+  // the macro itself depends on Column. The only option is to move the definition
   // of "concat" outside the Column class.
-  // def /[B](child: Column[B]): Column[B] = 
+  // def /[B](child: Column[B]): Column[B] =
   //   ColumnPathConcatMacro.concatImpl[A, B]
 
   def >(value: A)(implicit ev: OperatorSupport.LtGt[A]): Predicate[A] =

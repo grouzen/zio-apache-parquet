@@ -1,8 +1,9 @@
 package me.mnedokushev.zio.apache.parquet.core.filter.internal
 
-import scala.quoted.*
 import me.mnedokushev.zio.apache.parquet.core.filter.Predicate
 import org.apache.parquet.filter2.predicate.FilterPredicate
+
+import scala.quoted.*
 
 object CompilePredicateMacro {
 
@@ -10,6 +11,7 @@ object CompilePredicateMacro {
   def compileImpl[A: Type](predicate: Expr[Predicate[A]])(using Quotes): Expr[Either[String, FilterPredicate]] = {
     import quotes.reflect.*
 
+    // TODO: rewrite using limited stack for safety
     def containsOptionalValue(term: Term): Boolean =
       term match {
         case Inlined(_, _, term0)       =>
