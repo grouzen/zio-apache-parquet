@@ -4,20 +4,50 @@ import me.mnedokushev.zio.apache.parquet.core.filter.Predicate
 
 import scala.reflect.macros.blackbox
 
-class CompilePredicateMacro(val c: blackbox.Context) {
+class CompilePredicateMacro(val c: blackbox.Context) extends MacroUtils(c) {
   import c.universe._
 
-  def compileImpl[A](predicate: Expr[Predicate[A]]): Tree = {
-    val containsOptionalValue = predicate.tree.exists {
-      case q"scala.Some" =>
-        true
-      case q"scala.None" =>
-        true
-      case _             =>
-        false
-    }
+  def compileImpl[A](predicate: Expr[Predicate[A]])(ptt: c.WeakTypeTag[A]): Tree = {
 
-    if (containsOptionalValue)
+    // Example of a tree for A type:
+    // RefinedType(
+    //   List(
+    //     RefinedType(
+    //       List(
+    //         TypeRef(
+    //           ThisType(java.lang),
+    //           java.lang.String,
+    //           List()
+    //         ),
+    //         TypeRef(
+    //           ThisType(scala),
+    //           scala.Option,
+    //           List(
+    //             TypeRef(
+    //               ThisType(scala),
+    //               scala.Int,
+    //               List()
+    //             )
+    //           )
+    //         )
+    //       ),
+    //       Scope()
+    //     ),
+    //     TypeRef(ThisType(scala), scala.Int, List())
+    //   ),
+    //   Scope()
+    // )
+    def containsOptionalValue0(tpe: Type): Boolean =
+      tpe match {
+        case RefinedType(tpes, _) =>
+          tpes.exists(containsOptionalValue0)
+        case TypeRef(_, sym, _)   =>
+          List("scala.Option", "scala.Some", "scala.None").contains(sym.fullName)
+        case _                    =>
+          false
+      }
+
+    if (containsOptionalValue0(ptt.tpe))
       c.abort(
         c.enclosingPosition,
         s"""

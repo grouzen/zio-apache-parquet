@@ -11,6 +11,8 @@ object CompilePredicateMacro {
   def compileImpl[A: Type](predicate: Expr[Predicate[A]])(using Quotes): Expr[Either[String, FilterPredicate]] = {
     import quotes.reflect.*
 
+    println(predicate.asTerm.show(using Printer.TreeStructure))
+
     // TODO: rewrite using limited stack for safety
     def containsOptionalValue(term: Term): Boolean =
       term match {
