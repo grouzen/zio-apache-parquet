@@ -11,28 +11,31 @@ object CompilePredicateMacro {
   def compileImpl[A: Type](predicate: Expr[Predicate[A]])(using Quotes): Expr[Either[String, FilterPredicate]] = {
     import quotes.reflect.*
 
-    println(predicate.asTerm.show(using Printer.TreeStructure))
-
+    // Example of a type representation of A type:
+    // AndType(
+    //   AndType(
+    //     TypeRef(TermRef(ThisType(TypeRef(NoPrefix(), "scala")), "Predef"), "String"),
+    //     AppliedType(
+    //       TypeRef(TermRef(ThisType(TypeRef(NoPrefix(), "<root>")), "scala"), "Option"),
+    //       List(
+    //         TypeRef(TermRef(ThisType(TypeRef(NoPrefix(), "<root>")), "scala"), "Int")
+    //       )
+    //     )
+    //   ),
+    //   TypeRef(TermRef(ThisType(TypeRef(NoPrefix(), "<root>")), "scala"), "Int")
+    // )
     // TODO: rewrite using limited stack for safety
-    def containsOptionalValue(term: Term): Boolean =
-      term match {
-        case Inlined(_, _, term0)       =>
-          containsOptionalValue(term0)
-        case Apply(fun, args)           =>
-          containsOptionalValue(fun) || args.forall(containsOptionalValue)
-        case TypeApply(fun, _)          =>
-          containsOptionalValue(fun)
-        case Select(Ident("Some"), _)   =>
-          true
-        case Ident("None")              =>
-          true
-        case Select(Ident("Option"), _) =>
-          true
-        case _                          =>
-          false
+    def containsOptionalValue(tpe: TypeRepr): Boolean =
+      tpe match {
+        case AndType(a, b)       =>
+          containsOptionalValue(a) || containsOptionalValue(b)
+        case AppliedType(tpe, _) =>
+          containsOptionalValue(tpe)
+        case TypeRef(_, name)    =>
+          List("Option", "Some", "None").contains(name)
       }
 
-    if (containsOptionalValue(predicate.asTerm))
+    if (containsOptionalValue(TypeRepr.of[A]))
       report.errorAndAbort(
         s"""
            | The use of optional columns in filter predicate is prohibited. Please, use .nullable:

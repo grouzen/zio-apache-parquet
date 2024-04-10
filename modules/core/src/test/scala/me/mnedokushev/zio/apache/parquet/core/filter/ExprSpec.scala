@@ -327,11 +327,13 @@ object ExprSpec extends ZIOSpecDefault {
       test("compile option") {
         val (_, _, _, _, opt) = Filter[MyRecord].columns
 
-        // val v = Some(1)
         // val result   = compile(opt.nullable > 3 or opt.nullable === 0)
         // val result   = compile(opt > Some(3) and opt === None or opt <= Option(4))
         val result = compile(opt.nullable > 3)
-        // val result = compile(Filter.not(a === "foo" and opt > v or b =!= 1))
+
+        // val v = Some(1)
+        // val x = None
+        // val result = compile(Filter.not(a === "foo" and opt > v or opt < x or b =!= 1))
 
         val expected = FilterApi.gt(FilterApi.intColumn("opt"), Int.box(Value.int(3).value))
 
