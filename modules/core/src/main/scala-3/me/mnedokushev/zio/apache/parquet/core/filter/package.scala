@@ -5,12 +5,15 @@ import org.apache.parquet.filter2.predicate.FilterPredicate
 
 package object filter {
 
-  extension[F, S, A](column: Lens[F, S, Option[A]]) {
+  extension [F, S, A](column: Lens[F, S, Option[A]]) {
     def nullable(implicit typeTag: TypeTag[A]): Column.Named[A, column.Identity] =
       Column.Named(column.path)
   }
 
-  def compile[A](predicate: Predicate[A]): Either[String, FilterPredicate] =
-    CompilePredicateMacro.compileImpl[A](predicate)
+  inline def compile[A](inline predicate: Predicate[A]): Either[String, FilterPredicate] =
+    ${ CompilePredicateMacro.compileImpl[A]('predicate) }
+
+  // def compile[A](predicate: Predicate[A]): Either[String, FilterPredicate] =
+  //   CompilePredicateMacro.compile[A](predicate)
 
 }
