@@ -24,7 +24,7 @@ class ColumnPathConcatMacro(val c: blackbox.Context) extends MacroUtils(c) {
 
       q"_root_.me.mnedokushev.zio.apache.parquet.core.filter.Column.Named($concatExpr)"
     } else
-      c.abort(c.enclosingPosition, s"Parent column doesn't contain a column named $childField")
+      c.abort(c.enclosingPosition, s"Parent column doesn't contain a column named '$childField'")
   }
 
   private def getSingletonTypeName(tpe: Type): String =

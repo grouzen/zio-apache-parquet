@@ -325,17 +325,11 @@ object ExprSpec extends ZIOSpecDefault {
         )
       },
       test("compile option") {
+        // TODO: test failing compile-time cases
         val (_, _, _, _, opt) = Filter[MyRecord].columns
 
-        // val result   = compile(opt.nullable > 3 or opt.nullable === 0)
-        // val result   = compile(opt > Some(3) and opt === None or opt <= Option(4))
-        val result = compile(opt.nullable > 3)
-
-        // val v = Some(1)
-        // val x = None
-        // val result = compile(Filter.not(a === "foo" and opt > v or opt < x or b =!= 1))
-
         val expected = FilterApi.gt(FilterApi.intColumn("opt"), Int.box(Value.int(3).value))
+        val result   = compile(opt.nullable > 3)
 
         assert(result)(isRight(equalTo(expected)))
       },
@@ -346,25 +340,17 @@ object ExprSpec extends ZIOSpecDefault {
         val expected = FilterApi.eq(FilterApi.binaryColumn("enm"), Value.string("Done").value)
 
         assert(result)(isRight(equalTo(expected)))
+      },
+      test("column path concatenation") {
+        // TODO: test failing compile-time cases
+        // Show the macro determines the names of the parent/child fields no matter how we name
+        // the variables that represent columns
+        val (_, _, child0, _, _) = Filter[MyRecord].columns
+        val (c0, d0)             = Filter[MyRecord.Child].columns
+
+        assert(concat(child0, c0).path)(equalTo("child.c")) &&
+        assert(concat(child0, d0).path)(equalTo("child.d"))
       }
-      // test("column path concatenation") {
-      //   val (a, b, child, _, _) = Filter[MyRecord].columns
-      //   // Show that the macro determines the names of the child fields no matter how we name
-      //   // the variables that represent the child columns
-      //   val (c0, d0)            = Filter[MyRecord.Child].columns
-
-      //   assert(a.path)(equalTo("a")) &&
-      //   assert(b.path)(equalTo("b")) &&
-      //   assert(concat(child, c0).path)(equalTo("child.c")) &&
-      //   assert(concat(child, d0).path)(equalTo("child.d"))
-      //   // assert(/:(child, d).path)(equalTo("child.d"))
-      //   // assert((child / d).path)(equalTo("child.d")) &&
-      //   // assert((d / child).path)(equalTo("d.child")) // TODO: must fail
-
-      //   // assert((child / c).path)(equalTo("child.c")) &&
-      //   // assert((child / d).path)(equalTo("child.d")) &&
-      //   // assert((d / child).path)(equalTo("d.child")) // TODO: must fail
-      // }
     )
 
 }
