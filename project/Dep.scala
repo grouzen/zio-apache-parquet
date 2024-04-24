@@ -3,7 +3,7 @@ import sbt._
 object Dep {
 
   object V {
-    val zio                   = "2.0.21"
+    val zio                   = "2.0.22"
     val zioSchema             = "1.1.0"
     val scalaCollectionCompat = "2.11.0"
     val apacheParquet         = "1.13.1"
