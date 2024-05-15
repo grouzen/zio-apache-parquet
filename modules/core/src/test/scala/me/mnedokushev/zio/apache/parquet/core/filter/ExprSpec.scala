@@ -11,7 +11,7 @@ import java.time._
 import java.util.UUID
 import scala.jdk.CollectionConverters._
 
-import Fixtures._
+import me.mnedokushev.zio.apache.parquet.core.Fixtures._
 
 object ExprSpec extends ZIOSpecDefault {
 
@@ -59,7 +59,7 @@ object ExprSpec extends ZIOSpecDefault {
             )
           )
 
-        assert(result)(isRight(equalTo(expected)))
+        assert(result)(equalTo(expected))
       },
       test("compile summoned") {
         val (a, b) = Filter[MyRecordSummoned].columns
@@ -75,7 +75,7 @@ object ExprSpec extends ZIOSpecDefault {
           FilterApi.eq(bcol, Value.string("foo").value)
         )
 
-        assert(result)(isRight(equalTo(expected)))
+        assert(result)(equalTo(expected))
       },
       test("compile all primitive types") {
         val (
@@ -260,68 +260,66 @@ object ExprSpec extends ZIOSpecDefault {
           Long.box(Value.zonedDateTime(zonedDateTimePayload).value)
         )
 
-        ZIO.fromEither(
-          for {
-            stringResul          <- Filter.compile(string === stringPayload)
-            booleanResult        <- Filter.compile(boolean === booleanPayload)
-            byteResult           <- Filter.compile(byte === bytePayload)
-            shortResult          <- Filter.compile(short === shortPayload)
-            intResult            <- Filter.compile(int === intPayload)
-            longResult           <- Filter.compile(long === longPayload)
-            floatResult          <- Filter.compile(float === floatPayload)
-            doubleResult         <- Filter.compile(double === doublePayload)
-            binaryResult         <- Filter.compile(binary === binaryPayload)
-            charResult           <- Filter.compile(char === charPayload)
-            uuidResult           <- Filter.compile(uuid === uuidPayload)
-            bigDecimalResult     <- Filter.compile(bigDecimal === bigDecimalPayload)
-            bigIntegerResult     <- Filter.compile(bigInteger === bigIntegerPayload)
-            dayOfWeekResult      <- Filter.compile(dayOfWeek === dayOfWeekPayload)
-            monthResult          <- Filter.compile(month === monthPayload)
-            monthDayResult       <- Filter.compile(monthDay === monthDayPayload)
-            periodResult         <- Filter.compile(period === periodPayload)
-            yearResult           <- Filter.compile(year === yearPayload)
-            yearMonthResult      <- Filter.compile(yearMonth === yearMonthPayload)
-            zoneIdResult         <- Filter.compile(zoneId === zoneIdPayload)
-            zoneOffsetResult     <- Filter.compile(zoneOffset === zoneOffsetPayload)
-            durationResult       <- Filter.compile(duration === durationPayload)
-            instantResult        <- Filter.compile(instant === instantPayload)
-            localDateResult      <- Filter.compile(localDate === localDatePayload)
-            localTimeResult      <- Filter.compile(localTime === localTimePayload)
-            localDateTimeResult  <- Filter.compile(localDateTime === localDateTimePayload)
-            offsetTimeResult     <- Filter.compile(offsetTime === offsetTimePayload)
-            offsetDateTimeResult <- Filter.compile(offsetDateTime === offsetDateTimePayload)
-            zonedDateTimeResult  <- Filter.compile(zonedDateTime === zonedDateTimePayload)
-          } yield assertTrue(
-            stringResul == stringExpected,
-            booleanResult == booleanExpected,
-            byteResult == byteExpected,
-            shortResult == shortExpected,
-            intResult == intExpected,
-            longResult == longExpected,
-            floatResult == floatExpected,
-            doubleResult == doubleExpected,
-            binaryResult == binaryExpected,
-            charResult == charExpected,
-            uuidResult == uuidExpected,
-            bigDecimalResult == bigDecimalExpected,
-            bigIntegerResult == bigIntegerExpected,
-            dayOfWeekResult == dayOfWeekExpected,
-            monthResult == monthExpected,
-            monthDayResult == monthDayExpected,
-            periodResult == periodExpected,
-            yearResult == yearExpected,
-            yearMonthResult == yearMonthExpected,
-            zoneIdResult == zoneIdExpected,
-            zoneOffsetResult == zoneOffsetExpected,
-            durationResult == durationExpected,
-            instantResult == instantExpected,
-            localDateResult == localDateExpected,
-            localTimeResult == localTimeExpected,
-            localDateTimeResult == localDateTimeExpected,
-            offsetTimeResult == offsetTimeExpected,
-            offsetDateTimeResult == offsetDateTimeExpected,
-            zonedDateTimeResult == zonedDateTimeExpected
-          )
+        val stringResul          = Filter.compile(string === stringPayload)
+        val booleanResult        = Filter.compile(boolean === booleanPayload)
+        val byteResult           = Filter.compile(byte === bytePayload)
+        val shortResult          = Filter.compile(short === shortPayload)
+        val intResult            = Filter.compile(int === intPayload)
+        val longResult           = Filter.compile(long === longPayload)
+        val floatResult          = Filter.compile(float === floatPayload)
+        val doubleResult         = Filter.compile(double === doublePayload)
+        val binaryResult         = Filter.compile(binary === binaryPayload)
+        val charResult           = Filter.compile(char === charPayload)
+        val uuidResult           = Filter.compile(uuid === uuidPayload)
+        val bigDecimalResult     = Filter.compile(bigDecimal === bigDecimalPayload)
+        val bigIntegerResult     = Filter.compile(bigInteger === bigIntegerPayload)
+        val dayOfWeekResult      = Filter.compile(dayOfWeek === dayOfWeekPayload)
+        val monthResult          = Filter.compile(month === monthPayload)
+        val monthDayResult       = Filter.compile(monthDay === monthDayPayload)
+        val periodResult         = Filter.compile(period === periodPayload)
+        val yearResult           = Filter.compile(year === yearPayload)
+        val yearMonthResult      = Filter.compile(yearMonth === yearMonthPayload)
+        val zoneIdResult         = Filter.compile(zoneId === zoneIdPayload)
+        val zoneOffsetResult     = Filter.compile(zoneOffset === zoneOffsetPayload)
+        val durationResult       = Filter.compile(duration === durationPayload)
+        val instantResult        = Filter.compile(instant === instantPayload)
+        val localDateResult      = Filter.compile(localDate === localDatePayload)
+        val localTimeResult      = Filter.compile(localTime === localTimePayload)
+        val localDateTimeResult  = Filter.compile(localDateTime === localDateTimePayload)
+        val offsetTimeResult     = Filter.compile(offsetTime === offsetTimePayload)
+        val offsetDateTimeResult = Filter.compile(offsetDateTime === offsetDateTimePayload)
+        val zonedDateTimeResult  = Filter.compile(zonedDateTime === zonedDateTimePayload)
+
+        assertTrue(
+          stringResul == stringExpected,
+          booleanResult == booleanExpected,
+          byteResult == byteExpected,
+          shortResult == shortExpected,
+          intResult == intExpected,
+          longResult == longExpected,
+          floatResult == floatExpected,
+          doubleResult == doubleExpected,
+          binaryResult == binaryExpected,
+          charResult == charExpected,
+          uuidResult == uuidExpected,
+          bigDecimalResult == bigDecimalExpected,
+          bigIntegerResult == bigIntegerExpected,
+          dayOfWeekResult == dayOfWeekExpected,
+          monthResult == monthExpected,
+          monthDayResult == monthDayExpected,
+          periodResult == periodExpected,
+          yearResult == yearExpected,
+          yearMonthResult == yearMonthExpected,
+          zoneIdResult == zoneIdExpected,
+          zoneOffsetResult == zoneOffsetExpected,
+          durationResult == durationExpected,
+          instantResult == instantExpected,
+          localDateResult == localDateExpected,
+          localTimeResult == localTimeExpected,
+          localDateTimeResult == localDateTimeExpected,
+          offsetTimeResult == offsetTimeExpected,
+          offsetDateTimeResult == offsetDateTimeExpected,
+          zonedDateTimeResult == zonedDateTimeExpected
         )
       },
       test("compile option") {
@@ -329,9 +327,9 @@ object ExprSpec extends ZIOSpecDefault {
         val (_, _, _, _, opt) = Filter[MyRecord].columns
 
         val expected = FilterApi.gt(FilterApi.intColumn("opt"), Int.box(Value.int(3).value))
-        val result   = compile(opt.nullable > 3)
+        val result   = Filter.compile(opt.nullable > 3)
 
-        assert(result)(isRight(equalTo(expected)))
+        assert(result)(equalTo(expected))
       },
       test("compile enum") {
         val (_, _, _, enm, _) = Filter[MyRecord].columns
@@ -339,7 +337,7 @@ object ExprSpec extends ZIOSpecDefault {
         val result   = Filter.compile(enm === MyRecord.Enum.Done)
         val expected = FilterApi.eq(FilterApi.binaryColumn("enm"), Value.string("Done").value)
 
-        assert(result)(isRight(equalTo(expected)))
+        assert(result)(equalTo(expected))
       },
       test("column path concatenation") {
         // TODO: test failing compile-time cases

@@ -1,7 +1,7 @@
 package me.mnedokushev.zio.apache.parquet.core
 
-import me.mnedokushev.zio.apache.parquet.core.filter.internal.{ ColumnPathConcatMacro, CompilePredicateMacro }
-import org.apache.parquet.filter2.predicate.FilterPredicate
+
+import me.mnedokushev.zio.apache.parquet.core.filter.internal.ColumnPathConcatMacro
 
 package object filter {
 
@@ -9,9 +9,6 @@ package object filter {
     def nullable(implicit typeTag: TypeTag[A]): Column.Named[A, column.Identity] =
       Column.Named(column.path)
   }
-
-  inline def compile[A](inline predicate: Predicate[A]): Either[String, FilterPredicate] =
-    ${ CompilePredicateMacro.compileImpl[A]('predicate) }
 
   inline def concat[A, B, F](inline parent: Column[A], inline child: Column.Named[B, F])(using
     ctt: TypeTag[B]

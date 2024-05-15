@@ -7,8 +7,23 @@ import scala.quoted.*
 
 object CompilePredicateMacro {
 
+  private class PredicateFromExpr[A] extends FromExpr[Predicate[A]] {
+
+    override def unapply(x: Expr[Predicate[A]])(using Quotes): Option[Predicate[A]] = {
+      import quotes.reflect.*
+
+      println(x.asTerm.show(using Printer.TreeStructure))
+
+      x.asTerm.tpe.widenTermRefByName match {
+        case ConstantType(c) => Some(c.value.asInstanceOf[Predicate[A]])
+        case _               => None
+      }
+    }
+
+  }
+
   // TODO: tests
-  def compileImpl[A: Type](predicate: Expr[Predicate[A]])(using Quotes): Expr[Either[String, FilterPredicate]] = {
+  def compileImpl[A: Type](predicate: Expr[Predicate[A]])(using Quotes): Expr[FilterPredicate] = {
     import quotes.reflect.*
 
     // Example of a type representation of A type:
@@ -43,8 +58,21 @@ object CompilePredicateMacro {
            | Predicate tree: ${predicate.show}
         """.stripMargin
       )
-    else
-      '{ _root_.me.mnedokushev.zio.apache.parquet.core.filter.Filter.compile[A]($predicate) }
+    else {
+      val pred0 = predicate.valueOrAbort(using PredicateFromExpr[A])
+
+      _root_.me.mnedokushev.zio.apache.parquet.core.filter.Filter.compile0(pred0) match {
+        case Right(filter) =>
+          val clazz = filter.getClass()
+          Ref(defn.Predef_classOf)
+            .appliedToType(TypeRepr.typeConstructorOf(clazz))
+            .asExpr
+            .asInstanceOf[Expr[FilterPredicate]]
+        case Left(error)   =>
+          report.errorAndAbort(s"Error while compiling filter predicate: $error")
+      }
+    }
+
   }
 
 }

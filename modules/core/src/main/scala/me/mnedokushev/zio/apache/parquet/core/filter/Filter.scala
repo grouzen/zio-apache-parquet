@@ -4,6 +4,7 @@ import me.mnedokushev.zio.apache.parquet.core.{ Lens, Prism, Traversal }
 import org.apache.parquet.filter2.predicate.{ FilterApi, FilterPredicate, Operators }
 import zio.prelude._
 import zio.schema._
+import me.mnedokushev.zio.apache.parquet.core.filter.internal.CompilePredicateMacro
 
 trait Filter {
 
@@ -34,7 +35,10 @@ object Filter {
         schema.makeAccessors(accessorBuilder)
     }
 
-  private[zio] def compile[A](predicate: Predicate[A]): Either[String, FilterPredicate] = {
+  inline def compile[A](inline predicate: Predicate[A]): FilterPredicate =
+    ${ CompilePredicateMacro.compileImpl[A]('predicate) }
+
+  private[zio] def compile0[A](predicate: Predicate[A]): Either[String, FilterPredicate] = {
 
     def error(op: Operator) =
       Left(s"Operator $op is not supported by $predicate")
@@ -55,10 +59,10 @@ object Filter {
       case Predicate.Unary(predicate0, op)         =>
         op match {
           case Operator.Unary.Not() =>
-            compile(predicate0).map(FilterApi.not)
+            compile0(predicate0).map(FilterApi.not)
         }
       case Predicate.Logical(left, right, op)      =>
-        (compile(left) <*> compile(right)).map { case (left0, right0) =>
+        (compile0(left) <*> compile0(right)).map { case (left0, right0) =>
           op match {
             case Operator.Logical.And() =>
               FilterApi.and(left0, right0)

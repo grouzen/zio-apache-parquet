@@ -1,4 +1,4 @@
-package me.mnedokushev.zio.apache.parquet.core.filter
+package me.mnedokushev.zio.apache.parquet.core
 
 import me.mnedokushev.zio.apache.parquet.core.Value
 import org.apache.parquet.filter2.predicate.FilterApi

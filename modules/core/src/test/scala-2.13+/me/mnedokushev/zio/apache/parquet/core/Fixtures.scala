@@ -1,6 +1,5 @@
-package me.mnedokushev.zio.apache.parquet.core.filter
+package me.mnedokushev.zio.apache.parquet.core
 
-import me.mnedokushev.zio.apache.parquet.core.Value
 import org.apache.parquet.filter2.predicate.FilterApi
 import org.apache.parquet.filter2.predicate.Operators.BinaryColumn
 import org.apache.parquet.io.api.Binary
@@ -9,6 +8,14 @@ import zio.schema._
 
 import java.time._
 import java.util.UUID
+import me.mnedokushev.zio.apache.parquet.core.codec.SchemaEncoder
+import me.mnedokushev.zio.apache.parquet.core.codec.ValueEncoder
+import me.mnedokushev.zio.apache.parquet.core.codec.SchemaEncoderDeriver
+import me.mnedokushev.zio.apache.parquet.core.codec.ValueDecoder
+import me.mnedokushev.zio.apache.parquet.core.codec.ValueEncoderDeriver
+import me.mnedokushev.zio.apache.parquet.core.codec.ValueDecoderDeriver
+import me.mnedokushev.zio.apache.parquet.core.filter.TypeTagDeriver
+import me.mnedokushev.zio.apache.parquet.core.filter.TypeTag
 
 object Fixtures {
 
@@ -55,7 +62,7 @@ object Fixtures {
 
   case class MyRecordSummoned(a: Int, b: String)
 
-  object MyRecordSummoned  {
+  object MyRecordSummoned {
     implicit val schema: zio.schema.Schema.CaseClass2.WithFields["a", "b", Int, String, MyRecordSummoned] =
       DeriveSchema.gen[MyRecordSummoned]
 
@@ -65,6 +72,54 @@ object Fixtures {
         v => Value.string(v.toString).value
       )
     implicit val typeTag: TypeTag[MyRecordSummoned] = Derive.derive[TypeTag, MyRecordSummoned](TypeTagDeriver.summoned)
+  }
+
+  case class MyRecordIO(a: Int, b: String, c: Option[Long], d: List[Int], e: Map[String, Int])
+  object MyRecordIO {
+    implicit val schema: zio.schema.Schema.CaseClass5.WithFields[
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      Int,
+      String,
+      Option[Long],
+      List[Int],
+      Map[String, Int],
+      MyRecordIO
+    ] =
+      DeriveSchema.gen[MyRecordIO]
+    implicit val schemaEncoder: SchemaEncoder[MyRecordIO] =
+      Derive.derive[SchemaEncoder, MyRecordIO](SchemaEncoderDeriver.summoned)
+    implicit val valueEncoder: ValueEncoder[MyRecordIO]   =
+      Derive.derive[ValueEncoder, MyRecordIO](ValueEncoderDeriver.summoned)
+    implicit val valueDecoder: ValueDecoder[MyRecordIO]   =
+      Derive.derive[ValueDecoder, MyRecordIO](ValueDecoderDeriver.summoned)
+    implicit val typeTag: TypeTag[MyRecordIO]             =
+      Derive.derive[TypeTag, MyRecordIO](TypeTagDeriver.default)
+  }
+
+  case class MyProjectedRecordIO(a: Int, c: Option[Long], d: List[Int], e: Map[String, Int])
+  object MyProjectedRecordIO   {
+    implicit val schema: zio.schema.Schema.CaseClass4.WithFields[
+      "a",
+      "c",
+      "d",
+      "e",
+      Int,
+      Option[Long],
+      List[Int],
+      Map[String, Int],
+      MyProjectedRecordIO
+    ] =
+      DeriveSchema.gen[MyProjectedRecordIO]
+    implicit val schemaEncoder: SchemaEncoder[MyProjectedRecordIO] =
+      Derive.derive[SchemaEncoder, MyProjectedRecordIO](SchemaEncoderDeriver.summoned)
+    implicit val valueEncoder: ValueEncoder[MyProjectedRecordIO]   =
+      Derive.derive[ValueEncoder, MyProjectedRecordIO](ValueEncoderDeriver.summoned)
+    implicit val valueDecoder: ValueDecoder[MyProjectedRecordIO]   =
+      Derive.derive[ValueDecoder, MyProjectedRecordIO](ValueDecoderDeriver.summoned)
   }
 
   case class MyRecordAllTypes1(
@@ -134,7 +189,7 @@ object Fixtures {
       java.time.YearMonth,
       java.time.ZoneId,
       java.time.ZoneOffset,
-      me.mnedokushev.zio.apache.parquet.core.filter.Fixtures.MyRecordAllTypes1
+      MyRecordAllTypes1
     ] =
       DeriveSchema.gen[MyRecordAllTypes1]
     implicit val typeTag: TypeTag[MyRecordAllTypes1] =
@@ -168,7 +223,7 @@ object Fixtures {
       java.time.OffsetTime,
       java.time.OffsetDateTime,
       java.time.ZonedDateTime,
-      me.mnedokushev.zio.apache.parquet.core.filter.Fixtures.MyRecordAllTypes2
+      MyRecordAllTypes2
     ] =
       DeriveSchema.gen[MyRecordAllTypes2]
     implicit val typeTag: TypeTag[MyRecordAllTypes2] =
