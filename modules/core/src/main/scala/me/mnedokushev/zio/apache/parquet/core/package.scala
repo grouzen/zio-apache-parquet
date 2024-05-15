@@ -10,4 +10,8 @@ package object core {
   val DECIMAL_PRECISION = 11
   val DECIMAL_SCALE     = 2
 
+  type Lens[F, S, A]   = filter.Column.Named[A, F]
+  type Prism[F, S, A]  = Unit
+  type Traversal[S, A] = Unit
+
 }

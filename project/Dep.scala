@@ -1,4 +1,5 @@
 import sbt._
+import sbt.Keys.scalaVersion
 
 object Dep {
 
@@ -13,9 +14,9 @@ object Dep {
   object O {
     val apacheParquet    = "org.apache.parquet"
     val apacheHadoop     = "org.apache.hadoop"
-    val scalaLang        = "org.scala-lang"
     val zio              = "dev.zio"
-    val scalaLangModules = "org.scala-lang.modules"
+    val scalaLang        = "org.scala-lang"
+    val scalaLangModules = s"$scalaLang.modules"
   }
 
   lazy val zio                 = O.zio %% "zio"                   % V.zio
@@ -31,6 +32,8 @@ object Dep {
   lazy val hadoopMapred = O.apacheHadoop % "hadoop-mapred" % "0.22.0"
 
   lazy val scalaCollectionCompat = O.scalaLangModules %% "scala-collection-compat" % V.scalaCollectionCompat
+
+  lazy val scalaReflect = Def.setting("org.scala-lang" % "scala-reflect" % scalaVersion.value)
 
   lazy val core = Seq(
     zio,
