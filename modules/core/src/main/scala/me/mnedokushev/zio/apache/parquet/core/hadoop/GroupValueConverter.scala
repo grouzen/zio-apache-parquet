@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters._
 
 abstract class GroupValueConverter[V <: GroupValue[V]](
   schema: GroupType,
-  parent: Option[GroupValueConverter[_]] = None
+  parent: Option[GroupValueConverter[?]] = None
 ) extends GroupConverter { self =>
 
   def get: V =
@@ -20,7 +20,7 @@ abstract class GroupValueConverter[V <: GroupValue[V]](
   def put(name: String, value: Value): Unit =
     this.groupValue = this.groupValue.put(name, value)
 
-  protected var groupValue: V = _
+  protected var groupValue: V = null.asInstanceOf[V]
 
   private val converters: Chunk[Converter] =
     Chunk.fromIterable(

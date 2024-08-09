@@ -12,11 +12,11 @@ object SchemaEncoderDeriver {
 
     override def deriveRecord[A](
       record: Schema.Record[A],
-      fields: => Chunk[Deriver.WrappedF[SchemaEncoder, _]],
+      fields: => Chunk[Deriver.WrappedF[SchemaEncoder, ?]],
       summoned: => Option[SchemaEncoder[A]]
     ): SchemaEncoder[A] = new SchemaEncoder[A] {
 
-      private def enc[A1](name0: String, schema0: Schema[A1], encoder: SchemaEncoder[_]) =
+      private def enc[A1](name0: String, schema0: Schema[A1], encoder: SchemaEncoder[?]) =
         encoder.asInstanceOf[SchemaEncoder[A1]].encode(schema0, name0, isSchemaOptional(schema0))
 
       override def encode(schema: Schema[A], name: String, optional: Boolean): Type = {
@@ -30,7 +30,7 @@ object SchemaEncoderDeriver {
 
     override def deriveEnum[A](
       `enum`: Schema.Enum[A],
-      cases: => Chunk[Deriver.WrappedF[SchemaEncoder, _]],
+      cases: => Chunk[Deriver.WrappedF[SchemaEncoder, ?]],
       summoned: => Option[SchemaEncoder[A]]
     ): SchemaEncoder[A] = new SchemaEncoder[A] {
       override def encode(schema: Schema[A], name: String, optional: Boolean): Type =
@@ -121,7 +121,7 @@ object SchemaEncoderDeriver {
     }
 
     override def deriveSequence[C[_], A](
-      sequence: Schema.Sequence[C[A], A, _],
+      sequence: Schema.Sequence[C[A], A, ?],
       inner: => SchemaEncoder[A],
       summoned: => Option[SchemaEncoder[C[A]]]
     ): SchemaEncoder[C[A]] = new SchemaEncoder[C[A]] {
@@ -150,8 +150,8 @@ object SchemaEncoderDeriver {
 
     override def deriveTransformedRecord[A, B](
       record: Schema.Record[A],
-      transform: Schema.Transform[A, B, _],
-      fields: => Chunk[Deriver.WrappedF[SchemaEncoder, _]],
+      transform: Schema.Transform[A, B, ?],
+      fields: => Chunk[Deriver.WrappedF[SchemaEncoder, ?]],
       summoned: => Option[SchemaEncoder[B]]
     ): SchemaEncoder[B] = ???
 
@@ -159,7 +159,7 @@ object SchemaEncoderDeriver {
 
   val summoned: Deriver[SchemaEncoder] = default.autoAcceptSummoned
 
-  private def isSchemaOptional(schema: Schema[_]): Boolean =
+  private def isSchemaOptional(schema: Schema[?]): Boolean =
     schema match {
       case _: Schema.Optional[_] => true
       case _                     => false

@@ -35,6 +35,6 @@ class WriteSupport(schema: MessageType, metadata: Map[String, String]) extends H
     consumer.endMessage()
   }
 
-  private var consumer: RecordConsumer = _
+  private var consumer: RecordConsumer = null
 
 }
