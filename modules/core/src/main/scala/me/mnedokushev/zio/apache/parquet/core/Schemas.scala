@@ -7,7 +7,7 @@ import zio.Chunk
 
 object Schemas {
 
-  abstract class Def[Self <: Def[_]] {
+  abstract class Def[Self <: Def[?]] {
 
     def named(name: String): Type
 

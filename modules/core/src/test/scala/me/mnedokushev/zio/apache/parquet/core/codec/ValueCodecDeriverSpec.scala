@@ -53,7 +53,7 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
     implicit val schema: Schema[SummonedRecord] = DeriveSchema.gen[SummonedRecord]
   }
 
-  override def spec: Spec[TestEnvironment with Scope, Any] =
+  override def spec: Spec[TestEnvironment & Scope, Any] =
     suite("ValueCodecDeriverSpec")(
       test("primitive") {
         val stringEncoder         = Derive.derive[ValueEncoder, String](ValueEncoderDeriver.default)

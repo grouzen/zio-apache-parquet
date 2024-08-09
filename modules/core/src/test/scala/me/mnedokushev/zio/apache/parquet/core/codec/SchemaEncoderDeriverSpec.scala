@@ -26,10 +26,10 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
   }
 
   // Helper for being able to extract type parameter A from a given schema in order to cast the type of encoder<
-  private def encode[A](encoder: SchemaEncoder[_], schema: Schema[A], name: String, optional: Boolean) =
+  private def encode[A](encoder: SchemaEncoder[?], schema: Schema[A], name: String, optional: Boolean) =
     encoder.asInstanceOf[SchemaEncoder[A]].encode(schema, name, optional)
 
-  override def spec: Spec[TestEnvironment with Scope, Any] =
+  override def spec: Spec[TestEnvironment & Scope, Any] =
     suite("SchemaEncoderDeriverSpec")(
       test("primitive") {
         def named(defs: List[PrimitiveDef], names: List[String]) =
@@ -37,7 +37,7 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
             schemaDef.named(name)
           }
 
-        val encoders: List[SchemaEncoder[_]] =
+        val encoders: List[SchemaEncoder[?]] =
           List(
             Derive.derive[SchemaEncoder, String](SchemaEncoderDeriver.default),
             Derive.derive[SchemaEncoder, Boolean](SchemaEncoderDeriver.default),
@@ -47,7 +47,7 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
             Derive.derive[SchemaEncoder, Long](SchemaEncoderDeriver.default),
             Derive.derive[SchemaEncoder, UUID](SchemaEncoderDeriver.default)
           )
-        val schemas: List[Schema[_]]         =
+        val schemas: List[Schema[?]]         =
           List(
             Schema.primitive[String],
             Schema.primitive[Boolean],
@@ -116,7 +116,7 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
       },
       test("sequence") {
         val name                             = "mylist"
-        val encoders: List[SchemaEncoder[_]] =
+        val encoders: List[SchemaEncoder[?]] =
           List(
             Derive.derive[SchemaEncoder, List[String]](SchemaEncoderDeriver.default),
             Derive.derive[SchemaEncoder, List[Boolean]](SchemaEncoderDeriver.default),
@@ -133,7 +133,7 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
             Derive.derive[SchemaEncoder, List[Option[Long]]](SchemaEncoderDeriver.default),
             Derive.derive[SchemaEncoder, List[Option[UUID]]](SchemaEncoderDeriver.default)
           )
-        val schemas: List[Schema[_]]         =
+        val schemas: List[Schema[?]]         =
           List(
             Schema.list[String],
             Schema.list[Int],

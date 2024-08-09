@@ -32,7 +32,7 @@ object ValueDecoderDeriver {
 
     override def deriveRecord[A](
       record: Schema.Record[A],
-      fields: => Chunk[Deriver.WrappedF[ValueDecoder, _]],
+      fields: => Chunk[Deriver.WrappedF[ValueDecoder, ?]],
       summoned: => Option[ValueDecoder[A]]
     ): ValueDecoder[A] = new ValueDecoder[A] {
       override def decode(value: Value): A =
@@ -62,7 +62,7 @@ object ValueDecoderDeriver {
 
     override def deriveEnum[A](
       `enum`: Schema.Enum[A],
-      cases: => Chunk[Deriver.WrappedF[ValueDecoder, _]],
+      cases: => Chunk[Deriver.WrappedF[ValueDecoder, ?]],
       summoned: => Option[ValueDecoder[A]]
     ): ValueDecoder[A] = new ValueDecoder[A] {
       override def decode(value: Value): A = {
@@ -180,7 +180,7 @@ object ValueDecoderDeriver {
     }
 
     override def deriveSequence[C[_], A](
-      sequence: Schema.Sequence[C[A], A, _],
+      sequence: Schema.Sequence[C[A], A, ?],
       inner: => ValueDecoder[A],
       summoned: => Option[ValueDecoder[C[A]]]
     ): ValueDecoder[C[A]] = new ValueDecoder[C[A]] {
@@ -212,8 +212,8 @@ object ValueDecoderDeriver {
 
     override def deriveTransformedRecord[A, B](
       record: Schema.Record[A],
-      transform: Schema.Transform[A, B, _],
-      fields: => Chunk[Deriver.WrappedF[ValueDecoder, _]],
+      transform: Schema.Transform[A, B, ?],
+      fields: => Chunk[Deriver.WrappedF[ValueDecoder, ?]],
       summoned: => Option[ValueDecoder[B]]
     ): ValueDecoder[B] = ???
 
