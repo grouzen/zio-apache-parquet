@@ -15,7 +15,7 @@ object BuildHelper {
 
   val Scala212 = "2.12.19"
   val Scala213 = "2.13.14"
-  val Scala3   = "3.4.1"
+  val Scala3   = "3.4.3"
 
   private def betterMonadicFor(scalaVersion: String) =
     CrossVersion.partialVersion(scalaVersion) match {
