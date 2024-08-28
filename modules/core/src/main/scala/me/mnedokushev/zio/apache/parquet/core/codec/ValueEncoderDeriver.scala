@@ -31,11 +31,11 @@ object ValueEncoderDeriver {
 
     override def deriveRecord[A](
       record: Schema.Record[A],
-      fields: => Chunk[Deriver.WrappedF[ValueEncoder, _]],
+      fields: => Chunk[Deriver.WrappedF[ValueEncoder, ?]],
       summoned: => Option[ValueEncoder[A]]
     ): ValueEncoder[A] = new ValueEncoder[A] {
 
-      private def enc[A1](v: A, field: Schema.Field[A, A1], encoder: ValueEncoder[_]) =
+      private def enc[A1](v: A, field: Schema.Field[A, A1], encoder: ValueEncoder[?]) =
         encoder.asInstanceOf[ValueEncoder[A1]].encode(field.get(v))
 
       override def encode(value: A): Value =
@@ -51,7 +51,7 @@ object ValueEncoderDeriver {
 
     override def deriveEnum[A](
       `enum`: Schema.Enum[A],
-      cases: => Chunk[Deriver.WrappedF[ValueEncoder, _]],
+      cases: => Chunk[Deriver.WrappedF[ValueEncoder, ?]],
       summoned: => Option[ValueEncoder[A]]
     ): ValueEncoder[A] = new ValueEncoder[A] {
       override def encode(value: A): Value = {
@@ -151,7 +151,7 @@ object ValueEncoderDeriver {
       }
 
     override def deriveSequence[C[_], A](
-      sequence: Schema.Sequence[C[A], A, _],
+      sequence: Schema.Sequence[C[A], A, ?],
       inner: => ValueEncoder[A],
       summoned: => Option[ValueEncoder[C[A]]]
     ): ValueEncoder[C[A]] = new ValueEncoder[C[A]] {
@@ -175,8 +175,8 @@ object ValueEncoderDeriver {
 
     override def deriveTransformedRecord[A, B](
       record: Schema.Record[A],
-      transform: Schema.Transform[A, B, _],
-      fields: => Chunk[Deriver.WrappedF[ValueEncoder, _]],
+      transform: Schema.Transform[A, B, ?],
+      fields: => Chunk[Deriver.WrappedF[ValueEncoder, ?]],
       summoned: => Option[ValueEncoder[B]]
     ): ValueEncoder[B] = ???
 

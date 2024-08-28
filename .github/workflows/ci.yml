@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.13.13, 2.12.19, 3.3.3]
+        scala: [2.12.19, 2.13.14, 3.5.0]
         java: [temurin@11, temurin@17]
     runs-on: ${{ matrix.os }}
     steps:
@@ -46,6 +46,9 @@ jobs:
           distribution: temurin
           java-version: 17
           cache: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Lint Scala code
         run: sbt '++ ${{ matrix.scala }}' 'scalafix --check' scalafmtCheckAll
