@@ -15,6 +15,11 @@ sealed trait Predicate[A] { self =>
 
 object Predicate {
 
+  private[filter] trait Syntax {
+    def not[A](pred: Predicate[A]) =
+      Predicate.Unary(pred, Operator.Unary.Not[A]())
+  }
+
   final case class Binary[A](column: Column[A], value: A, op: Operator.Binary[A]) extends Predicate[A]
 
   final case class BinarySet[A](column: Column[A], values: Set[A], op: Operator.Binary.Set[A]) extends Predicate[A]

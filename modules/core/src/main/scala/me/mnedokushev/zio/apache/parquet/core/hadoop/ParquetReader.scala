@@ -16,7 +16,7 @@ import java.io.IOException
 
 trait ParquetReader[+A <: Product] {
 
-  def readStream(path: Path): ZStream[Scope, Throwable, A]
+  def readStream(path: Path, filter: Option[CompiledPredicate] = None): ZStream[Scope, Throwable, A]
 
   def readChunk[B](path: Path, filter: Option[CompiledPredicate] = None): Task[Chunk[A]]
 
@@ -29,9 +29,9 @@ final class ParquetReaderLive[A <: Product: Tag](
 )(implicit decoder: ValueDecoder[A])
     extends ParquetReader[A] {
 
-  override def readStream(path: Path): ZStream[Scope, Throwable, A] =
+  override def readStream(path: Path, filter: Option[CompiledPredicate] = None): ZStream[Scope, Throwable, A] =
     for {
-      reader <- ZStream.fromZIO(build(path))
+      reader <- ZStream.fromZIO(build(path, filter))
       value  <- ZStream.repeatZIOOption(
                   ZIO
                     .attemptBlockingIO(reader.read())
@@ -67,7 +67,7 @@ final class ParquetReaderLive[A <: Product: Tag](
 
   private def build[B](
     path: Path,
-    filter: Option[CompiledPredicate] = None
+    filter: Option[CompiledPredicate]
   ): ZIO[Scope, IOException, HadoopParquetReader[RecordValue]] =
     for {
       inputFile      <- path.toInputFileZIO(hadoopConf)

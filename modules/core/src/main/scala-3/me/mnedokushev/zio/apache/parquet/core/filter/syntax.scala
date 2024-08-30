@@ -3,7 +3,7 @@ package me.mnedokushev.zio.apache.parquet.core.filter
 import me.mnedokushev.zio.apache.parquet.core.Lens
 import me.mnedokushev.zio.apache.parquet.core.filter.internal.{ ColumnPathConcatMacro, SanitizeOptionalsMacro }
 
-package object syntax {
+package object syntax extends Predicate.Syntax {
 
   extension [F, S, A](column: Lens[F, S, Option[A]]) {
     def nullable(implicit typeTag: TypeTag[A]): Column.Named[A, column.Identity] =

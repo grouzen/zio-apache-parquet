@@ -32,10 +32,4 @@ object Filter {
         schema.makeAccessors(accessorBuilder)
     }
 
-  // inline def compile[A](inline predicate: Predicate[A]): FilterPredicate =
-  //   ${ CompilePredicateMacro.compileImpl[A]('predicate) }
-
-  def not[A](pred: Predicate[A]): Predicate[A] =
-    Predicate.Unary(pred, Operator.Unary.Not[A]())
-
 }

@@ -6,7 +6,7 @@ import me.mnedokushev.zio.apache.parquet.core.filter.TypeTag._
 import me.mnedokushev.zio.apache.parquet.core.filter.syntax._
 import org.apache.parquet.filter2.predicate.FilterApi
 import zio._
-import zio.test.Assertion._
+import zio.test.Assertion.{ equalTo, isRight }
 import zio.test._
 
 import java.time._
@@ -21,7 +21,7 @@ object ExprSpec extends ZIOSpecDefault {
         val (a, b, _, _, _) = Filter[MyRecord].columns
 
         val result = predicate(
-          Filter.not(
+          not(
             (b >= 3 `or` b <= 100 `and` a.in(Set("foo", "bar"))) `or`
               (a === "foo" `and` (b === 20 `or` b.notIn(Set(1, 2, 3)))) `or`
               (a =!= "foo" `and` b > 2 `and` b < 10)
