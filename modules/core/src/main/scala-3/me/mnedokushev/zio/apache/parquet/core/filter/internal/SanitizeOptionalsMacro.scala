@@ -1,9 +1,9 @@
 package me.mnedokushev.zio.apache.parquet.core.filter.internal
 
-import me.mnedokushev.zio.apache.parquet.core.filter.Predicate
+import me.mnedokushev.zio.apache.parquet.core.filter.{ CompiledPredicate, Predicate }
 import org.apache.parquet.filter2.predicate.FilterPredicate
+
 import scala.quoted.*
-import me.mnedokushev.zio.apache.parquet.core.filter.CompiledPredicate
 
 object SanitizeOptionalsMacro {
 

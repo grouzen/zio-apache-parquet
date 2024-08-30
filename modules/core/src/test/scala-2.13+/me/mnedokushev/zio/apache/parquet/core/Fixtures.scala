@@ -1,5 +1,14 @@
 package me.mnedokushev.zio.apache.parquet.core
 
+import me.mnedokushev.zio.apache.parquet.core.codec.{
+  SchemaEncoder,
+  SchemaEncoderDeriver,
+  ValueDecoder,
+  ValueDecoderDeriver,
+  ValueEncoder,
+  ValueEncoderDeriver
+}
+import me.mnedokushev.zio.apache.parquet.core.filter.{ TypeTag, TypeTagDeriver }
 import org.apache.parquet.filter2.predicate.FilterApi
 import org.apache.parquet.filter2.predicate.Operators.BinaryColumn
 import org.apache.parquet.io.api.Binary
@@ -8,14 +17,6 @@ import zio.schema._
 
 import java.time._
 import java.util.UUID
-import me.mnedokushev.zio.apache.parquet.core.codec.SchemaEncoder
-import me.mnedokushev.zio.apache.parquet.core.codec.ValueEncoder
-import me.mnedokushev.zio.apache.parquet.core.codec.SchemaEncoderDeriver
-import me.mnedokushev.zio.apache.parquet.core.codec.ValueDecoder
-import me.mnedokushev.zio.apache.parquet.core.codec.ValueEncoderDeriver
-import me.mnedokushev.zio.apache.parquet.core.codec.ValueDecoderDeriver
-import me.mnedokushev.zio.apache.parquet.core.filter.TypeTagDeriver
-import me.mnedokushev.zio.apache.parquet.core.filter.TypeTag
 
 object Fixtures {
 
@@ -101,7 +102,7 @@ object Fixtures {
   }
 
   case class MyProjectedRecordIO(a: Int, c: Option[Long], d: List[Int], e: Map[String, Int])
-  object MyProjectedRecordIO   {
+  object MyProjectedRecordIO {
     implicit val schema: zio.schema.Schema.CaseClass4.WithFields[
       "a",
       "c",
@@ -145,7 +146,7 @@ object Fixtures {
     zoneId: ZoneId,
     zoneOffset: ZoneOffset
   )
-  object MyRecordAllTypes1 {
+  object MyRecordAllTypes1   {
     implicit val schema: zio.schema.Schema.CaseClass21.WithFields[
       "string",
       "boolean",
@@ -205,7 +206,7 @@ object Fixtures {
     offsetDateTime: OffsetDateTime,
     zonedDateTime: ZonedDateTime
   )
-  object MyRecordAllTypes2 {
+  object MyRecordAllTypes2   {
     implicit val schema: zio.schema.Schema.CaseClass8.WithFields[
       "duration",
       "instant",

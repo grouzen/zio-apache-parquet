@@ -1,8 +1,6 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
-import org.apache.parquet.filter2.predicate.FilterPredicate
-import org.apache.parquet.filter2.predicate.Operators
-import org.apache.parquet.filter2.predicate.FilterApi
+import org.apache.parquet.filter2.predicate.{ FilterApi, FilterPredicate, Operators }
 import zio.prelude._
 
 sealed trait Predicate[A] { self =>

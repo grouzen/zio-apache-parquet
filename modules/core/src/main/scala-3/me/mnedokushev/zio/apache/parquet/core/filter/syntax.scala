@@ -1,8 +1,7 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
-import me.mnedokushev.zio.apache.parquet.core.filter.internal.ColumnPathConcatMacro
-import me.mnedokushev.zio.apache.parquet.core.filter.internal.SanitizeOptionalsMacro
 import me.mnedokushev.zio.apache.parquet.core.Lens
+import me.mnedokushev.zio.apache.parquet.core.filter.internal.{ ColumnPathConcatMacro, SanitizeOptionalsMacro }
 
 package object syntax {
 

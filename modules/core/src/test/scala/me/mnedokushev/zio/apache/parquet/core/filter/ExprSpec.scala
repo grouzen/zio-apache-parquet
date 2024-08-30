@@ -1,5 +1,6 @@
 package me.mnedokushev.zio.apache.parquet.core.filter
 
+import me.mnedokushev.zio.apache.parquet.core.Fixtures._
 import me.mnedokushev.zio.apache.parquet.core.Value
 import me.mnedokushev.zio.apache.parquet.core.filter.TypeTag._
 import me.mnedokushev.zio.apache.parquet.core.filter.syntax._
@@ -11,8 +12,6 @@ import zio.test._
 import java.time._
 import java.util.UUID
 import scala.jdk.CollectionConverters._
-
-import me.mnedokushev.zio.apache.parquet.core.Fixtures._
 
 object ExprSpec extends ZIOSpecDefault {
 
@@ -292,34 +291,34 @@ object ExprSpec extends ZIOSpecDefault {
         val zonedDateTimeResult  = predicate(zonedDateTime === zonedDateTimePayload)
 
         assert(stringResul)(isRight(equalTo(stringExpected))) &&
-          assert(booleanResult)(isRight(equalTo(booleanExpected))) &&
-          assert(byteResult)(isRight(equalTo(byteExpected))) &&
-          assert(shortResult)(isRight(equalTo(shortExpected))) &&
-          assert(intResult)(isRight(equalTo(intExpected))) &&
-          assert(longResult)(isRight(equalTo(longExpected))) &&
-          assert(floatResult)(isRight(equalTo(floatExpected))) &&
-          assert(doubleResult)(isRight(equalTo(doubleExpected))) &&
-          assert(binaryResult)(isRight(equalTo(binaryExpected))) &&
-          assert(charResult)(isRight(equalTo(charExpected))) &&
-          assert(uuidResult)(isRight(equalTo(uuidExpected))) &&
-          assert(bigDecimalResult)(isRight(equalTo(bigDecimalExpected))) &&
-          assert(bigIntegerResult)(isRight(equalTo(bigIntegerExpected))) &&
-          assert(dayOfWeekResult)(isRight(equalTo(dayOfWeekExpected))) &&
-          assert(monthResult)(isRight(equalTo(monthExpected))) &&
-          assert(monthDayResult)(isRight(equalTo(monthDayExpected))) &&
-          assert(periodResult)(isRight(equalTo(periodExpected))) &&
-          assert(yearResult)(isRight(equalTo(yearExpected))) &&
-          assert(yearMonthResult)(isRight(equalTo(yearMonthExpected))) &&
-          assert(zoneIdResult)(isRight(equalTo(zoneIdExpected))) &&
-          assert(zoneOffsetResult)(isRight(equalTo(zoneOffsetExpected))) &&
-          assert(durationResult)(isRight(equalTo(durationExpected))) &&
-          assert(instantResult)(isRight(equalTo(instantExpected))) &&
-          assert(localDateResult)(isRight(equalTo(localDateExpected))) &&
-          assert(localTimeResult)(isRight(equalTo(localTimeExpected))) &&
-          assert(localDateTimeResult)(isRight(equalTo(localDateTimeExpected))) &&
-          assert(offsetTimeResult)(isRight(equalTo(offsetTimeExpected))) &&
-          assert(offsetDateTimeResult)(isRight(equalTo(offsetDateTimeExpected))) &&
-          assert(zonedDateTimeResult)(isRight(equalTo(zonedDateTimeExpected)))
+        assert(booleanResult)(isRight(equalTo(booleanExpected))) &&
+        assert(byteResult)(isRight(equalTo(byteExpected))) &&
+        assert(shortResult)(isRight(equalTo(shortExpected))) &&
+        assert(intResult)(isRight(equalTo(intExpected))) &&
+        assert(longResult)(isRight(equalTo(longExpected))) &&
+        assert(floatResult)(isRight(equalTo(floatExpected))) &&
+        assert(doubleResult)(isRight(equalTo(doubleExpected))) &&
+        assert(binaryResult)(isRight(equalTo(binaryExpected))) &&
+        assert(charResult)(isRight(equalTo(charExpected))) &&
+        assert(uuidResult)(isRight(equalTo(uuidExpected))) &&
+        assert(bigDecimalResult)(isRight(equalTo(bigDecimalExpected))) &&
+        assert(bigIntegerResult)(isRight(equalTo(bigIntegerExpected))) &&
+        assert(dayOfWeekResult)(isRight(equalTo(dayOfWeekExpected))) &&
+        assert(monthResult)(isRight(equalTo(monthExpected))) &&
+        assert(monthDayResult)(isRight(equalTo(monthDayExpected))) &&
+        assert(periodResult)(isRight(equalTo(periodExpected))) &&
+        assert(yearResult)(isRight(equalTo(yearExpected))) &&
+        assert(yearMonthResult)(isRight(equalTo(yearMonthExpected))) &&
+        assert(zoneIdResult)(isRight(equalTo(zoneIdExpected))) &&
+        assert(zoneOffsetResult)(isRight(equalTo(zoneOffsetExpected))) &&
+        assert(durationResult)(isRight(equalTo(durationExpected))) &&
+        assert(instantResult)(isRight(equalTo(instantExpected))) &&
+        assert(localDateResult)(isRight(equalTo(localDateExpected))) &&
+        assert(localTimeResult)(isRight(equalTo(localTimeExpected))) &&
+        assert(localDateTimeResult)(isRight(equalTo(localDateTimeExpected))) &&
+        assert(offsetTimeResult)(isRight(equalTo(offsetTimeExpected))) &&
+        assert(offsetDateTimeResult)(isRight(equalTo(offsetDateTimeExpected))) &&
+        assert(zonedDateTimeResult)(isRight(equalTo(zonedDateTimeExpected)))
       },
       test("compile option") {
         // TODO: test failing compile-time cases

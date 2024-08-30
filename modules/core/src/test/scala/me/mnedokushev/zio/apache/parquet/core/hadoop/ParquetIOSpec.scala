@@ -1,14 +1,14 @@
 package me.mnedokushev.zio.apache.parquet.core.hadoop
 
+import me.mnedokushev.zio.apache.parquet.core.Fixtures._
+import me.mnedokushev.zio.apache.parquet.core.filter._
+import me.mnedokushev.zio.apache.parquet.core.filter.syntax._
 import zio._
 import zio.stream._
 import zio.test.TestAspect._
 import zio.test._
 
 import java.nio.file.Files
-import me.mnedokushev.zio.apache.parquet.core.filter._
-import me.mnedokushev.zio.apache.parquet.core.filter.syntax._
-import me.mnedokushev.zio.apache.parquet.core.Fixtures._
 
 object ParquetIOSpec extends ZIOSpecDefault {
 

@@ -41,8 +41,6 @@ object BuildHelper {
 
   def crossVersionSources(scalaVersion: String, conf: String, baseDirectory: File): List[File] = {
     val versions = CrossVersion.partialVersion(scalaVersion) match {
-      case Some((2, 12)) =>
-        List("2", "2.12")
       case Some((2, 13)) =>
         List("2", "2.13", "2.13+")
       case Some((3, _))  =>
