@@ -2,7 +2,6 @@ package me.mnedokushev.zio.apache.parquet.core.hadoop
 
 import me.mnedokushev.zio.apache.parquet.core.Value.GroupValue.RecordValue
 import me.mnedokushev.zio.apache.parquet.core.codec.{ SchemaEncoder, ValueDecoder }
-// import me.mnedokushev.zio.apache.parquet.core.filter.{ Filter, Predicate }
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.filter2.compat.FilterCompat
 import org.apache.parquet.hadoop.api.{ ReadSupport => HadoopReadSupport }
@@ -13,13 +12,13 @@ import zio.schema.Schema
 import zio.stream._
 
 import java.io.IOException
-import org.apache.parquet.filter2.predicate.FilterPredicate
+import me.mnedokushev.zio.apache.parquet.core.filter.CompiledPredicate
 
 trait ParquetReader[+A <: Product] {
 
   def readStream(path: Path): ZStream[Scope, Throwable, A]
 
-  def readChunk[B](path: Path, filter: Option[FilterPredicate] = None): Task[Chunk[A]]
+  def readChunk[B](path: Path, filter: Option[CompiledPredicate] = None): Task[Chunk[A]]
 
 }
 
@@ -42,7 +41,7 @@ final class ParquetReaderLive[A <: Product: Tag](
                 )
     } yield value
 
-  override def readChunk[B](path: Path, filter: Option[FilterPredicate] = None): Task[Chunk[A]] =
+  override def readChunk[B](path: Path, filter: Option[CompiledPredicate] = None): Task[Chunk[A]] =
     ZIO.scoped(
       for {
         reader  <- build(path, filter)
@@ -68,20 +67,20 @@ final class ParquetReaderLive[A <: Product: Tag](
 
   private def build[B](
     path: Path,
-    filter: Option[FilterPredicate] = None
+    filter: Option[CompiledPredicate] = None
   ): ZIO[Scope, IOException, HadoopParquetReader[RecordValue]] =
     for {
       inputFile      <- path.toInputFileZIO(hadoopConf)
-      // compiledFilter <- ZIO.foreach(filter) { pred =>
-      //                     ZIO
-      //                       .fromEither(Filter.compile(pred))
-      //                       .mapError(new IOException(_))
-      //                   }
+      compiledFilter <- ZIO.foreach(filter) { pred =>
+                          ZIO
+                            .fromEither(pred)
+                            .mapError(new IOException(_))
+                        }
       reader         <- ZIO.fromAutoCloseable(
                           ZIO.attemptBlockingIO {
                             val builder = new ParquetReader.Builder(inputFile, schema, schemaEncoder)
 
-                            filter.foreach(pred => builder.withFilter(FilterCompat.get(pred)))
+                            compiledFilter.foreach(pred => builder.withFilter(FilterCompat.get(pred)))
                             builder.withConf(hadoopConf).build()
                           }
                         )

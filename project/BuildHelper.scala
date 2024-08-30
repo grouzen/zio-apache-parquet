@@ -19,7 +19,8 @@ object BuildHelper {
           Seq(Dep.scalaReflect.value)
         case _            => Seq.empty
       }
-    }
+    },
+    scalacOptions ++= source3Compatibility(scalaVersion.value)
   )
 
   val Scala212 = "2.12.19"
@@ -30,6 +31,12 @@ object BuildHelper {
     CrossVersion.partialVersion(scalaVersion) match {
       case Some((2, _)) => Seq(compilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"))
       case _            => Seq()
+    }
+
+  private def source3Compatibility(scalaVersion: String) =
+    CrossVersion.partialVersion(scalaVersion) match {
+      case Some((2, 13)) => Seq("-Xsource:3")
+      case _             => Seq()
     }
 
   def crossVersionSources(scalaVersion: String, conf: String, baseDirectory: File): List[File] = {

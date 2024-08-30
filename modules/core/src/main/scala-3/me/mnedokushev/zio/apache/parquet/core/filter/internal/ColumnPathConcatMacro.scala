@@ -26,7 +26,7 @@ object ColumnPathConcatMacro {
     if (parentFields.contains(childField)) {
       val concatExpr = '{ ${ parent }.path + "." + ${ child }.path }
 
-      '{ me.mnedokushev.zio.apache.parquet.core.filter.Column.Named[B, F]($concatExpr)($childTypeTag) }
+      '{ me.mnedokushev.zio.apache.parquet.core.filter.Column.Named[B, F]($concatExpr)(using $childTypeTag) }
     } else
       report.errorAndAbort(s"Parent column doesn't contain a column named '$childField'")
   }

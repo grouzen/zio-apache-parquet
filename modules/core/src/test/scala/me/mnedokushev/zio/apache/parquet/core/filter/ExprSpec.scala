@@ -2,6 +2,7 @@ package me.mnedokushev.zio.apache.parquet.core.filter
 
 import me.mnedokushev.zio.apache.parquet.core.Value
 import me.mnedokushev.zio.apache.parquet.core.filter.TypeTag._
+import me.mnedokushev.zio.apache.parquet.core.filter.syntax._
 import org.apache.parquet.filter2.predicate.FilterApi
 import zio._
 import zio.test.Assertion._
@@ -15,16 +16,16 @@ import me.mnedokushev.zio.apache.parquet.core.Fixtures._
 
 object ExprSpec extends ZIOSpecDefault {
 
-  override def spec: Spec[TestEnvironment with Scope, Any] =
+  override def spec: Spec[TestEnvironment & Scope, Any] =
     suite("ExprSpec")(
       test("compile all operators") {
         val (a, b, _, _, _) = Filter[MyRecord].columns
 
-        val result = Filter.compile(
+        val result = predicate(
           Filter.not(
-            (b >= 3 or b <= 100 and a.in(Set("foo", "bar"))) or
-              (a === "foo" and (b === 20 or b.notIn(Set(1, 2, 3)))) or
-              (a =!= "foo" and b > 2 and b < 10)
+            (b >= 3 `or` b <= 100 `and` a.in(Set("foo", "bar"))) `or`
+              (a === "foo" `and` (b === 20 `or` b.notIn(Set(1, 2, 3)))) `or`
+              (a =!= "foo" `and` b > 2 `and` b < 10)
           )
         )
 
@@ -59,13 +60,13 @@ object ExprSpec extends ZIOSpecDefault {
             )
           )
 
-        assert(result)(equalTo(expected))
+        assert(result)(isRight(equalTo(expected)))
       },
       test("compile summoned") {
         val (a, b) = Filter[MyRecordSummoned].columns
 
-        val result = Filter.compile(
-          a === 3 and b === "foo"
+        val result = predicate(
+          a === 3 `and` b === "foo"
         )
 
         val acol     = FilterApi.binaryColumn("a")
@@ -75,7 +76,7 @@ object ExprSpec extends ZIOSpecDefault {
           FilterApi.eq(bcol, Value.string("foo").value)
         )
 
-        assert(result)(equalTo(expected))
+        assert(result)(isRight(equalTo(expected)))
       },
       test("compile all primitive types") {
         val (
@@ -260,84 +261,82 @@ object ExprSpec extends ZIOSpecDefault {
           Long.box(Value.zonedDateTime(zonedDateTimePayload).value)
         )
 
-        val stringResul          = Filter.compile(string === stringPayload)
-        val booleanResult        = Filter.compile(boolean === booleanPayload)
-        val byteResult           = Filter.compile(byte === bytePayload)
-        val shortResult          = Filter.compile(short === shortPayload)
-        val intResult            = Filter.compile(int === intPayload)
-        val longResult           = Filter.compile(long === longPayload)
-        val floatResult          = Filter.compile(float === floatPayload)
-        val doubleResult         = Filter.compile(double === doublePayload)
-        val binaryResult         = Filter.compile(binary === binaryPayload)
-        val charResult           = Filter.compile(char === charPayload)
-        val uuidResult           = Filter.compile(uuid === uuidPayload)
-        val bigDecimalResult     = Filter.compile(bigDecimal === bigDecimalPayload)
-        val bigIntegerResult     = Filter.compile(bigInteger === bigIntegerPayload)
-        val dayOfWeekResult      = Filter.compile(dayOfWeek === dayOfWeekPayload)
-        val monthResult          = Filter.compile(month === monthPayload)
-        val monthDayResult       = Filter.compile(monthDay === monthDayPayload)
-        val periodResult         = Filter.compile(period === periodPayload)
-        val yearResult           = Filter.compile(year === yearPayload)
-        val yearMonthResult      = Filter.compile(yearMonth === yearMonthPayload)
-        val zoneIdResult         = Filter.compile(zoneId === zoneIdPayload)
-        val zoneOffsetResult     = Filter.compile(zoneOffset === zoneOffsetPayload)
-        val durationResult       = Filter.compile(duration === durationPayload)
-        val instantResult        = Filter.compile(instant === instantPayload)
-        val localDateResult      = Filter.compile(localDate === localDatePayload)
-        val localTimeResult      = Filter.compile(localTime === localTimePayload)
-        val localDateTimeResult  = Filter.compile(localDateTime === localDateTimePayload)
-        val offsetTimeResult     = Filter.compile(offsetTime === offsetTimePayload)
-        val offsetDateTimeResult = Filter.compile(offsetDateTime === offsetDateTimePayload)
-        val zonedDateTimeResult  = Filter.compile(zonedDateTime === zonedDateTimePayload)
+        val stringResul          = predicate(string === stringPayload)
+        val booleanResult        = predicate(boolean === booleanPayload)
+        val byteResult           = predicate(byte === bytePayload)
+        val shortResult          = predicate(short === shortPayload)
+        val intResult            = predicate(int === intPayload)
+        val longResult           = predicate(long === longPayload)
+        val floatResult          = predicate(float === floatPayload)
+        val doubleResult         = predicate(double === doublePayload)
+        val binaryResult         = predicate(binary === binaryPayload)
+        val charResult           = predicate(char === charPayload)
+        val uuidResult           = predicate(uuid === uuidPayload)
+        val bigDecimalResult     = predicate(bigDecimal === bigDecimalPayload)
+        val bigIntegerResult     = predicate(bigInteger === bigIntegerPayload)
+        val dayOfWeekResult      = predicate(dayOfWeek === dayOfWeekPayload)
+        val monthResult          = predicate(month === monthPayload)
+        val monthDayResult       = predicate(monthDay === monthDayPayload)
+        val periodResult         = predicate(period === periodPayload)
+        val yearResult           = predicate(year === yearPayload)
+        val yearMonthResult      = predicate(yearMonth === yearMonthPayload)
+        val zoneIdResult         = predicate(zoneId === zoneIdPayload)
+        val zoneOffsetResult     = predicate(zoneOffset === zoneOffsetPayload)
+        val durationResult       = predicate(duration === durationPayload)
+        val instantResult        = predicate(instant === instantPayload)
+        val localDateResult      = predicate(localDate === localDatePayload)
+        val localTimeResult      = predicate(localTime === localTimePayload)
+        val localDateTimeResult  = predicate(localDateTime === localDateTimePayload)
+        val offsetTimeResult     = predicate(offsetTime === offsetTimePayload)
+        val offsetDateTimeResult = predicate(offsetDateTime === offsetDateTimePayload)
+        val zonedDateTimeResult  = predicate(zonedDateTime === zonedDateTimePayload)
 
-        assertTrue(
-          stringResul == stringExpected,
-          booleanResult == booleanExpected,
-          byteResult == byteExpected,
-          shortResult == shortExpected,
-          intResult == intExpected,
-          longResult == longExpected,
-          floatResult == floatExpected,
-          doubleResult == doubleExpected,
-          binaryResult == binaryExpected,
-          charResult == charExpected,
-          uuidResult == uuidExpected,
-          bigDecimalResult == bigDecimalExpected,
-          bigIntegerResult == bigIntegerExpected,
-          dayOfWeekResult == dayOfWeekExpected,
-          monthResult == monthExpected,
-          monthDayResult == monthDayExpected,
-          periodResult == periodExpected,
-          yearResult == yearExpected,
-          yearMonthResult == yearMonthExpected,
-          zoneIdResult == zoneIdExpected,
-          zoneOffsetResult == zoneOffsetExpected,
-          durationResult == durationExpected,
-          instantResult == instantExpected,
-          localDateResult == localDateExpected,
-          localTimeResult == localTimeExpected,
-          localDateTimeResult == localDateTimeExpected,
-          offsetTimeResult == offsetTimeExpected,
-          offsetDateTimeResult == offsetDateTimeExpected,
-          zonedDateTimeResult == zonedDateTimeExpected
-        )
+        assert(stringResul)(isRight(equalTo(stringExpected))) &&
+          assert(booleanResult)(isRight(equalTo(booleanExpected))) &&
+          assert(byteResult)(isRight(equalTo(byteExpected))) &&
+          assert(shortResult)(isRight(equalTo(shortExpected))) &&
+          assert(intResult)(isRight(equalTo(intExpected))) &&
+          assert(longResult)(isRight(equalTo(longExpected))) &&
+          assert(floatResult)(isRight(equalTo(floatExpected))) &&
+          assert(doubleResult)(isRight(equalTo(doubleExpected))) &&
+          assert(binaryResult)(isRight(equalTo(binaryExpected))) &&
+          assert(charResult)(isRight(equalTo(charExpected))) &&
+          assert(uuidResult)(isRight(equalTo(uuidExpected))) &&
+          assert(bigDecimalResult)(isRight(equalTo(bigDecimalExpected))) &&
+          assert(bigIntegerResult)(isRight(equalTo(bigIntegerExpected))) &&
+          assert(dayOfWeekResult)(isRight(equalTo(dayOfWeekExpected))) &&
+          assert(monthResult)(isRight(equalTo(monthExpected))) &&
+          assert(monthDayResult)(isRight(equalTo(monthDayExpected))) &&
+          assert(periodResult)(isRight(equalTo(periodExpected))) &&
+          assert(yearResult)(isRight(equalTo(yearExpected))) &&
+          assert(yearMonthResult)(isRight(equalTo(yearMonthExpected))) &&
+          assert(zoneIdResult)(isRight(equalTo(zoneIdExpected))) &&
+          assert(zoneOffsetResult)(isRight(equalTo(zoneOffsetExpected))) &&
+          assert(durationResult)(isRight(equalTo(durationExpected))) &&
+          assert(instantResult)(isRight(equalTo(instantExpected))) &&
+          assert(localDateResult)(isRight(equalTo(localDateExpected))) &&
+          assert(localTimeResult)(isRight(equalTo(localTimeExpected))) &&
+          assert(localDateTimeResult)(isRight(equalTo(localDateTimeExpected))) &&
+          assert(offsetTimeResult)(isRight(equalTo(offsetTimeExpected))) &&
+          assert(offsetDateTimeResult)(isRight(equalTo(offsetDateTimeExpected))) &&
+          assert(zonedDateTimeResult)(isRight(equalTo(zonedDateTimeExpected)))
       },
       test("compile option") {
         // TODO: test failing compile-time cases
         val (_, _, _, _, opt) = Filter[MyRecord].columns
 
         val expected = FilterApi.gt(FilterApi.intColumn("opt"), Int.box(Value.int(3).value))
-        val result   = Filter.compile(opt.nullable > 3)
+        val result   = predicate(opt.nullable > 3)
 
-        assert(result)(equalTo(expected))
+        assert(result)(isRight(equalTo(expected)))
       },
       test("compile enum") {
         val (_, _, _, enm, _) = Filter[MyRecord].columns
 
-        val result   = Filter.compile(enm === MyRecord.Enum.Done)
+        val result   = predicate(enm === MyRecord.Enum.Done)
         val expected = FilterApi.eq(FilterApi.binaryColumn("enm"), Value.string("Done").value)
 
-        assert(result)(equalTo(expected))
+        assert(result)(isRight(equalTo(expected)))
       },
       test("column path concatenation") {
         // TODO: test failing compile-time cases

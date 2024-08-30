@@ -9,7 +9,7 @@ object TypeTagDeriver {
 
     override def deriveRecord[A](
       record: Schema.Record[A],
-      fields: => Chunk[Deriver.WrappedF[TypeTag, _]],
+      fields: => Chunk[Deriver.WrappedF[TypeTag, ?]],
       summoned: => Option[TypeTag[A]]
     ): TypeTag[A] =
       TypeTag.Record(
@@ -21,7 +21,7 @@ object TypeTagDeriver {
 
     override def deriveEnum[A](
       `enum`: Schema.Enum[A],
-      cases: => Chunk[Deriver.WrappedF[TypeTag, _]],
+      cases: => Chunk[Deriver.WrappedF[TypeTag, ?]],
       summoned: => Option[TypeTag[A]]
     ): TypeTag[A] = {
       val casesMap = `enum`.cases.map { case0 =>
@@ -73,10 +73,10 @@ object TypeTagDeriver {
       inner: => TypeTag[A],
       summoned: => Option[TypeTag[Option[A]]]
     ): TypeTag[Option[A]] =
-      TypeTag.optional[A](inner)
+      TypeTag.optional[A](using inner)
 
     override def deriveSequence[C[_], A](
-      sequence: Schema.Sequence[C[A], A, _],
+      sequence: Schema.Sequence[C[A], A, ?],
       inner: => TypeTag[A],
       summoned: => Option[TypeTag[C[A]]]
     ): TypeTag[C[A]] =
@@ -92,8 +92,8 @@ object TypeTagDeriver {
 
     override def deriveTransformedRecord[A, B](
       record: Schema.Record[A],
-      transform: Schema.Transform[A, B, _],
-      fields: => Chunk[Deriver.WrappedF[TypeTag, _]],
+      transform: Schema.Transform[A, B, ?],
+      fields: => Chunk[Deriver.WrappedF[TypeTag, ?]],
       summoned: => Option[TypeTag[B]]
     ): TypeTag[B] =
       TypeTag.dummy[B]

@@ -6,7 +6,8 @@ import zio.test.TestAspect._
 import zio.test._
 
 import java.nio.file.Files
-import me.mnedokushev.zio.apache.parquet.core.filter.Filter
+import me.mnedokushev.zio.apache.parquet.core.filter._
+import me.mnedokushev.zio.apache.parquet.core.filter.syntax._
 import me.mnedokushev.zio.apache.parquet.core.Fixtures._
 
 object ParquetIOSpec extends ZIOSpecDefault {
@@ -92,13 +93,13 @@ object ParquetIOSpec extends ZIOSpecDefault {
           MyRecordIO(2, "bar", Some(3L), List.empty, Map("third" -> 3))
         )
 
-        val (a, _, c, _, _) = Filter[MyRecordIO].columns
+        val (a, _, _, _, _) = Filter[MyRecordIO].columns
 
         for {
           writer <- ZIO.service[ParquetWriter[MyRecordIO]]
           reader <- ZIO.service[ParquetReader[MyRecordIO]]
           _      <- writer.writeChunk(tmpPath, payload)
-          result <- reader.readChunk(tmpPath, filter = Some(Filter.compile(a > 1)))
+          result <- reader.readChunk(tmpPath, filter = Some(predicate(a > 1)))
         } yield assertTrue(result.size == 1)
       } @@ after(cleanTmpFile(tmpDir))
     ).provide(

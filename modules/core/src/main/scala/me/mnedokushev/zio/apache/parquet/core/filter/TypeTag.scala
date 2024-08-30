@@ -53,11 +53,11 @@ object TypeTag {
   implicit def optional[A: TypeTag]: TypeTag[Option[A]] =
     Optional[A]()
 
-  final case class Record[+A](columns: Map[String, TypeTag[_]]) extends TypeTag[A]
+  final case class Record[+A](columns: Map[String, TypeTag[?]]) extends TypeTag[A]
 
   trait EqNotEq[A] extends TypeTag[A] { self =>
     type T <: Comparable[T]
-    type C <: Operators.Column[T] with Operators.SupportsEqNotEq
+    type C <: Operators.Column[T] & Operators.SupportsEqNotEq
 
     def cast[A0]: EqNotEq[A0] = self.asInstanceOf[EqNotEq[A0]]
 
@@ -69,7 +69,7 @@ object TypeTag {
 
   trait LtGt[A] extends TypeTag[A] { self =>
     type T <: Comparable[T]
-    type C <: Operators.Column[T] with Operators.SupportsLtGt
+    type C <: Operators.Column[T] & Operators.SupportsLtGt
 
     def cast[A0]: LtGt[A0] = self.asInstanceOf[LtGt[A0]]
 
@@ -79,7 +79,7 @@ object TypeTag {
       vs.map(value).asJava
   }
 
-  def eqnoteq[A, T0 <: Comparable[T0], C0 <: Operators.Column[T0] with Operators.SupportsEqNotEq](
+  def eqnoteq[A, T0 <: Comparable[T0], C0 <: Operators.Column[T0] & Operators.SupportsEqNotEq](
     column0: String => C0,
     value0: A => T0
   ): TypeTag.EqNotEq[A] =
@@ -97,7 +97,7 @@ object TypeTag {
 
     }
 
-  def ltgt[A, T0 <: Comparable[T0], C0 <: Operators.Column[T0] with Operators.SupportsLtGt](
+  def ltgt[A, T0 <: Comparable[T0], C0 <: Operators.Column[T0] & Operators.SupportsLtGt](
     column0: String => C0,
     value0: A => T0
   ): TypeTag.LtGt[A] =

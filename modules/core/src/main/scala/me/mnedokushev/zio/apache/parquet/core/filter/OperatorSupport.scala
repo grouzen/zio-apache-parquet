@@ -26,7 +26,7 @@ sealed trait OperatorSupport[A]
 
 object OperatorSupport {
 
-  trait Optional[A, S[_] <: OperatorSupport[_]] {
+  trait Optional[A, S[_] <: OperatorSupport[?]] {
     val operatorSupport: S[A]
   }
 

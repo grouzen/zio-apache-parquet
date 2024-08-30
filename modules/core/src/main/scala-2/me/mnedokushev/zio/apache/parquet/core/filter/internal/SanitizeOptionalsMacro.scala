@@ -4,10 +4,10 @@ import me.mnedokushev.zio.apache.parquet.core.filter.Predicate
 
 import scala.reflect.macros.blackbox
 
-class CompilePredicateMacro(val c: blackbox.Context) extends MacroUtils(c) {
+class SanitizeOptionalsMacro(val c: blackbox.Context) extends MacroUtils(c) {
   import c.universe._
 
-  def compileImpl[A](predicate: Expr[Predicate[A]])(ptt: c.WeakTypeTag[A]): Tree = {
+  def sanitizeImpl[A](predicate: Expr[Predicate[A]])(ptt: c.WeakTypeTag[A]): Tree = {
 
     // Example of a tree for A type:
     // RefinedType(
@@ -58,7 +58,7 @@ class CompilePredicateMacro(val c: blackbox.Context) extends MacroUtils(c) {
         """.stripMargin
       )
     else
-      q"_root_.me.mnedokushev.zio.apache.parquet.core.filter.Filter.compile($predicate)"
+      q"_root_.me.mnedokushev.zio.apache.parquet.core.filter.Predicate.compile0($predicate)"
   }
 
 }
