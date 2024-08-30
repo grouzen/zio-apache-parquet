@@ -6,6 +6,7 @@ import me.mnedokushev.zio.apache.parquet.core.filter.syntax._
 import zio._
 import zio.stream._
 import zio.test.TestAspect._
+import zio.test.Assertion._
 import zio.test._
 
 import java.nio.file.Files
@@ -90,17 +91,20 @@ object ParquetIOSpec extends ZIOSpecDefault {
       test("write and read with filter") {
         val payload = Chunk(
           MyRecordIO(1, "foo", None, List(1, 2), Map("first" -> 1, "second" -> 2)),
-          MyRecordIO(2, "bar", Some(3L), List.empty, Map("third" -> 3))
+          MyRecordIO(2, "foo", None, List(1, 2), Map.empty),
+          MyRecordIO(3, "bar", Some(3L), List.empty, Map("third" -> 3)),
+          MyRecordIO(4, "baz", None, List.empty, Map("fourth" -> 3))
         )
 
-        val (a, _, _, _, _) = Filter[MyRecordIO].columns
+        val (id, name, _, _, _) = Filter[MyRecordIO].columns
+        val pred                = predicate(id > 1 `and` name =!= "foo")
 
         for {
           writer <- ZIO.service[ParquetWriter[MyRecordIO]]
           reader <- ZIO.service[ParquetReader[MyRecordIO]]
           _      <- writer.writeChunk(tmpPath, payload)
-          result <- reader.readChunk(tmpPath, filter = Some(predicate(a > 1)))
-        } yield assertTrue(result.size == 1)
+          result <- reader.readChunk(tmpPath, filter = Some(pred))
+        } yield assertTrue(result.size == 2) && assert(result)(equalTo(payload.drop(2)))
       } @@ after(cleanTmpFile(tmpDir))
     ).provide(
       ParquetWriter.configured[MyRecordIO](),
