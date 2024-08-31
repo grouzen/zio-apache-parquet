@@ -20,7 +20,7 @@ object ExprSpec extends ZIOSpecDefault {
       test("compile all operators") {
         val (a, b, _, _, _) = Filter[MyRecord].columns
 
-        val result = predicate(
+        val result = filter(
           not(
             (b >= 3 `or` b <= 100 `and` a.in(Set("foo", "bar"))) `or`
               (a === "foo" `and` (b === 20 `or` b.notIn(Set(1, 2, 3)))) `or`
@@ -64,7 +64,7 @@ object ExprSpec extends ZIOSpecDefault {
       test("compile summoned") {
         val (a, b) = Filter[MyRecordSummoned].columns
 
-        val result = predicate(
+        val result = filter(
           a === 3 `and` b === "foo"
         )
 
@@ -260,35 +260,35 @@ object ExprSpec extends ZIOSpecDefault {
           Long.box(Value.zonedDateTime(zonedDateTimePayload).value)
         )
 
-        val stringResul          = predicate(string === stringPayload)
-        val booleanResult        = predicate(boolean === booleanPayload)
-        val byteResult           = predicate(byte === bytePayload)
-        val shortResult          = predicate(short === shortPayload)
-        val intResult            = predicate(int === intPayload)
-        val longResult           = predicate(long === longPayload)
-        val floatResult          = predicate(float === floatPayload)
-        val doubleResult         = predicate(double === doublePayload)
-        val binaryResult         = predicate(binary === binaryPayload)
-        val charResult           = predicate(char === charPayload)
-        val uuidResult           = predicate(uuid === uuidPayload)
-        val bigDecimalResult     = predicate(bigDecimal === bigDecimalPayload)
-        val bigIntegerResult     = predicate(bigInteger === bigIntegerPayload)
-        val dayOfWeekResult      = predicate(dayOfWeek === dayOfWeekPayload)
-        val monthResult          = predicate(month === monthPayload)
-        val monthDayResult       = predicate(monthDay === monthDayPayload)
-        val periodResult         = predicate(period === periodPayload)
-        val yearResult           = predicate(year === yearPayload)
-        val yearMonthResult      = predicate(yearMonth === yearMonthPayload)
-        val zoneIdResult         = predicate(zoneId === zoneIdPayload)
-        val zoneOffsetResult     = predicate(zoneOffset === zoneOffsetPayload)
-        val durationResult       = predicate(duration === durationPayload)
-        val instantResult        = predicate(instant === instantPayload)
-        val localDateResult      = predicate(localDate === localDatePayload)
-        val localTimeResult      = predicate(localTime === localTimePayload)
-        val localDateTimeResult  = predicate(localDateTime === localDateTimePayload)
-        val offsetTimeResult     = predicate(offsetTime === offsetTimePayload)
-        val offsetDateTimeResult = predicate(offsetDateTime === offsetDateTimePayload)
-        val zonedDateTimeResult  = predicate(zonedDateTime === zonedDateTimePayload)
+        val stringResul          = filter(string === stringPayload)
+        val booleanResult        = filter(boolean === booleanPayload)
+        val byteResult           = filter(byte === bytePayload)
+        val shortResult          = filter(short === shortPayload)
+        val intResult            = filter(int === intPayload)
+        val longResult           = filter(long === longPayload)
+        val floatResult          = filter(float === floatPayload)
+        val doubleResult         = filter(double === doublePayload)
+        val binaryResult         = filter(binary === binaryPayload)
+        val charResult           = filter(char === charPayload)
+        val uuidResult           = filter(uuid === uuidPayload)
+        val bigDecimalResult     = filter(bigDecimal === bigDecimalPayload)
+        val bigIntegerResult     = filter(bigInteger === bigIntegerPayload)
+        val dayOfWeekResult      = filter(dayOfWeek === dayOfWeekPayload)
+        val monthResult          = filter(month === monthPayload)
+        val monthDayResult       = filter(monthDay === monthDayPayload)
+        val periodResult         = filter(period === periodPayload)
+        val yearResult           = filter(year === yearPayload)
+        val yearMonthResult      = filter(yearMonth === yearMonthPayload)
+        val zoneIdResult         = filter(zoneId === zoneIdPayload)
+        val zoneOffsetResult     = filter(zoneOffset === zoneOffsetPayload)
+        val durationResult       = filter(duration === durationPayload)
+        val instantResult        = filter(instant === instantPayload)
+        val localDateResult      = filter(localDate === localDatePayload)
+        val localTimeResult      = filter(localTime === localTimePayload)
+        val localDateTimeResult  = filter(localDateTime === localDateTimePayload)
+        val offsetTimeResult     = filter(offsetTime === offsetTimePayload)
+        val offsetDateTimeResult = filter(offsetDateTime === offsetDateTimePayload)
+        val zonedDateTimeResult  = filter(zonedDateTime === zonedDateTimePayload)
 
         assert(stringResul)(isRight(equalTo(stringExpected))) &&
         assert(booleanResult)(isRight(equalTo(booleanExpected))) &&
@@ -325,14 +325,14 @@ object ExprSpec extends ZIOSpecDefault {
         val (_, _, _, _, opt) = Filter[MyRecord].columns
 
         val expected = FilterApi.gt(FilterApi.intColumn("opt"), Int.box(Value.int(3).value))
-        val result   = predicate(opt.nullable > 3)
+        val result   = filter(opt.nullable > 3)
 
         assert(result)(isRight(equalTo(expected)))
       },
       test("compile enum") {
         val (_, _, _, enm, _) = Filter[MyRecord].columns
 
-        val result   = predicate(enm === MyRecord.Enum.Done)
+        val result   = filter(enm === MyRecord.Enum.Done)
         val expected = FilterApi.eq(FilterApi.binaryColumn("enm"), Value.string("Done").value)
 
         assert(result)(isRight(equalTo(expected)))

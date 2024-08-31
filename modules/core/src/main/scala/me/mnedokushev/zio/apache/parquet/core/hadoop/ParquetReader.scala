@@ -16,9 +16,13 @@ import java.io.IOException
 
 trait ParquetReader[+A <: Product] {
 
-  def readStream(path: Path, filter: Option[CompiledPredicate] = None): ZStream[Scope, Throwable, A]
+  def readStream(path: Path): ZStream[Scope, Throwable, A]
 
-  def readChunk[B](path: Path, filter: Option[CompiledPredicate] = None): Task[Chunk[A]]
+  def readStreamFiltered(path: Path, filter: CompiledPredicate): ZStream[Scope, Throwable, A]
+
+  def readChunk[B](path: Path): Task[Chunk[A]]
+
+  def readChunkFiltered[B](path: Path, filter: CompiledPredicate): Task[Chunk[A]]
 
 }
 
@@ -29,30 +33,55 @@ final class ParquetReaderLive[A <: Product: Tag](
 )(implicit decoder: ValueDecoder[A])
     extends ParquetReader[A] {
 
-  override def readStream(path: Path, filter: Option[CompiledPredicate] = None): ZStream[Scope, Throwable, A] =
+  override def readStream(path: Path): ZStream[Scope, Throwable, A] =
     for {
-      reader <- ZStream.fromZIO(build(path, filter))
-      value  <- ZStream.repeatZIOOption(
-                  ZIO
-                    .attemptBlockingIO(reader.read())
-                    .asSomeError
-                    .filterOrFail(_ != null)(None)
-                    .flatMap(decoder.decodeZIO(_).asSomeError)
-                )
+      reader <- ZStream.fromZIO(build(path, None))
+      value  <- readStream0(reader)
     } yield value
 
-  override def readChunk[B](path: Path, filter: Option[CompiledPredicate] = None): Task[Chunk[A]] =
+  override def readStreamFiltered(path: Path, filter: CompiledPredicate): ZStream[Scope, Throwable, A] =
+    for {
+      reader <- ZStream.fromZIO(build(path, Some(filter)))
+      value  <- readStream0(reader)
+    } yield value
+
+  override def readChunk[B](path: Path): Task[Chunk[A]] =
     ZIO.scoped(
       for {
-        reader  <- build(path, filter)
-        readNext = for {
-                     value  <- ZIO.attemptBlockingIO(reader.read())
-                     record <- if (value != null)
-                                 decoder.decodeZIO(value)
-                               else
-                                 ZIO.succeed(null.asInstanceOf[A])
-                   } yield record
-        builder  = Chunk.newBuilder[A]
+        reader <- build(path, None)
+        result <- readChunk0(reader)
+      } yield result
+    )
+
+  override def readChunkFiltered[B](path: Path, filter: CompiledPredicate): Task[Chunk[A]] =
+    ZIO.scoped(
+      for {
+        reader <- build(path, Some(filter))
+        result <- readChunk0(reader)
+      } yield result
+    )
+
+  private def readStream0(reader: HadoopParquetReader[RecordValue]): ZStream[Any, Throwable, A] =
+    ZStream.repeatZIOOption(
+      ZIO
+        .attemptBlockingIO(reader.read())
+        .asSomeError
+        .filterOrFail(_ != null)(None)
+        .flatMap(decoder.decodeZIO(_).asSomeError)
+    )
+
+  private def readChunk0[B](reader: HadoopParquetReader[RecordValue]): Task[Chunk[A]] = {
+    val readNext = for {
+      value  <- ZIO.attemptBlockingIO(reader.read())
+      record <- if (value != null)
+                  decoder.decodeZIO(value)
+                else
+                  ZIO.succeed(null.asInstanceOf[A])
+    } yield record
+    val builder  = Chunk.newBuilder[A]
+
+    ZIO.scoped(
+      for {
         initial <- readNext
         _       <- {
           var current = initial
@@ -64,6 +93,7 @@ final class ParquetReaderLive[A <: Product: Tag](
         }
       } yield builder.result()
     )
+  }
 
   private def build[B](
     path: Path,

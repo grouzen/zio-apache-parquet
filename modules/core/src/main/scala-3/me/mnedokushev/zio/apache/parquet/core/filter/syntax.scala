@@ -10,7 +10,7 @@ package object syntax extends Predicate.Syntax {
       Column.Named(column.path)
   }
 
-  inline def predicate[A](inline predicate: Predicate[A]): CompiledPredicate =
+  inline def filter[A](inline predicate: Predicate[A]): CompiledPredicate =
     ${ SanitizeOptionalsMacro.sanitizeImpl[A]('predicate) }
 
   inline def concat[A, B, F](inline parent: Column[A], inline child: Column.Named[B, F])(using

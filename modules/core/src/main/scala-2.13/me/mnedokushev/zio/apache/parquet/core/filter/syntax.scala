@@ -11,7 +11,7 @@ package object syntax extends Predicate.Syntax {
       Column.Named(column.path)
   }
 
-  def predicate[A](predicate: Predicate[A]): CompiledPredicate = macro SanitizeOptionalsMacro.sanitizeImpl[A]
+  def filter[A](predicate: Predicate[A]): CompiledPredicate = macro SanitizeOptionalsMacro.sanitizeImpl[A]
 
   def concat[A, B, F](
     parent: Column[A],
