@@ -20,8 +20,9 @@ inThisBuild(
         "scm:git:git@github.com:grouzen/zio-apache-parquet.git"
       )
     ),
-    crossScalaVersions                  := Seq(Scala212, Scala213, Scala3),
-    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"), JavaSpec.temurin("17")),
+    crossScalaVersions                  := Seq(Scala213, Scala3),
+    ThisBuild / scalaVersion            := Scala3,
+    githubWorkflowJavaVersions          := Seq(JavaSpec.temurin("11"), JavaSpec.temurin("17")),
     githubWorkflowPublishTargetBranches := Seq(),
     githubWorkflowBuildPreamble         := Seq(
       WorkflowStep.Sbt(
@@ -40,6 +41,9 @@ lazy val root =
     .in(file("."))
     .aggregate(core)
     .settings(publish / skip := true)
+    .settings(
+      addCommandAlias("fmtAll", "+scalafmtAll; +scalafixAll")
+    )
 
 lazy val core =
   project
