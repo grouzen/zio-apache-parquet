@@ -18,32 +18,6 @@ object ParquetIOSpec extends ZIOSpecDefault {
   val tmpCrcPath = tmpDir / ".parquet-writer-spec.parquet.crc"
   val tmpPath    = tmpDir / tmpFile
 
-  // case class Record(a: Int, b: String, c: Option[Long], d: List[Int], e: Map[String, Int])
-  // object Record {
-  //   implicit val schema: Schema[Record]               =
-  //     DeriveSchema.gen[Record]
-  //   implicit val schemaEncoder: SchemaEncoder[Record] =
-  //     Derive.derive[SchemaEncoder, Record](SchemaEncoderDeriver.summoned)
-  //   implicit val valueEncoder: ValueEncoder[Record]   =
-  //     Derive.derive[ValueEncoder, Record](ValueEncoderDeriver.summoned)
-  //   implicit val valueDecoder: ValueDecoder[Record]   =
-  //     Derive.derive[ValueDecoder, Record](ValueDecoderDeriver.summoned)
-  //   implicit val typeTag: TypeTag[Record] =
-  //     Derive.derive[TypeTag, Record](TypeTagDeriver.default)
-  // }
-
-  // case class ProjectedRecord(a: Int, c: Option[Long], d: List[Int], e: Map[String, Int])
-  // object ProjectedRecord {
-  //   implicit val schema: Schema[ProjectedRecord]               =
-  //     DeriveSchema.gen[ProjectedRecord]
-  //   implicit val schemaEncoder: SchemaEncoder[ProjectedRecord] =
-  //     Derive.derive[SchemaEncoder, ProjectedRecord](SchemaEncoderDeriver.summoned)
-  //   implicit val valueEncoder: ValueEncoder[ProjectedRecord]   =
-  //     Derive.derive[ValueEncoder, ProjectedRecord](ValueEncoderDeriver.summoned)
-  //   implicit val valueDecoder: ValueDecoder[ProjectedRecord]   =
-  //     Derive.derive[ValueDecoder, ProjectedRecord](ValueDecoderDeriver.summoned)
-  // }
-
   override def spec: Spec[TestEnvironment & Scope, Any] =
     suite("ParquetIOSpec")(
       test("write and read - chunk") {
