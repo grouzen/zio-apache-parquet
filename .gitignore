@@ -10,3 +10,4 @@ private/
 .metals/
 .vscode/
 metals.sbt
+.scala-build
