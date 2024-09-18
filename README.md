@@ -25,6 +25,7 @@ Ready for more? Check out my other game-changing library that makes working with
     - [Value](#value)
   - [Reading & Writing files](#reading--writing-files)
     - [Filtering](#filtering)
+- [Resources](#resources)
 
 ## Installation
 
@@ -325,3 +326,7 @@ object Filtering extends ZIOAppDefault:
   // Outputs:
   // Chunk(MyRecord(2,bob,Some(12)),MyRecord(3,alice,Some(13)),MyRecord(4,john,None))
 ```
+
+## Resources
+
+- [Unpacking ZIO Schema's Accessors](https://mnedokushev.me/2024/09/05/unpacking-zio-schema-accessors.html) - Explore how ZIO Schema enables type-safe filtering through its underdocumented feature on my personal blog.
