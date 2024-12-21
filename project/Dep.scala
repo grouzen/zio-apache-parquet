@@ -4,7 +4,7 @@ import sbt.Keys.scalaVersion
 object Dep {
 
   object V {
-    val zio                   = "2.1.13"
+    val zio                   = "2.1.14"
     val zioSchema             = "1.1.1"
     val scalaCollectionCompat = "2.12.0"
     val apacheParquet         = "1.15.0"
