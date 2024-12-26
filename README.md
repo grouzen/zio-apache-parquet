@@ -330,3 +330,5 @@ object Filtering extends ZIOAppDefault:
 ## Resources
 
 - [Unpacking ZIO Schema's Accessors](https://mnedokushev.me/2024/09/05/unpacking-zio-schema-accessors.html) - Explore how ZIO Schema enables type-safe filtering through its underdocumented feature on my personal blog.
+- [Scala's Hidden Treasures: Five ZIO-Compatible Libraries you didn't know you needed!](https://jorgevasquez.blog/scalas-hidden-treasures-five-zio-compatible-libraries-you-didnt-know-you-needed) - This article, featured in Jorge Vásquez's blog post accompanying his presentation at the [Functional Scala 2024 Conference](https://www.functionalscala.com). You can find more information on the [slides](https://jorge-vasquez-2301.github.io/scalas-hidden-treasures/24).
+- [Overview page on ZIO's official community ecosystem website](https://zio.dev/ecosystem/community/zio-apache-parquet/) - For a brief overview, visit this page on ZIO's official community ecosystem website.
