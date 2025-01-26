@@ -24,7 +24,7 @@ object BuildHelper {
   )
 
   val Scala212 = "2.12.20"
-  val Scala213 = "2.13.15"
+  val Scala213 = "2.13.16"
   val Scala3   = "3.6.3"
 
   private def betterMonadicFor(scalaVersion: String) =
