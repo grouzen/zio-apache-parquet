@@ -1,3 +1,5 @@
+![](docs/logo.png)
+
 ![Build status](https://github.com/grouzen/zio-apache-parquet/actions/workflows/ci.yml/badge.svg)
 ![Sonatype Nexus (Releases)](https://img.shields.io/nexus/r/me.mnedokushev/zio-apache-parquet-core_2.13?server=https%3A%2F%2Foss.sonatype.org)
 ![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/me.mnedokushev/zio-apache-parquet-core_2.13?server=https%3A%2F%2Foss.sonatype.org)
