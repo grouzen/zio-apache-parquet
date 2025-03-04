@@ -180,8 +180,25 @@ object ValueEncoderDeriver {
       transform: Schema.Transform[A, B, ?],
       fields: => Chunk[Deriver.WrappedF[ValueEncoder, ?]],
       summoned: => Option[ValueEncoder[B]]
-    ): ValueEncoder[B] = ???
+    ): ValueEncoder[B] = summoned.getOrElse {
+      new ValueEncoder[B] {
+        private def enc[A1](v: A, field: Schema.Field[A, A1], encoder: ValueEncoder[?]) =
+          encoder.asInstanceOf[ValueEncoder[A1]].encode(field.get(v))
 
+        override def encode(value: B): Value =
+          Value.record(
+            record.fields
+              .zip(fields.map(_.unwrap))
+              .map { case (field, encoder) =>
+                transform.g(value) match {
+                  case Right(v) => field.name -> enc(v, field, encoder)
+                  case Left(_)  => throw EncoderError(s"Failed to encode transformed record for value $value")
+                }
+              }
+              .toMap
+          )
+      }
+    }
   }.cached
 
   val summoned: Deriver[ValueEncoder] = default.autoAcceptSummoned

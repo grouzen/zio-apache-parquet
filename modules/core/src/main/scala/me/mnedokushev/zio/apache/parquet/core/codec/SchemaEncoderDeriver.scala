@@ -155,8 +155,20 @@ object SchemaEncoderDeriver {
       transform: Schema.Transform[A, B, ?],
       fields: => Chunk[Deriver.WrappedF[SchemaEncoder, ?]],
       summoned: => Option[SchemaEncoder[B]]
-    ): SchemaEncoder[B] = ???
+    ): SchemaEncoder[B] = summoned.getOrElse {
+      new SchemaEncoder[B] {
+        private def enc[A1](name0: String, schema0: Schema[A1], encoder: SchemaEncoder[?]) =
+          encoder.asInstanceOf[SchemaEncoder[A1]].encode(schema0, name0, isSchemaOptional(schema0))
 
+        override def encode(schema: Schema[B], name: String, optional: Boolean): Type = {
+          val fieldTypes = record.fields.zip(fields.map(_.unwrap)).map { case (field, encoder) =>
+            enc(field.name, field.schema, encoder)
+          }
+
+          Schemas.record(fieldTypes).optionality(optional).named(name)
+        }
+      }
+    }
   }.cached
 
   val summoned: Deriver[SchemaEncoder] = default.autoAcceptSummoned

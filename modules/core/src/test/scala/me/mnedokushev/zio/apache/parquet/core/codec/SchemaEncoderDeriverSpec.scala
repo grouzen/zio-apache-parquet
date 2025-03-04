@@ -20,7 +20,12 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
     implicit val schema: Schema[MyEnum] = DeriveSchema.gen[MyEnum]
   }
 
-  case class Record(a: Int, b: Option[String])
+  case class Record(
+    a: Int, b: Option[String], c: Int, d:Int, e:Int, f:Int,
+    g:Int, h:Int, i:Int, j:Int, k:Int, l:Int, m:Int, n:Int,
+    o:Int, p:Int, q:Int, r:Int, s:Int, t:Int, u:Int, v:Int,
+    w:Int
+  )
   object Record {
     implicit val schema: Schema[Record] = DeriveSchema.gen[Record]
   }
@@ -105,7 +110,28 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
         val schemaDef   = Schemas.record(
           Chunk(
             Schemas.int.required.named("a"),
-            Schemas.string.optional.named("b")
+            Schemas.string.optional.named("b"),
+            Schemas.int.required.named("c"),
+            Schemas.int.required.named("d"),
+            Schemas.int.required.named("e"),
+            Schemas.int.required.named("f"),
+            Schemas.int.required.named("g"),
+            Schemas.int.required.named("h"),
+            Schemas.int.required.named("i"),
+            Schemas.int.required.named("j"),
+            Schemas.int.required.named("k"),
+            Schemas.int.required.named("l"),
+            Schemas.int.required.named("m"),
+            Schemas.int.required.named("n"),
+            Schemas.int.required.named("o"),
+            Schemas.int.required.named("p"),
+            Schemas.int.required.named("q"),
+            Schemas.int.required.named("r"),
+            Schemas.int.required.named("s"),
+            Schemas.int.required.named("t"),
+            Schemas.int.required.named("u"),
+            Schemas.int.required.named("v"),
+            Schemas.int.required.named("w")
           )
         )
 
