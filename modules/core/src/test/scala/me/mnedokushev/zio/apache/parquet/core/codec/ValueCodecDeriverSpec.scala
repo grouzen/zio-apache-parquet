@@ -43,20 +43,25 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
     implicit val schema: Schema[MyEnum] = DeriveSchema.gen[MyEnum]
   }
 
-  case class Record(
+  case class Record(a: Int, b: Boolean, c: Option[String], d: List[Int], e: Map[String, Int])
+  object Record {
+    implicit val schema: Schema[Record] = DeriveSchema.gen[Record]
+  }
+
+  case class BigRecord(
     a: Int, b: Boolean, c: Option[String], d: List[Int], e: Map[String, Int],
     f: Int = 6, g: Int = 7, h: Int = 8, i:Int = 9, j:Int = 10, k:Int = 11,
     l: Int = 12, m: Int = 13, n: Int = 14, o:Int = 15, p:Int = 16, q:Int = 17,
     r: Int = 18, s: Int = 19, t: Int = 20, u:Int = 21, v:Int = 22, w:Int = 23
   )
-  object Record {
-    implicit val schema: Schema[Record] = DeriveSchema.gen[Record]
+  object BigRecord {
+    implicit val schema: Schema[BigRecord] = DeriveSchema.gen[BigRecord]
   }
-
-//  case class SummonedRecord(a: Int, b: Boolean, c: Option[String], d: Option[Int])
-//  object SummonedRecord {
-//    implicit val schema: Schema[SummonedRecord] = DeriveSchema.gen[SummonedRecord]
-//  }
+  
+  case class SummonedRecord(a: Int, b: Boolean, c: Option[String], d: Option[Int])
+  object SummonedRecord {
+    implicit val schema: Schema[SummonedRecord] = DeriveSchema.gen[SummonedRecord]
+  }
 
   override def spec: Spec[TestEnvironment & Scope, Any] =
     suite("ValueCodecDeriverSpec")(
@@ -326,6 +331,16 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
         val encoder = Derive.derive[ValueEncoder, Record](ValueEncoderDeriver.default)
         val decoder = Derive.derive[ValueDecoder, Record](ValueDecoderDeriver.default)
         val payload = Record(2, false, Some("data"), List(1), Map("zio" -> 1))
+
+        for {
+          value  <- encoder.encodeZIO(payload)
+          result <- decoder.decodeZIO(value)
+        } yield assertTrue(result == payload)
+      },
+      test("arity > 22") {
+        val encoder = Derive.derive[ValueEncoder, BigRecord](ValueEncoderDeriver.default)
+        val decoder = Derive.derive[ValueDecoder, BigRecord](ValueDecoderDeriver.default)
+        val payload = BigRecord(2, false, Some("data"), List(1), Map("zio" -> 1))
 
         for {
           value  <- encoder.encodeZIO(payload)
