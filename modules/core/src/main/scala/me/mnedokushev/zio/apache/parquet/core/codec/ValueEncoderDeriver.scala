@@ -185,7 +185,7 @@ object ValueEncoderDeriver {
         private def enc[A1](v: A, field: Schema.Field[A, A1], encoder: ValueEncoder[?]) =
           encoder.asInstanceOf[ValueEncoder[A1]].encode(field.get(v))
 
-override def encode(value: B): Value =
+        override def encode(value: B): Value =
           transform.g(value) match {
             case Right(v)     =>
               Value.record(
