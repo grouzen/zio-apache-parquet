@@ -230,7 +230,7 @@ object ValueDecoderDeriver {
                     .map { case (v, decoder) =>
                       decoder.decode(v)
                     }
-                ).flatMap(v => transform.f(v)) match {
+                ).flatMap(transform.f) match {
                   case Right(v)     => v
                   case Left(reason) =>
                     throw DecoderError(s"Couldn't decode $value: $reason")
