@@ -30,15 +30,34 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
   // Error while emitting me/mnedokushev/zio/apache/parquet/core/codec/SchemaEncoderDeriverSpec$MaxArityRecord$
   // Method too large: me/mnedokushev/zio/apache/parquet/core/codec/SchemaEncoderDeriverSpec$MaxArityRecord$.derivedSchema0$lzyINIT4$1$$anonfun$364 (Lscala/collection/immutable/ListMap;)Lscala/util/Either;
   case class BigRecord(
-    a: Int, b: Option[String], c: Int, d:Int, e:Int, f:Int,
-    g:Int, h:Int, i:Int, j:Int, k:Int, l:Int, m:Int, n:Int,
-    o:Int, p:Int, q:Int, r:Int, s:Int, t:Int, u:Int, v:Int,
-    w:Int
+    a: Int,
+    b: Option[String],
+    c: Int,
+    d: Int,
+    e: Int,
+    f: Int,
+    g: Int,
+    h: Int,
+    i: Int,
+    j: Int,
+    k: Int,
+    l: Int,
+    m: Int,
+    n: Int,
+    o: Int,
+    p: Int,
+    q: Int,
+    r: Int,
+    s: Int,
+    t: Int,
+    u: Int,
+    v: Int,
+    w: Int
   )
   object BigRecord {
     implicit val schema: Schema[BigRecord] = DeriveSchema.gen[BigRecord]
   }
-  
+
   // Helper for being able to extract type parameter A from a given schema in order to cast the type of encoder<
   private def encode[A](encoder: SchemaEncoder[?], schema: Schema[A], name: String, optional: Boolean) =
     encoder.asInstanceOf[SchemaEncoder[A]].encode(schema, name, optional)

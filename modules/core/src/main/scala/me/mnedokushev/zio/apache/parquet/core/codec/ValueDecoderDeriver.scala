@@ -223,14 +223,16 @@ object ValueDecoderDeriver {
           value match {
             case GroupValue.RecordValue(values) =>
               Unsafe.unsafe { implicit unsafe =>
-                record.construct(
-                  Chunk
-                    .fromIterable(record.fields.map(f => values(f.name)))
-                    .zip(fields.map(_.unwrap))
-                    .map { case (v, decoder) =>
-                      decoder.decode(v)
-                    }
-                ).flatMap(transform.f) match {
+                record
+                  .construct(
+                    Chunk
+                      .fromIterable(record.fields.map(f => values(f.name)))
+                      .zip(fields.map(_.unwrap))
+                      .map { case (v, decoder) =>
+                        decoder.decode(v)
+                      }
+                  )
+                  .flatMap(transform.f) match {
                   case Right(v)     => v
                   case Left(reason) =>
                     throw DecoderError(s"Couldn't decode $value: $reason")

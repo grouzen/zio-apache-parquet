@@ -44,20 +44,39 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
   }
 
   case class Record(a: Int, b: Boolean, c: Option[String], d: List[Int], e: Map[String, Int])
-  object Record {
+  object Record    {
     implicit val schema: Schema[Record] = DeriveSchema.gen[Record]
   }
 
   case class BigRecord(
-    a: Int, b: Boolean, c: Option[String], d: List[Int], e: Map[String, Int],
-    f: Int = 6, g: Int = 7, h: Int = 8, i:Int = 9, j:Int = 10, k:Int = 11,
-    l: Int = 12, m: Int = 13, n: Int = 14, o:Int = 15, p:Int = 16, q:Int = 17,
-    r: Int = 18, s: Int = 19, t: Int = 20, u:Int = 21, v:Int = 22, w:Int = 23
+    a: Int,
+    b: Boolean,
+    c: Option[String],
+    d: List[Int],
+    e: Map[String, Int],
+    f: Int = 6,
+    g: Int = 7,
+    h: Int = 8,
+    i: Int = 9,
+    j: Int = 10,
+    k: Int = 11,
+    l: Int = 12,
+    m: Int = 13,
+    n: Int = 14,
+    o: Int = 15,
+    p: Int = 16,
+    q: Int = 17,
+    r: Int = 18,
+    s: Int = 19,
+    t: Int = 20,
+    u: Int = 21,
+    v: Int = 22,
+    w: Int = 23
   )
   object BigRecord {
     implicit val schema: Schema[BigRecord] = DeriveSchema.gen[BigRecord]
   }
-  
+
   case class SummonedRecord(a: Int, b: Boolean, c: Option[String], d: Option[Int])
   object SummonedRecord {
     implicit val schema: Schema[SummonedRecord] = DeriveSchema.gen[SummonedRecord]
