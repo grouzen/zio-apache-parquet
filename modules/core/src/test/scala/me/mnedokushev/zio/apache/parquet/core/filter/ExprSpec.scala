@@ -10,7 +10,7 @@ import zio.test.Assertion.{ equalTo, isRight }
 import zio.test._
 
 import java.time._
-import java.util.UUID
+import java.util.{Currency, UUID}
 import scala.jdk.CollectionConverters._
 
 object ExprSpec extends ZIOSpecDefault {
@@ -90,6 +90,7 @@ object ExprSpec extends ZIOSpecDefault {
           binary,
           char,
           uuid,
+          currency,
           bigDecimal,
           bigInteger,
           dayOfWeek,
@@ -124,6 +125,7 @@ object ExprSpec extends ZIOSpecDefault {
         val binaryPayload         = Chunk(1.toByte, 2.toByte)
         val charPayload           = 'c'
         val uuidPayload           = UUID.randomUUID()
+        val currencyPayload       = Currency.getInstance("USD")
         val bigDecimalPayload     = new java.math.BigDecimal("1.0")
         val bigIntegerPayload     = new java.math.BigInteger("99999999999")
         val dayOfWeekPayload      = DayOfWeek.of(1)
@@ -186,6 +188,10 @@ object ExprSpec extends ZIOSpecDefault {
         val uuidExpected           = FilterApi.eq(
           FilterApi.binaryColumn("uuid"),
           Value.uuid(uuidPayload).value
+        )
+        val currencyExpected       = FilterApi.eq(
+          FilterApi.binaryColumn("currency"),
+          Value.currency(currencyPayload).value
         )
         val bigDecimalExpected     = FilterApi.eq(
           FilterApi.longColumn("bigDecimal"),
@@ -271,6 +277,7 @@ object ExprSpec extends ZIOSpecDefault {
         val binaryResult         = filter(binary === binaryPayload)
         val charResult           = filter(char === charPayload)
         val uuidResult           = filter(uuid === uuidPayload)
+        val currencyResult       = filter(currency === currencyPayload)
         val bigDecimalResult     = filter(bigDecimal === bigDecimalPayload)
         val bigIntegerResult     = filter(bigInteger === bigIntegerPayload)
         val dayOfWeekResult      = filter(dayOfWeek === dayOfWeekPayload)
@@ -301,6 +308,7 @@ object ExprSpec extends ZIOSpecDefault {
         assert(binaryResult)(isRight(equalTo(binaryExpected))) &&
         assert(charResult)(isRight(equalTo(charExpected))) &&
         assert(uuidResult)(isRight(equalTo(uuidExpected))) &&
+        assert(currencyResult)(isRight(equalTo(currencyExpected))) &&
         assert(bigDecimalResult)(isRight(equalTo(bigDecimalExpected))) &&
         assert(bigIntegerResult)(isRight(equalTo(bigIntegerExpected))) &&
         assert(dayOfWeekResult)(isRight(equalTo(dayOfWeekExpected))) &&

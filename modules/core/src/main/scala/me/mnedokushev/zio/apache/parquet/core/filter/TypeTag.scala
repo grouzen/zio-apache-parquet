@@ -23,7 +23,7 @@ import java.time.{
   ZoneOffset,
   ZonedDateTime
 }
-import java.util.UUID
+import java.util.{Currency, UUID}
 import scala.jdk.CollectionConverters._
 
 sealed trait TypeTag[+A] { self =>
@@ -175,6 +175,11 @@ object TypeTag {
     eqnoteq[UUID, Binary, Operators.BinaryColumn](
       FilterApi.binaryColumn,
       Value.uuid(_).value
+    )
+  implicit val currency: TypeTag.EqNotEq[Currency]            =
+    eqnoteq[Currency, Binary, Operators.BinaryColumn](
+      FilterApi.binaryColumn,
+      Value.currency(_).value
     )
   implicit val bigDecimal: TypeTag.LtGt[java.math.BigDecimal] =
     ltgt[java.math.BigDecimal, java.lang.Long, Operators.LongColumn](
