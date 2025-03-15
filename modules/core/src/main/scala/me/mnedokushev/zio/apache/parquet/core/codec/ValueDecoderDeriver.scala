@@ -24,7 +24,7 @@ import java.time.{
   ZoneOffset,
   ZonedDateTime
 }
-import java.util.{Currency, UUID}
+import java.util.{ Currency, UUID }
 
 object ValueDecoderDeriver {
 

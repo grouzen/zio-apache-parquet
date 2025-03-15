@@ -10,7 +10,7 @@ import zio.test.Assertion.{ equalTo, isRight }
 import zio.test._
 
 import java.time._
-import java.util.{Currency, UUID}
+import java.util.{ Currency, UUID }
 import scala.jdk.CollectionConverters._
 
 object ExprSpec extends ZIOSpecDefault {

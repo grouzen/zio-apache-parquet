@@ -16,7 +16,7 @@ import zio.Chunk
 import zio.schema._
 
 import java.time._
-import java.util.{Currency, UUID}
+import java.util.{ Currency, UUID }
 
 object Fixtures {
 
