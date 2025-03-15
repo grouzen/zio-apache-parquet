@@ -217,8 +217,33 @@ object ValueDecoderDeriver {
       transform: Schema.Transform[A, B, ?],
       fields: => Chunk[Deriver.WrappedF[ValueDecoder, ?]],
       summoned: => Option[ValueDecoder[B]]
-    ): ValueDecoder[B] = ???
+    ): ValueDecoder[B] = summoned.getOrElse {
+      new ValueDecoder[B] {
+        override def decode(value: Value): B =
+          value match {
+            case GroupValue.RecordValue(values) =>
+              Unsafe.unsafe { implicit unsafe =>
+                record
+                  .construct(
+                    Chunk
+                      .fromIterable(record.fields.map(f => values(f.name)))
+                      .zip(fields.map(_.unwrap))
+                      .map { case (v, decoder) =>
+                        decoder.decode(v)
+                      }
+                  )
+                  .flatMap(transform.f) match {
+                  case Right(v)     => v
+                  case Left(reason) =>
+                    throw DecoderError(s"Couldn't decode $value: $reason")
+                }
+              }
 
+            case other =>
+              throw DecoderError(s"Couldn't decode $other, it must be of type RecordValue")
+          }
+      }
+    }
   }.cached
 
   def summoned: Deriver[ValueDecoder] =
