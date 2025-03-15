@@ -25,6 +25,7 @@ import java.time.{
   ZonedDateTime
 }
 import java.util.UUID
+import java.util.Currency
 
 object ValueDecoderDeriver {
 
@@ -117,6 +118,8 @@ object ValueDecoderDeriver {
             val bb = ByteBuffer.wrap(v.getBytes)
 
             new UUID(bb.getLong, bb.getLong)
+          case (StandardType.CurrencyType, PrimitiveValue.BinaryValue(v))      =>
+            Currency.getInstance(v.toStringUsingUTF8)
           case (StandardType.BigDecimalType, PrimitiveValue.Int64Value(v))     =>
             BigDecimal.valueOf(v, DECIMAL_SCALE)
           case (StandardType.BigIntegerType, PrimitiveValue.BinaryValue(v))    =>

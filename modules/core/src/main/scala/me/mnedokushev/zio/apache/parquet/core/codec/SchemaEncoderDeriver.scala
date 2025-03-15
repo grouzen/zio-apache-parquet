@@ -69,6 +69,8 @@ object SchemaEncoderDeriver {
               tpe(Schemas.char)
             case StandardType.UUIDType           =>
               tpe(Schemas.uuid)
+            case StandardType.CurrencyType       =>
+              tpe(Schemas.currency)
             case StandardType.BigDecimalType     =>
               tpe(Schemas.bigDecimal)
             case StandardType.BigIntegerType     =>
@@ -106,7 +108,7 @@ object SchemaEncoderDeriver {
             case StandardType.ZonedDateTimeType  =>
               tpe(Schemas.zonedDateTime)
             case StandardType.UnitType           =>
-              throw EncoderError("Unit type is unsupported")
+              throw EncoderError("Unit standard type is unsupported")
           }
         }
       }

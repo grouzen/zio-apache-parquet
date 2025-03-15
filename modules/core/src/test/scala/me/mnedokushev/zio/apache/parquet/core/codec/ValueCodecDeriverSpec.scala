@@ -27,6 +27,7 @@ import java.time.{
   ZonedDateTime
 }
 import java.util.UUID
+import java.util.Currency
 
 //import java.nio.ByteBuffer
 //import java.util.UUID
@@ -67,6 +68,7 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
         val binaryEncoder         = Derive.derive[ValueEncoder, Chunk[Byte]](ValueEncoderDeriver.default)
         val charEncoder           = Derive.derive[ValueEncoder, Char](ValueEncoderDeriver.default)
         val uuidEncoder           = Derive.derive[ValueEncoder, UUID](ValueEncoderDeriver.default)
+        val currencyEncoder       = Derive.derive[ValueEncoder, Currency](ValueEncoderDeriver.default)
         val bigDecimalEncoder     = Derive.derive[ValueEncoder, BigDecimal](ValueEncoderDeriver.default)
         val bigIntegerEncoder     = Derive.derive[ValueEncoder, BigInteger](ValueEncoderDeriver.default)
         val dayOfWeekEncoder      = Derive.derive[ValueEncoder, DayOfWeek](ValueEncoderDeriver.default)
@@ -97,6 +99,7 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
         val binaryDecoder         = Derive.derive[ValueDecoder, Chunk[Byte]](ValueDecoderDeriver.default)
         val charDecoder           = Derive.derive[ValueDecoder, Char](ValueDecoderDeriver.default)
         val uuidDecoder           = Derive.derive[ValueDecoder, UUID](ValueDecoderDeriver.default)
+        val currencyDecoder       = Derive.derive[ValueDecoder, Currency](ValueDecoderDeriver.default)
         val bigDecimalDecoder     = Derive.derive[ValueDecoder, BigDecimal](ValueDecoderDeriver.default)
         val bigIntegerDecoder     = Derive.derive[ValueDecoder, BigInteger](ValueDecoderDeriver.default)
         val dayOfWeekDecoder      = Derive.derive[ValueDecoder, DayOfWeek](ValueDecoderDeriver.default)
@@ -127,6 +130,7 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
         val binaryPayload         = Chunk.fromArray("foobar".getBytes)
         val charPayload           = 'c'
         val uuidPayload           = UUID.randomUUID()
+        val currencyPayload       = Currency.getInstance("USD")
         val bigDecimalPayload     = new BigDecimal("993123312.32")
         val bigIntegerPayload     = new BigInteger("99931234123")
         val dayOfWeekPayload      = DayOfWeek.of(5)
@@ -207,6 +211,8 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
           charResult           <- charDecoder.decodeZIO(charValue)
           uuidValue            <- uuidEncoder.encodeZIO(uuidPayload)
           uuidResult           <- uuidDecoder.decodeZIO(uuidValue)
+          currencyValue        <- currencyEncoder.encodeZIO(currencyPayload)
+          currencyResult       <- currencyDecoder.decodeZIO(currencyValue)
           bigDecimalValue      <- bigDecimalEncoder.encodeZIO(bigDecimalPayload)
           bigDecimalResult     <- bigDecimalDecoder.decodeZIO(bigDecimalValue)
           bigIntegerValue      <- bigIntegerEncoder.encodeZIO(bigIntegerPayload)
@@ -255,6 +261,7 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
           binaryResult == binaryPayload,
           charResult == charPayload,
           uuidResult == uuidPayload,
+          currencyResult == currencyPayload,
           bigDecimalResult == bigDecimalPayload,
           bigIntegerResult == bigIntegerPayload,
           dayOfWeekResult == dayOfWeekPayload,
