@@ -127,6 +127,7 @@ object Schemas {
   val binary: PrimitiveDef         = PrimitiveDef(BINARY)
   val char: PrimitiveDef           = byte
   val uuid: PrimitiveDef           = PrimitiveDef(FIXED_LEN_BYTE_ARRAY, Some(uuidType())).length(16)
+  val currency: PrimitiveDef       = string
   val bigDecimal: PrimitiveDef     = PrimitiveDef(INT64, Some(decimalType(DECIMAL_PRECISION, DECIMAL_SCALE)))
   val bigInteger: PrimitiveDef     = PrimitiveDef(BINARY)
   val dayOfWeek: PrimitiveDef      = byte

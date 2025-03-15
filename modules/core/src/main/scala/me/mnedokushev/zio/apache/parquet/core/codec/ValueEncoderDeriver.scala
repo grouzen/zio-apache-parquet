@@ -23,7 +23,7 @@ import java.time.{
   ZoneOffset,
   ZonedDateTime
 }
-import java.util.UUID
+import java.util.{ Currency, UUID }
 
 object ValueEncoderDeriver {
 
@@ -96,6 +96,8 @@ object ValueEncoderDeriver {
               Value.char(v)
             case (StandardType.UUIDType, v: UUID)                     =>
               Value.uuid(v)
+            case (StandardType.CurrencyType, v: Currency)             =>
+              Value.currency(v)
             case (StandardType.BigDecimalType, v: BigDecimal)         =>
               Value.bigDecimal(v)
             case (StandardType.BigIntegerType, v: BigInteger)         =>

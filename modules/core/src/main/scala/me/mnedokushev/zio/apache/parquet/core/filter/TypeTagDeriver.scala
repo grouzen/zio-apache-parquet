@@ -47,6 +47,7 @@ object TypeTagDeriver {
         case StandardType.BinaryType         => TypeTag.binary
         case StandardType.CharType           => TypeTag.char
         case StandardType.UUIDType           => TypeTag.uuid
+        case StandardType.CurrencyType       => TypeTag.currency
         case StandardType.BigDecimalType     => TypeTag.bigDecimal
         case StandardType.BigIntegerType     => TypeTag.bigInteger
         case StandardType.DayOfWeekType      => TypeTag.dayOfWeek
@@ -65,7 +66,7 @@ object TypeTagDeriver {
         case StandardType.OffsetTimeType     => TypeTag.offsetTime
         case StandardType.OffsetDateTimeType => TypeTag.offsetDateTime
         case StandardType.ZonedDateTimeType  => TypeTag.zonedDateTime
-        case _                               => TypeTag.dummy[A]
+        case StandardType.UnitType           => TypeTag.dummy[A]
       }
 
     override def deriveOption[A](
