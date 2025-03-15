@@ -16,7 +16,7 @@ import zio.Chunk
 import zio.schema._
 
 import java.time._
-import java.util.UUID
+import java.util.{ Currency, UUID }
 
 object Fixtures {
 
@@ -135,6 +135,7 @@ object Fixtures {
     binary: Chunk[Byte],
     char: Char,
     uuid: UUID,
+    currency: Currency,
     bigDecimal: java.math.BigDecimal,
     bigInteger: java.math.BigInteger,
     dayOfWeek: DayOfWeek,
@@ -147,7 +148,7 @@ object Fixtures {
     zoneOffset: ZoneOffset
   )
   object MyRecordAllTypes1   {
-    implicit val schema: zio.schema.Schema.CaseClass21.WithFields[
+    implicit val schema: zio.schema.Schema.CaseClass22.WithFields[
       "string",
       "boolean",
       "byte",
@@ -159,6 +160,7 @@ object Fixtures {
       "binary",
       "char",
       "uuid",
+      "currency",
       "bigDecimal",
       "bigInteger",
       "dayOfWeek",
@@ -180,6 +182,7 @@ object Fixtures {
       zio.Chunk[Byte],
       Char,
       java.util.UUID,
+      java.util.Currency,
       java.math.BigDecimal,
       java.math.BigInteger,
       java.time.DayOfWeek,

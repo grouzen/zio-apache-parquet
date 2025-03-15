@@ -92,6 +92,7 @@ object OperatorSupport {
     implicit case object binary         extends EqNotEq[Chunk[Byte]]
     implicit case object char           extends EqNotEq[Char]
     implicit case object uuid           extends EqNotEq[UUID]
+    implicit case object currency       extends EqNotEq[java.util.Currency]
     implicit case object bigDecimal     extends EqNotEq[java.math.BigDecimal]
     implicit case object bigInteger     extends EqNotEq[java.math.BigInteger]
     implicit case object dayOfWeek      extends EqNotEq[DayOfWeek]

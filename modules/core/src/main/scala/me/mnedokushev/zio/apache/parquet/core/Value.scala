@@ -24,7 +24,7 @@ import java.time.{
   ZoneOffset,
   ZonedDateTime
 }
-import java.util.UUID
+import java.util.{ Currency, UUID }
 
 sealed trait Value {
   def write(schema: Type, recordConsumer: RecordConsumer): Unit
@@ -230,6 +230,9 @@ object Value {
 
     PrimitiveValue.BinaryValue(Binary.fromConstantByteArray(bb.array()))
   }
+
+  def currency(v: Currency) =
+    string(v.getCurrencyCode)
 
   def bigDecimal(v: BigDecimal) =
     long(v.unscaledValue.longValue)
