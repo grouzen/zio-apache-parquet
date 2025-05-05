@@ -5,13 +5,12 @@ import scalafix.sbt.ScalafixPlugin.autoImport.scalafixSemanticdb
 object BuildHelper {
 
   def stdSettings(projectName: String): Seq[Def.Setting[_]] = Seq(
-    name                          := s"zio-apache-parquet-$projectName",
-    organization                  := "me.mnedokushev",
+    name              := s"zio-apache-parquet-$projectName",
+    organization      := "me.mnedokushev",
     libraryDependencies ++= betterMonadicFor(scalaVersion.value),
-    ThisBuild / semanticdbEnabled := scalaVersion.value != Scala3,
-    ThisBuild / semanticdbOptions += "-P:semanticdb:synthetics:on",
-    ThisBuild / semanticdbVersion := scalafixSemanticdb.revision,
-    Test / fork                   := true,
+    semanticdbEnabled := true,
+    semanticdbVersion := scalafixSemanticdb.revision,
+    Test / fork       := true,
     Test / unmanagedSourceDirectories ++= crossVersionSources(scalaVersion.value, "test", baseDirectory.value),
     Test / unmanagedSourceDirectories ++= crossVersionSources(scalaVersion.value, "main", baseDirectory.value),
     libraryDependencies ++= {
