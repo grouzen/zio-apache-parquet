@@ -20,6 +20,40 @@ import java.util.{ Currency, UUID }
 
 object Fixtures {
 
+  // unable to generate code for case classes with more than 120 int fields due to following error:
+  // tested with jdk 11.0.23 64bit
+  // Error while emitting me/mnedokushev/zio/apache/parquet/core/codec/SchemaEncoderDeriverSpec$MaxArityRecord$
+  // Method too large: me/mnedokushev/zio/apache/parquet/core/codec/SchemaEncoderDeriverSpec$MaxArityRecord$.derivedSchema0$lzyINIT4$1$$anonfun$364 (Lscala/collection/immutable/ListMap;)Lscala/util/Either;
+  case class Arity23(
+    a: Int,
+    b: Option[String],
+    c: Int,
+    d: Int,
+    e: Int,
+    f: Int,
+    g: Int,
+    h: Int,
+    i: Int,
+    j: Int,
+    k: Int,
+    l: Int,
+    m: Int,
+    n: Int,
+    o: Int,
+    p: Int,
+    q: Int,
+    r: Int,
+    s: Int,
+    t: Int,
+    u: Int,
+    v: Int,
+    w: Int
+  )
+  object Arity23 {
+    implicit lazy val schema: Schema[Arity23] =
+      DeriveSchema.gen[Arity23]
+  }
+
   case class MyRecord(a: String, b: Int, child: MyRecord.Child, enm: MyRecord.Enum, opt: Option[Int])
 
   object MyRecord {

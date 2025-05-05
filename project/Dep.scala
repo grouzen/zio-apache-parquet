@@ -33,7 +33,7 @@ object Dep {
 
   lazy val scalaCollectionCompat = O.scalaLangModules %% "scala-collection-compat" % V.scalaCollectionCompat
 
-  lazy val scalaReflect = Def.setting("org.scala-lang" % "scala-reflect" % scalaVersion.value)
+  lazy val scalaReflect = Def.setting("org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided")
 
   lazy val core = Seq(
     zio,

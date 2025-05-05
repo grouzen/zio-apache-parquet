@@ -27,6 +27,7 @@ import java.time.{
   ZonedDateTime
 }
 import java.util.{ Currency, UUID }
+import me.mnedokushev.zio.apache.parquet.core.Fixtures
 
 //import java.nio.ByteBuffer
 //import java.util.UUID
@@ -321,6 +322,40 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
         val encoder = Derive.derive[ValueEncoder, Record](ValueEncoderDeriver.default)
         val decoder = Derive.derive[ValueDecoder, Record](ValueDecoderDeriver.default)
         val payload = Record(2, false, Some("data"), List(1), Map("zio" -> 1))
+
+        for {
+          value  <- encoder.encodeZIO(payload)
+          result <- decoder.decodeZIO(value)
+        } yield assertTrue(result == payload)
+      },
+      test("record arity > 22") {
+        val encoder = Derive.derive[ValueEncoder, Fixtures.Arity23](ValueEncoderDeriver.default)
+        val decoder = Derive.derive[ValueDecoder, Fixtures.Arity23](ValueDecoderDeriver.default)
+        val payload = Fixtures.Arity23(
+          a = 1,
+          b = None,
+          c = 3,
+          d = 4,
+          e = 5,
+          f = 6,
+          g = 7,
+          h = 8,
+          i = 9,
+          j = 10,
+          k = 11,
+          l = 12,
+          m = 13,
+          n = 14,
+          o = 15,
+          p = 16,
+          q = 17,
+          r = 18,
+          s = 19,
+          t = 20,
+          u = 21,
+          v = 22,
+          w = 23
+        )
 
         for {
           value  <- encoder.encodeZIO(payload)

@@ -7,6 +7,7 @@ import zio.schema._
 import zio.test._
 
 import java.util.UUID
+import me.mnedokushev.zio.apache.parquet.core.Fixtures
 //import scala.annotation.nowarn
 
 object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
@@ -106,6 +107,44 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
           Chunk(
             Schemas.int.required.named("a"),
             Schemas.string.optional.named("b")
+          )
+        )
+
+        assertTrue(
+          tpeOptional == schemaDef.optional.named(name),
+          tpeRequired == schemaDef.required.named(name)
+        )
+      },
+      test("record arity > 22") {
+        val name        = "arity"
+        val encoder     = Derive.derive[SchemaEncoder, Fixtures.Arity23](SchemaEncoderDeriver.default)
+        val tpeOptional = encoder.encode(Fixtures.Arity23.schema, name, optional = true)
+        val tpeRequired = encoder.encode(Fixtures.Arity23.schema, name, optional = false)
+        val schemaDef   = Schemas.record(
+          Chunk(
+            Schemas.int.required.named("a"),
+            Schemas.string.optional.named("b"),
+            Schemas.int.required.named("c"),
+            Schemas.int.required.named("d"),
+            Schemas.int.required.named("e"),
+            Schemas.int.required.named("f"),
+            Schemas.int.required.named("g"),
+            Schemas.int.required.named("h"),
+            Schemas.int.required.named("i"),
+            Schemas.int.required.named("j"),
+            Schemas.int.required.named("k"),
+            Schemas.int.required.named("l"),
+            Schemas.int.required.named("m"),
+            Schemas.int.required.named("n"),
+            Schemas.int.required.named("o"),
+            Schemas.int.required.named("p"),
+            Schemas.int.required.named("q"),
+            Schemas.int.required.named("r"),
+            Schemas.int.required.named("s"),
+            Schemas.int.required.named("t"),
+            Schemas.int.required.named("u"),
+            Schemas.int.required.named("v"),
+            Schemas.int.required.named("w")
           )
         )
 
