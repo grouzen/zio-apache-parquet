@@ -5,7 +5,7 @@ object Dep {
 
   object V {
     val zio                   = "2.1.17"
-    val zioSchema             = "1.6.6"
+    val zioSchema             = "1.7.0"
     val scalaCollectionCompat = "2.13.0"
     val apacheParquet         = "1.15.0"
     val apacheHadoop          = "3.4.1"
@@ -33,7 +33,7 @@ object Dep {
 
   lazy val scalaCollectionCompat = O.scalaLangModules %% "scala-collection-compat" % V.scalaCollectionCompat
 
-  lazy val scalaReflect = Def.setting("org.scala-lang" % "scala-reflect" % scalaVersion.value)
+  lazy val scalaReflect = Def.setting("org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided")
 
   lazy val core = Seq(
     zio,

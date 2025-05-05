@@ -5,12 +5,13 @@ import scalafix.sbt.ScalafixPlugin.autoImport.scalafixSemanticdb
 object BuildHelper {
 
   def stdSettings(projectName: String): Seq[Def.Setting[_]] = Seq(
-    name              := s"zio-apache-parquet-$projectName",
-    organization      := "me.mnedokushev",
+    name                          := s"zio-apache-parquet-$projectName",
+    organization                  := "me.mnedokushev",
     libraryDependencies ++= betterMonadicFor(scalaVersion.value),
-    semanticdbEnabled := true,
-    semanticdbVersion := scalafixSemanticdb.revision,
-    Test / fork       := true,
+    ThisBuild / semanticdbEnabled := scalaVersion.value != Scala3,
+    ThisBuild / semanticdbOptions += "-P:semanticdb:synthetics:on",
+    ThisBuild / semanticdbVersion := scalafixSemanticdb.revision,
+    Test / fork                   := true,
     Test / unmanagedSourceDirectories ++= crossVersionSources(scalaVersion.value, "test", baseDirectory.value),
     Test / unmanagedSourceDirectories ++= crossVersionSources(scalaVersion.value, "main", baseDirectory.value),
     libraryDependencies ++= {
@@ -25,7 +26,7 @@ object BuildHelper {
 
   val Scala212 = "2.12.20"
   val Scala213 = "2.13.16"
-  val Scala3   = "3.6.4"
+  val Scala3   = "3.3.5"
 
   private def betterMonadicFor(scalaVersion: String) =
     CrossVersion.partialVersion(scalaVersion) match {

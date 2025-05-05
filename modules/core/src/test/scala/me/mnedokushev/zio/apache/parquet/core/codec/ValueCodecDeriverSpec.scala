@@ -27,6 +27,7 @@ import java.time.{
   ZonedDateTime
 }
 import java.util.{ Currency, UUID }
+import me.mnedokushev.zio.apache.parquet.core.Fixtures
 
 //import java.nio.ByteBuffer
 //import java.util.UUID
@@ -44,37 +45,8 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
   }
 
   case class Record(a: Int, b: Boolean, c: Option[String], d: List[Int], e: Map[String, Int])
-  object Record    {
+  object Record {
     implicit val schema: Schema[Record] = DeriveSchema.gen[Record]
-  }
-
-  case class BigRecord(
-    a: Int,
-    b: Boolean,
-    c: Option[String],
-    d: List[Int],
-    e: Map[String, Int],
-    f: Int = 6,
-    g: Int = 7,
-    h: Int = 8,
-    i: Int = 9,
-    j: Int = 10,
-    k: Int = 11,
-    l: Int = 12,
-    m: Int = 13,
-    n: Int = 14,
-    o: Int = 15,
-    p: Int = 16,
-    q: Int = 17,
-    r: Int = 18,
-    s: Int = 19,
-    t: Int = 20,
-    u: Int = 21,
-    v: Int = 22,
-    w: Int = 23
-  )
-  object BigRecord {
-    implicit val schema: Schema[BigRecord] = DeriveSchema.gen[BigRecord]
   }
 
   case class SummonedRecord(a: Int, b: Boolean, c: Option[String], d: Option[Int])
@@ -356,10 +328,34 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
           result <- decoder.decodeZIO(value)
         } yield assertTrue(result == payload)
       },
-      test("arity > 22") {
-        val encoder = Derive.derive[ValueEncoder, BigRecord](ValueEncoderDeriver.default)
-        val decoder = Derive.derive[ValueDecoder, BigRecord](ValueDecoderDeriver.default)
-        val payload = BigRecord(2, false, Some("data"), List(1), Map("zio" -> 1))
+      test("record arity > 22") {
+        val encoder = Derive.derive[ValueEncoder, Fixtures.Arity23](ValueEncoderDeriver.default)
+        val decoder = Derive.derive[ValueDecoder, Fixtures.Arity23](ValueDecoderDeriver.default)
+        val payload = Fixtures.Arity23(
+          a = 1,
+          b = None,
+          c = 3,
+          d = 4,
+          e = 5,
+          f = 6,
+          g = 7,
+          h = 8,
+          i = 9,
+          j = 10,
+          k = 11,
+          l = 12,
+          m = 13,
+          n = 14,
+          o = 15,
+          p = 16,
+          q = 17,
+          r = 18,
+          s = 19,
+          t = 20,
+          u = 21,
+          v = 22,
+          w = 23
+        )
 
         for {
           value  <- encoder.encodeZIO(payload)

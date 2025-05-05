@@ -1,4 +1,5 @@
 import BuildHelper._
+import org.typelevel.scalacoptions.ScalacOptions
 
 inThisBuild(
   List(
@@ -21,7 +22,7 @@ inThisBuild(
       )
     ),
     crossScalaVersions                  := Seq(Scala213, Scala3),
-    ThisBuild / scalaVersion            := Scala3,
+    scalaVersion                        := Scala213,
     githubWorkflowJavaVersions          := Seq(JavaSpec.temurin("11"), JavaSpec.temurin("17")),
     githubWorkflowPublishTargetBranches := Seq(),
     githubWorkflowBuildPreamble         := Seq(
@@ -50,6 +51,13 @@ lazy val core =
     .in(file("modules/core"))
     .settings(
       stdSettings("core"),
+      tpolecatSettings,
       libraryDependencies ++= Dep.core,
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
     )
+
+val tpolecatSettings =
+  Seq(
+    tpolecatScalacOptions += ScalacOptions.source3,
+    tpolecatExcludeOptions += ScalacOptions.lintInferAny
+  )

@@ -7,6 +7,7 @@ import zio.schema._
 import zio.test._
 
 import java.util.UUID
+import me.mnedokushev.zio.apache.parquet.core.Fixtures
 //import scala.annotation.nowarn
 
 object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
@@ -23,39 +24,6 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
   case class Record(a: Int, b: Option[String])
   object Record {
     implicit val schema: Schema[Record] = DeriveSchema.gen[Record]
-  }
-
-  // unable to generate code for case classes with more than 120 int fields due to following error:
-  // tested with jdk 11.0.23 64bit
-  // Error while emitting me/mnedokushev/zio/apache/parquet/core/codec/SchemaEncoderDeriverSpec$MaxArityRecord$
-  // Method too large: me/mnedokushev/zio/apache/parquet/core/codec/SchemaEncoderDeriverSpec$MaxArityRecord$.derivedSchema0$lzyINIT4$1$$anonfun$364 (Lscala/collection/immutable/ListMap;)Lscala/util/Either;
-  case class BigRecord(
-    a: Int,
-    b: Option[String],
-    c: Int,
-    d: Int,
-    e: Int,
-    f: Int,
-    g: Int,
-    h: Int,
-    i: Int,
-    j: Int,
-    k: Int,
-    l: Int,
-    m: Int,
-    n: Int,
-    o: Int,
-    p: Int,
-    q: Int,
-    r: Int,
-    s: Int,
-    t: Int,
-    u: Int,
-    v: Int,
-    w: Int
-  )
-  object BigRecord {
-    implicit val schema: Schema[BigRecord] = DeriveSchema.gen[BigRecord]
   }
 
   // Helper for being able to extract type parameter A from a given schema in order to cast the type of encoder<
@@ -147,11 +115,11 @@ object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
           tpeRequired == schemaDef.required.named(name)
         )
       },
-      test("arity > 22") {
+      test("record arity > 22") {
         val name        = "arity"
-        val encoder     = Derive.derive[SchemaEncoder, BigRecord](SchemaEncoderDeriver.default)
-        val tpeOptional = encoder.encode(BigRecord.schema, name, optional = true)
-        val tpeRequired = encoder.encode(BigRecord.schema, name, optional = false)
+        val encoder     = Derive.derive[SchemaEncoder, Fixtures.Arity23](SchemaEncoderDeriver.default)
+        val tpeOptional = encoder.encode(Fixtures.Arity23.schema, name, optional = true)
+        val tpeRequired = encoder.encode(Fixtures.Arity23.schema, name, optional = false)
         val schemaDef   = Schemas.record(
           Chunk(
             Schemas.int.required.named("a"),
