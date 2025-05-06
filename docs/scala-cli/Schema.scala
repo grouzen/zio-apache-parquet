@@ -1,5 +1,5 @@
 //> using scala "3.6.4"
-//> using dep me.mnedokushev::zio-apache-parquet-core:0.1.12
+//> using dep me.mnedokushev::zio-apache-parquet-core:0.2.1
 
 import zio.schema.*
 import me.mnedokushev.zio.apache.parquet.core.codec.*
