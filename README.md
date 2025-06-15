@@ -113,7 +113,7 @@ object SchemaSummoned extends App:
   // }
 ```
 
-The case classes with arity bigger than 22 are supported too. Check [[docs/scala-cli/SchemaArity23.scala]] out!
+The case classes with arity bigger than 22 are supported too. Check out the [SchemaArity23.scala ScalaCLI example](docs/scala-cli/SchemaArity23.scala)!
 
 #### Value
 
