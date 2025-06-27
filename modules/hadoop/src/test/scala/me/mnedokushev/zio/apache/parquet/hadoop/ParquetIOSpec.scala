@@ -1,4 +1,4 @@
-package me.mnedokushev.zio.apache.parquet.core.hadoop
+package me.mnedokushev.zio.apache.parquet.hadoop
 
 import me.mnedokushev.zio.apache.parquet.core.Fixtures._
 import me.mnedokushev.zio.apache.parquet.core.filter.Filter

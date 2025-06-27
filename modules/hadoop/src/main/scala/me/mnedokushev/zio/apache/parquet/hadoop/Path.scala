@@ -1,4 +1,4 @@
-package me.mnedokushev.zio.apache.parquet.core.hadoop
+package me.mnedokushev.zio.apache.parquet.hadoop
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{ Path => HadoopPath }
