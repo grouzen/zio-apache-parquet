@@ -65,7 +65,7 @@ lazy val hadoop =
       libraryDependencies ++= Dep.hadoop,
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
     )
-    .dependsOn(core)
+    .dependsOn(core % "compile->compile;test->test")
 
 val tpolecatSettings =
   Seq(
