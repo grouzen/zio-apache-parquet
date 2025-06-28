@@ -40,7 +40,7 @@ inThisBuild(
 lazy val root =
   project
     .in(file("."))
-    .aggregate(core)
+    .aggregate(core, hadoop)
     .settings(publish / skip := true)
     .settings(
       addCommandAlias("fmtAll", "+scalafmtAll; +scalafixAll")
@@ -55,6 +55,17 @@ lazy val core =
       libraryDependencies ++= Dep.core,
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
     )
+
+lazy val hadoop =
+  project
+    .in(file("modules/hadoop"))
+    .settings(
+      stdSettings("hadoop"),
+      tpolecatSettings,
+      libraryDependencies ++= Dep.hadoop,
+      testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+    )
+    .dependsOn(core % "compile->compile;test->test")
 
 val tpolecatSettings =
   Seq(

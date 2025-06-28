@@ -3,7 +3,7 @@
 
 import zio.schema.*
 import me.mnedokushev.zio.apache.parquet.core.codec.*
-import me.mnedokushev.zio.apache.parquet.core.hadoop.{ ParquetReader, ParquetWriter, Path }
+import me.mnedokushev.zio.apache.parquet.hadoop.{ ParquetReader, ParquetWriter, Path }
 import zio.*
 
 import java.nio.file.Files

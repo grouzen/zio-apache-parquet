@@ -1,4 +1,4 @@
-package me.mnedokushev.zio.apache.parquet.core.hadoop
+package me.mnedokushev.zio.apache.parquet.hadoop
 
 import me.mnedokushev.zio.apache.parquet.core.Schemas
 import me.mnedokushev.zio.apache.parquet.core.Value.GroupValue.RecordValue

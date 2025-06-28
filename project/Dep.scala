@@ -42,6 +42,11 @@ object Dep {
     scalaCollectionCompat,
     parquetHadoop,
     parquetColumn,
+    zioTest    % Test,
+    zioTestSbt % Test
+  )
+
+  lazy val hadoop = Seq(
     hadoopCommon,
     hadoopMapred,
     zioTest    % Test,
