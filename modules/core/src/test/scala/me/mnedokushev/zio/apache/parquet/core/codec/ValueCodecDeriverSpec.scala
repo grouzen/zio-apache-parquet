@@ -2,7 +2,7 @@ package me.mnedokushev.zio.apache.parquet.core.codec
 
 //import me.mnedokushev.zio.apache.parquet.core.Value
 //import me.mnedokushev.zio.apache.parquet.core.Value.PrimitiveValue
-import me.mnedokushev.zio.apache.parquet.core.{Fixtures, NANOS_FACTOR, NANOS_PER_DAY, Value}
+import me.mnedokushev.zio.apache.parquet.core.{ Fixtures, NANOS_FACTOR, NANOS_PER_DAY, Value }
 import zio._
 import zio.schema._
 import zio.test.Assertion._

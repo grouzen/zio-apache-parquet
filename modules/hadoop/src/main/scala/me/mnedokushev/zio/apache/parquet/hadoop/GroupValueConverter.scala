@@ -9,107 +9,151 @@ import zio.Chunk
 
 import scala.jdk.CollectionConverters._
 
-abstract class GroupValueConverter[V <: GroupValue[V], SV <: GroupValue[SV]](
-  schema: GroupType,
-  overridenSelf: Option[GroupValueConverter[SV, ?]] = None
-) extends GroupConverter { self =>
+trait GroupValueConverter[V <: GroupValue[V]] extends GroupConverter {
 
   def get: V =
     this.groupValue
 
-  def put(name: String, value: Value): Unit =
-    overridenSelf match {
-      case Some(self0) =>
-        self0.groupValue = self0.groupValue.put(name, value)
-      case None        =>
-        this.groupValue = this.groupValue.put(name, value)
-    }
+  def put(name: String, value: Value): Unit
 
   protected var groupValue: V =
     null.asInstanceOf[V]
 
-  private val converters: Chunk[Converter] =
-    Chunk.fromIterable(
-      schema.getFields.asScala.toList.map { schema0 =>
-        val name = schema0.getName
-
-        schema0.getLogicalTypeAnnotation match {
-          case _ if schema0.isPrimitive                           =>
-            primitive(name)
-          case _: LogicalTypeAnnotation.ListLogicalTypeAnnotation =>
-            list(schema0.asGroupType(), name)
-          case _: LogicalTypeAnnotation.MapLogicalTypeAnnotation  =>
-            map(schema0.asGroupType(), name)
-          case _                                                  =>
-            (name, schema0.getRepetition) match {
-              case ("list", Repetition.REPEATED)      =>
-                listElement(schema0.asGroupType())
-              case ("key_value", Repetition.REPEATED) =>
-                mapKeyValue(schema0.asGroupType(), name)
-              case _                                  =>
-                record(schema0.asGroupType(), name)
-            }
-        }
-      }
-    )
+  protected val converters: Chunk[Converter]
 
   override def getConverter(fieldIndex: Int): Converter =
     converters(fieldIndex)
 
-  private def primitive(name: String) =
+}
+
+object GroupValueConverter {
+
+  abstract case class Default[V <: GroupValue[V]](schema: GroupType) extends GroupValueConverter[V] {
+
+    override def put(name: String, value: Value): Unit =
+      this.groupValue = this.groupValue.put(name, value)
+
+    override protected val converters: Chunk[Converter] =
+      Chunk.fromIterable(
+        schema.getFields.asScala.toList.map { schema0 =>
+          val name = schema0.getName
+
+          schema0.getLogicalTypeAnnotation match {
+            case _ if schema0.isPrimitive                           =>
+              GroupValueConverter.primitive(name, this)
+            case _: LogicalTypeAnnotation.ListLogicalTypeAnnotation =>
+              GroupValueConverter.list(schema0.asGroupType(), name, this)
+            case _: LogicalTypeAnnotation.MapLogicalTypeAnnotation  =>
+              GroupValueConverter.map(schema0.asGroupType(), name, this)
+            case _                                                  =>
+              (name, schema0.getRepetition) match {
+                case ("list", Repetition.REPEATED)      =>
+                  GroupValueConverter.listElement(schema0.asGroupType(), this)
+                case ("key_value", Repetition.REPEATED) =>
+                  GroupValueConverter.mapKeyValue(schema0.asGroupType(), name, this)
+                case _                                  =>
+                  GroupValueConverter.record(schema0.asGroupType(), name, this)
+              }
+          }
+        }
+      )
+
+  }
+
+  abstract case class ByPass[V <: GroupValue[V], S <: GroupValue[S]](
+    schema: GroupType,
+    toSelf: GroupValueConverter[S]
+  ) extends GroupValueConverter[V] {
+
+    override def put(name: String, value: Value): Unit =
+      toSelf.groupValue = toSelf.groupValue.put(name, value)
+
+    override protected val converters: Chunk[Converter] =
+      Chunk.fromIterable(
+        schema.getFields.asScala.toList.map { schema0 =>
+          val name = schema0.getName
+
+          schema0.getLogicalTypeAnnotation match {
+            case _ if schema0.isPrimitive                           =>
+              GroupValueConverter.primitive(name, toSelf)
+            case _: LogicalTypeAnnotation.ListLogicalTypeAnnotation =>
+              GroupValueConverter.list(schema0.asGroupType(), name, this)
+            case _: LogicalTypeAnnotation.MapLogicalTypeAnnotation  =>
+              GroupValueConverter.map(schema0.asGroupType(), name, this)
+            case _                                                  =>
+              (name, schema0.getRepetition) match {
+                case ("list", Repetition.REPEATED)      =>
+                  GroupValueConverter.listElement(schema0.asGroupType(), this)
+                case ("key_value", Repetition.REPEATED) =>
+                  GroupValueConverter.mapKeyValue(schema0.asGroupType(), name, this)
+                case _                                  =>
+                  GroupValueConverter.record(schema0.asGroupType(), name, this)
+              }
+          }
+        }
+      )
+
+  }
+
+  def primitive[V <: GroupValue[V]](name: String, parent: GroupValueConverter[V]): PrimitiveConverter =
     new PrimitiveConverter {
 
       override def addBinary(value: Binary): Unit =
-        overridenSelf.getOrElse(self).put(name, PrimitiveValue.BinaryValue(value))
+        parent.put(name, PrimitiveValue.BinaryValue(value))
 
       override def addBoolean(value: Boolean): Unit =
-        overridenSelf.getOrElse(self).put(name, PrimitiveValue.BooleanValue(value))
+        parent.put(name, PrimitiveValue.BooleanValue(value))
 
       override def addDouble(value: Double): Unit =
-        overridenSelf.getOrElse(self).put(name, PrimitiveValue.DoubleValue(value))
+        parent.put(name, PrimitiveValue.DoubleValue(value))
 
       override def addFloat(value: Float): Unit =
-        overridenSelf.getOrElse(self).put(name, PrimitiveValue.FloatValue(value))
+        parent.put(name, PrimitiveValue.FloatValue(value))
 
       override def addInt(value: Int): Unit =
-        overridenSelf.getOrElse(self).put(name, PrimitiveValue.Int32Value(value))
+        parent.put(name, PrimitiveValue.Int32Value(value))
 
       override def addLong(value: Long): Unit =
-        overridenSelf.getOrElse(self).put(name, PrimitiveValue.Int64Value(value))
+        parent.put(name, PrimitiveValue.Int64Value(value))
 
     }
 
-  private def record(
+  def record[V <: GroupValue[V]](
     schema: GroupType,
-    name: String
-  ): GroupValueConverter[GroupValue.RecordValue, Nothing] =
-    new GroupValueConverter[GroupValue.RecordValue, Nothing](schema) {
+    name: String,
+    parent: GroupValueConverter[V]
+  ): GroupValueConverter[GroupValue.RecordValue] =
+    new Default[GroupValue.RecordValue](schema) {
 
       override def start(): Unit =
         this.groupValue = Value.record(
-          schema.getFields.asScala.toList.map(_.getName -> Value.nil).toMap
+          this.schema.getFields.asScala.toList.map(_.getName -> Value.nil).toMap
         )
 
       override def end(): Unit =
-        self.put(name, this.groupValue)
+        parent.put(name, this.groupValue)
 
     }
 
-  private def list(
+  def list[V <: GroupValue[V]](
     schema: GroupType,
-    name: String
-  ): GroupValueConverter[GroupValue.ListValue, Nothing] =
-    new GroupValueConverter[GroupValue.ListValue, Nothing](schema) {
+    name: String,
+    parent: GroupValueConverter[V]
+  ): GroupValueConverter[GroupValue.ListValue] =
+    new Default[GroupValue.ListValue](schema) {
 
       override def start(): Unit =
         this.groupValue = Value.list(Chunk.empty)
 
       override def end(): Unit =
-        self.put(name, this.groupValue)
+        parent.put(name, this.groupValue)
     }
 
-  private def listElement(schema: GroupType): GroupValueConverter[GroupValue.RecordValue, V] =
-    new GroupValueConverter[GroupValue.RecordValue, V](schema, overridenSelf = Some(self)) {
+  def listElement[V <: GroupValue[V], S <: GroupValue[S]](
+    schema: GroupType,
+    parent: GroupValueConverter[S]
+  ): GroupValueConverter[GroupValue.RecordValue] =
+    new ByPass[GroupValue.RecordValue, S](schema, parent) {
 
       override def start(): Unit = ()
 
@@ -117,43 +161,41 @@ abstract class GroupValueConverter[V <: GroupValue[V], SV <: GroupValue[SV]](
 
     }
 
-  private def map(
+  def map[V <: GroupValue[V]](
     schema: GroupType,
-    name: String
-  ): GroupValueConverter[GroupValue.MapValue, Nothing] =
-    new GroupValueConverter[GroupValue.MapValue, Nothing](schema) {
+    name: String,
+    parent: GroupValueConverter[V]
+  ): GroupValueConverter[GroupValue.MapValue] =
+    new Default[GroupValue.MapValue](schema) {
 
       override def start(): Unit =
         this.groupValue = Value.map(Map.empty)
 
       override def end(): Unit =
-        self.put(name, this.groupValue)
+        parent.put(name, this.groupValue)
     }
 
-  private def mapKeyValue(
+  def mapKeyValue[V <: GroupValue[V]](
     schema: GroupType,
-    name: String
-  ): GroupValueConverter[GroupValue.RecordValue, Nothing] =
-    new GroupValueConverter[GroupValue.RecordValue, Nothing](schema) {
+    name: String,
+    parent: GroupValueConverter[V]
+  ): GroupValueConverter[GroupValue.RecordValue] =
+    new Default[GroupValue.RecordValue](schema) {
 
       override def start(): Unit =
         this.groupValue = Value.record(Map("key" -> Value.nil, "value" -> Value.nil))
 
       override def end(): Unit =
-        self.put(name, this.groupValue)
+        parent.put(name, this.groupValue)
 
     }
 
-}
-
-object GroupValueConverter {
-
-  def root(schema: GroupType): GroupValueConverter[GroupValue.RecordValue, Nothing] =
-    new GroupValueConverter[GroupValue.RecordValue, Nothing](schema) {
+  def root(schema: GroupType): GroupValueConverter[GroupValue.RecordValue] =
+    new Default[GroupValue.RecordValue](schema) {
 
       override def start(): Unit =
         this.groupValue = Value.record(
-          schema.getFields.asScala.toList.map(_.getName -> Value.nil).toMap
+          this.schema.getFields.asScala.toList.map(_.getName -> Value.nil).toMap
         )
 
       override def end(): Unit = ()

@@ -1,10 +1,15 @@
 package me.mnedokushev.zio.apache.parquet.hadoop
 
-import me.mnedokushev.zio.apache.parquet.core.codec.{SchemaEncoder, SchemaEncoderDeriver, ValueDecoder, ValueDecoderDeriver}
+import me.mnedokushev.zio.apache.parquet.core.codec.{
+  SchemaEncoder,
+  SchemaEncoderDeriver,
+  ValueDecoder,
+  ValueDecoderDeriver
+}
 import me.mnedokushev.zio.apache.parquet.hadoop.ValueConverterSpec.FoodProductName.ProductName
-import zio.schema.{Derive, DeriveSchema, Schema}
-import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, _}
-import zio.{Scope, _}
+import zio.schema.{ Derive, DeriveSchema, Schema }
+import zio.test.{ Spec, TestEnvironment, ZIOSpecDefault, _ }
+import zio.{ Scope, _ }
 
 object ValueConverterSpec extends ZIOSpecDefault {
 
