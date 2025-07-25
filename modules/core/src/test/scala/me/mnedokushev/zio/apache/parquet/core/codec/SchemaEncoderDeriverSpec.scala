@@ -1,13 +1,12 @@
 package me.mnedokushev.zio.apache.parquet.core.codec
 
-import me.mnedokushev.zio.apache.parquet.core.Schemas
 import me.mnedokushev.zio.apache.parquet.core.Schemas.PrimitiveDef
+import me.mnedokushev.zio.apache.parquet.core.{ Fixtures, Schemas }
 import zio._
 import zio.schema._
 import zio.test._
 
 import java.util.UUID
-import me.mnedokushev.zio.apache.parquet.core.Fixtures
 //import scala.annotation.nowarn
 
 object SchemaEncoderDeriverSpec extends ZIOSpecDefault {
