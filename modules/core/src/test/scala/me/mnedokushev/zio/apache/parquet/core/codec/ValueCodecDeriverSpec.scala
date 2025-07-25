@@ -2,7 +2,7 @@ package me.mnedokushev.zio.apache.parquet.core.codec
 
 //import me.mnedokushev.zio.apache.parquet.core.Value
 //import me.mnedokushev.zio.apache.parquet.core.Value.PrimitiveValue
-import me.mnedokushev.zio.apache.parquet.core.{ NANOS_FACTOR, NANOS_PER_DAY, Value }
+import me.mnedokushev.zio.apache.parquet.core.{Fixtures, NANOS_FACTOR, NANOS_PER_DAY, Value}
 import zio._
 import zio.schema._
 import zio.test.Assertion._
@@ -27,7 +27,6 @@ import java.time.{
   ZonedDateTime
 }
 import java.util.{ Currency, UUID }
-import me.mnedokushev.zio.apache.parquet.core.Fixtures
 
 //import java.nio.ByteBuffer
 //import java.util.UUID
@@ -41,17 +40,20 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
     case object InProgress extends MyEnum
     case object Done       extends MyEnum
 
-    implicit val schema: Schema[MyEnum] = DeriveSchema.gen[MyEnum]
+    implicit val schema: Schema[MyEnum] =
+      DeriveSchema.gen[MyEnum]
   }
 
   case class Record(a: Int, b: Boolean, c: Option[String], d: List[Int], e: Map[String, Int])
   object Record {
-    implicit val schema: Schema[Record] = DeriveSchema.gen[Record]
+    implicit val schema: Schema[Record] =
+      DeriveSchema.gen[Record]
   }
 
   case class SummonedRecord(a: Int, b: Boolean, c: Option[String], d: Option[Int])
   object SummonedRecord {
-    implicit val schema: Schema[SummonedRecord] = DeriveSchema.gen[SummonedRecord]
+    implicit val schema: Schema[SummonedRecord] =
+      DeriveSchema.gen[SummonedRecord]
   }
 
   override def spec: Spec[TestEnvironment & Scope, Any] =

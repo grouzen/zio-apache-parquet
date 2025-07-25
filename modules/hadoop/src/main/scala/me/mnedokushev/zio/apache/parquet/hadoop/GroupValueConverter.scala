@@ -9,18 +9,24 @@ import zio.Chunk
 
 import scala.jdk.CollectionConverters._
 
-abstract class GroupValueConverter[V <: GroupValue[V]](
+abstract class GroupValueConverter[V <: GroupValue[V], SV <: GroupValue[SV]](
   schema: GroupType,
-  parent: Option[GroupValueConverter[?]] = None
+  overridenSelf: Option[GroupValueConverter[SV, ?]] = None
 ) extends GroupConverter { self =>
 
   def get: V =
     this.groupValue
 
   def put(name: String, value: Value): Unit =
-    this.groupValue = this.groupValue.put(name, value)
+    overridenSelf match {
+      case Some(self0) =>
+        self0.groupValue = self0.groupValue.put(name, value)
+      case None        =>
+        this.groupValue = this.groupValue.put(name, value)
+    }
 
-  protected var groupValue: V = null.asInstanceOf[V]
+  protected var groupValue: V =
+    null.asInstanceOf[V]
 
   private val converters: Chunk[Converter] =
     Chunk.fromIterable(
@@ -54,44 +60,46 @@ abstract class GroupValueConverter[V <: GroupValue[V]](
     new PrimitiveConverter {
 
       override def addBinary(value: Binary): Unit =
-        parent.getOrElse(self).put(name, PrimitiveValue.BinaryValue(value))
+        overridenSelf.getOrElse(self).put(name, PrimitiveValue.BinaryValue(value))
 
       override def addBoolean(value: Boolean): Unit =
-        parent.getOrElse(self).put(name, PrimitiveValue.BooleanValue(value))
+        overridenSelf.getOrElse(self).put(name, PrimitiveValue.BooleanValue(value))
 
       override def addDouble(value: Double): Unit =
-        parent.getOrElse(self).put(name, PrimitiveValue.DoubleValue(value))
+        overridenSelf.getOrElse(self).put(name, PrimitiveValue.DoubleValue(value))
 
       override def addFloat(value: Float): Unit =
-        parent.getOrElse(self).put(name, PrimitiveValue.FloatValue(value))
+        overridenSelf.getOrElse(self).put(name, PrimitiveValue.FloatValue(value))
 
       override def addInt(value: Int): Unit =
-        parent.getOrElse(self).put(name, PrimitiveValue.Int32Value(value))
+        overridenSelf.getOrElse(self).put(name, PrimitiveValue.Int32Value(value))
 
       override def addLong(value: Long): Unit =
-        parent.getOrElse(self).put(name, PrimitiveValue.Int64Value(value))
+        overridenSelf.getOrElse(self).put(name, PrimitiveValue.Int64Value(value))
 
     }
 
   private def record(
     schema: GroupType,
     name: String
-  ): GroupValueConverter[GroupValue.RecordValue] =
-    new GroupValueConverter[GroupValue.RecordValue](schema, parent) {
+  ): GroupValueConverter[GroupValue.RecordValue, Nothing] =
+    new GroupValueConverter[GroupValue.RecordValue, Nothing](schema) {
 
       override def start(): Unit =
-        this.groupValue = Value.record(Map.empty)
+        this.groupValue = Value.record(
+          schema.getFields.asScala.toList.map(_.getName -> Value.nil).toMap
+        )
 
       override def end(): Unit =
-        put(name, this.groupValue)
+        self.put(name, this.groupValue)
 
     }
 
   private def list(
     schema: GroupType,
     name: String
-  ): GroupValueConverter[GroupValue.ListValue] =
-    new GroupValueConverter[GroupValue.ListValue](schema) {
+  ): GroupValueConverter[GroupValue.ListValue, Nothing] =
+    new GroupValueConverter[GroupValue.ListValue, Nothing](schema) {
 
       override def start(): Unit =
         this.groupValue = Value.list(Chunk.empty)
@@ -100,8 +108,8 @@ abstract class GroupValueConverter[V <: GroupValue[V]](
         self.put(name, this.groupValue)
     }
 
-  private def listElement(schema: GroupType): GroupValueConverter[GroupValue.RecordValue] =
-    new GroupValueConverter[GroupValue.RecordValue](schema, Some(self)) {
+  private def listElement(schema: GroupType): GroupValueConverter[GroupValue.RecordValue, V] =
+    new GroupValueConverter[GroupValue.RecordValue, V](schema, overridenSelf = Some(self)) {
 
       override def start(): Unit = ()
 
@@ -112,8 +120,8 @@ abstract class GroupValueConverter[V <: GroupValue[V]](
   private def map(
     schema: GroupType,
     name: String
-  ): GroupValueConverter[GroupValue.MapValue] =
-    new GroupValueConverter[GroupValue.MapValue](schema) {
+  ): GroupValueConverter[GroupValue.MapValue, Nothing] =
+    new GroupValueConverter[GroupValue.MapValue, Nothing](schema) {
 
       override def start(): Unit =
         this.groupValue = Value.map(Map.empty)
@@ -125,8 +133,8 @@ abstract class GroupValueConverter[V <: GroupValue[V]](
   private def mapKeyValue(
     schema: GroupType,
     name: String
-  ): GroupValueConverter[GroupValue.RecordValue] =
-    new GroupValueConverter[GroupValue.RecordValue](schema) {
+  ): GroupValueConverter[GroupValue.RecordValue, Nothing] =
+    new GroupValueConverter[GroupValue.RecordValue, Nothing](schema) {
 
       override def start(): Unit =
         this.groupValue = Value.record(Map("key" -> Value.nil, "value" -> Value.nil))
@@ -140,8 +148,8 @@ abstract class GroupValueConverter[V <: GroupValue[V]](
 
 object GroupValueConverter {
 
-  def root(schema: GroupType): GroupValueConverter[GroupValue.RecordValue] =
-    new GroupValueConverter[GroupValue.RecordValue](schema) {
+  def root(schema: GroupType): GroupValueConverter[GroupValue.RecordValue, Nothing] =
+    new GroupValueConverter[GroupValue.RecordValue, Nothing](schema) {
 
       override def start(): Unit =
         this.groupValue = Value.record(
