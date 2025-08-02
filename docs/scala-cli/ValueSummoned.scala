@@ -1,4 +1,4 @@
-//> using scala "3.7.1"
+//> using scala "3.7.2"
 //> using dep me.mnedokushev::zio-apache-parquet-core:0.3.1
 
 import me.mnedokushev.zio.apache.parquet.core.Value
