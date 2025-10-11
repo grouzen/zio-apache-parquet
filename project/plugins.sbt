@@ -1,6 +1,6 @@
 // Linting
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.5")
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.3")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.4")
 
 // Dependencies management
 addSbtPlugin("ch.epfl.scala"    % "sbt-missinglink"           % "0.3.6")
