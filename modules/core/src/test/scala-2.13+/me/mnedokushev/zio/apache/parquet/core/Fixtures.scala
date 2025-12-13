@@ -69,7 +69,7 @@ object Fixtures {
       MyRecord.Enum,
       Option[Int],
       MyRecord
-    ] =
+    ]                                       =
       DeriveSchema.gen[MyRecord]
     implicit val typeTag: TypeTag[MyRecord] =
       Derive.derive[TypeTag, MyRecord](TypeTagDeriver.default)
@@ -123,7 +123,7 @@ object Fixtures {
       List[Int],
       Map[String, Int],
       MyRecordIO
-    ] =
+    ]                                                     =
       DeriveSchema.gen[MyRecordIO]
     implicit val schemaEncoder: SchemaEncoder[MyRecordIO] =
       Derive.derive[SchemaEncoder, MyRecordIO](SchemaEncoderDeriver.summoned)
@@ -147,7 +147,7 @@ object Fixtures {
       List[Int],
       Map[String, Int],
       MyProjectedRecordIO
-    ] =
+    ]                                                              =
       DeriveSchema.gen[MyProjectedRecordIO]
     implicit val schemaEncoder: SchemaEncoder[MyProjectedRecordIO] =
       Derive.derive[SchemaEncoder, MyProjectedRecordIO](SchemaEncoderDeriver.summoned)
@@ -181,7 +181,7 @@ object Fixtures {
     zoneId: ZoneId,
     zoneOffset: ZoneOffset
   )
-  object MyRecordAllTypes1   {
+  object MyRecordAllTypes1 {
     implicit val schema: zio.schema.Schema.CaseClass22.WithFields[
       "string",
       "boolean",
@@ -228,7 +228,7 @@ object Fixtures {
       java.time.ZoneId,
       java.time.ZoneOffset,
       MyRecordAllTypes1
-    ] =
+    ]                                                =
       DeriveSchema.gen[MyRecordAllTypes1]
     implicit val typeTag: TypeTag[MyRecordAllTypes1] =
       Derive.derive[TypeTag, MyRecordAllTypes1](TypeTagDeriver.default)
@@ -243,7 +243,7 @@ object Fixtures {
     offsetDateTime: OffsetDateTime,
     zonedDateTime: ZonedDateTime
   )
-  object MyRecordAllTypes2   {
+  object MyRecordAllTypes2 {
     implicit val schema: zio.schema.Schema.CaseClass8.WithFields[
       "duration",
       "instant",
@@ -262,7 +262,7 @@ object Fixtures {
       java.time.OffsetDateTime,
       java.time.ZonedDateTime,
       MyRecordAllTypes2
-    ] =
+    ]                                                =
       DeriveSchema.gen[MyRecordAllTypes2]
     implicit val typeTag: TypeTag[MyRecordAllTypes2] =
       Derive.derive[TypeTag, MyRecordAllTypes2](TypeTagDeriver.default)
