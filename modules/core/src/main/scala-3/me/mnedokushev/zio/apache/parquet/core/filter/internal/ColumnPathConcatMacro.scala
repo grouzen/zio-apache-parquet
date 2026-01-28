@@ -24,7 +24,7 @@ object ColumnPathConcatMacro {
     val parentFields = TypeRepr.of[A].typeSymbol.caseFields.map(_.name)
 
     if (parentFields.contains(childField)) {
-      val concatExpr = '{ ${ parent }.path + "." + ${ child }.path }
+      val concatExpr = '{ $parent.path + "." + $child.path }
 
       '{ me.mnedokushev.zio.apache.parquet.core.filter.Column.Named[B, F]($concatExpr)(using $childTypeTag) }
     } else
