@@ -8,7 +8,7 @@ object Dep {
     val zioSchema             = "1.7.6"
     val scalaCollectionCompat = "2.13.0"
     val apacheParquet         = "1.17.1"
-    val apacheHadoop          = "3.4.3"
+    val apacheHadoop          = "3.5.0"
   }
 
   object O {
