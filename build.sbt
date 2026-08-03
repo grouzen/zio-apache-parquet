@@ -23,7 +23,7 @@ inThisBuild(
     ),
     crossScalaVersions                  := Seq(Scala213, Scala3),
     scalaVersion                        := Scala3,
-    githubWorkflowJavaVersions          := Seq(JavaSpec.temurin("11"), JavaSpec.temurin("17")),
+    githubWorkflowJavaVersions          := Seq(JavaSpec.temurin("17")),
     githubWorkflowPublishTargetBranches := Seq(),
     githubWorkflowBuildPreamble         := Seq(
       WorkflowStep.Sbt(
