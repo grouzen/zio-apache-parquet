@@ -9,5 +9,5 @@ addSbtPlugin("me.mnedokushev" % "sbt2-explicit-dependencies" % "0.2.0")
 // Versioning and release
 addSbtPlugin("com.eed3si9n"   % "sbt-buildinfo"      % "0.13.1")
 addSbtPlugin("org.typelevel"  % "sbt-tpolecat"       % "0.5.7")
-addSbtPlugin("com.github.sbt" % "sbt-ci-release"     % "1.12.0")
+addSbtPlugin("com.github.sbt" % "sbt-ci-release"     % "1.12.1")
 addSbtPlugin("com.github.sbt" % "sbt-github-actions" % "0.31.0")
