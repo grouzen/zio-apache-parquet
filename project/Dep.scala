@@ -4,19 +4,19 @@ import sbt.Keys.scalaVersion
 object Dep {
 
   object V {
-    val zio                   = "2.1.26"
-    val zioSchema             = "1.8.5"
-    val zioPrelude            = "1.0.0-RC47"
-    val zioStreams            = "2.1.24"
-    val apacheParquet         = "1.17.1"
-    val apacheHadoop          = "3.5.0"
+    val zio           = "2.1.26"
+    val zioSchema     = "1.8.5"
+    val zioPrelude    = "1.0.0-RC47"
+    val zioStreams    = "2.1.24"
+    val apacheParquet = "1.18.1"
+    val apacheHadoop  = "3.5.0"
   }
 
   object O {
-    val apacheParquet    = "org.apache.parquet"
-    val apacheHadoop     = "org.apache.hadoop"
-    val zio              = "dev.zio"
-    val scalaLang        = "org.scala-lang"
+    val apacheParquet = "org.apache.parquet"
+    val apacheHadoop  = "org.apache.hadoop"
+    val zio           = "dev.zio"
+    val scalaLang     = "org.scala-lang"
   }
 
   lazy val zio                 = O.zio %% "zio"                   % V.zio
@@ -55,8 +55,8 @@ object Dep {
     parquetHadoop,
     parquetColumn,
     parquetCommon,
-    zioTest    % Test,
-    zioTestSbt % Test
+    zioTest      % Test,
+    zioTestSbt   % Test
   )
 
 }
