@@ -4,7 +4,7 @@ addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.7")
 
 // Dependencies management
 addSbtPlugin("ch.epfl.scala"  % "sbt-missinglink"            % "0.3.8")
-addSbtPlugin("me.mnedokushev" % "sbt2-explicit-dependencies" % "0.2.1")
+addSbtPlugin("me.mnedokushev" % "sbt2-explicit-dependencies" % "0.2.2")
 
 // Versioning and release
 addSbtPlugin("com.eed3si9n"   % "sbt-buildinfo"      % "0.13.1")
