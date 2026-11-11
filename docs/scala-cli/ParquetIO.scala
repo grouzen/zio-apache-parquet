@@ -1,4 +1,4 @@
-//> using scala "3.8.4"
+//> using scala "3.10.1"
 //> using dep me.mnedokushev::zio-apache-parquet-hadoop:0.3.4
 
 import zio.schema.*
