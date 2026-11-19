@@ -4,11 +4,11 @@ import sbt.Keys.scalaVersion
 object Dep {
 
   object V {
-    val zio           = "2.1.26"
+    val zio           = "2.1.27"
     val zioSchema     = "1.8.7"
-    val zioPrelude    = "1.0.0-RC47"
-    val zioStreams    = "2.1.24"
-    val apacheParquet = "1.17.1"
+    val zioPrelude    = "1.0.0-RC49"
+    val zioStreams    = "2.1.27"
+    val apacheParquet = "1.18.2"
     val apacheHadoop  = "3.5.0"
   }
 
