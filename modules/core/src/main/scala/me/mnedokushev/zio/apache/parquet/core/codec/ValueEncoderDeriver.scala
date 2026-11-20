@@ -27,6 +27,20 @@ import java.util.{ Currency, UUID }
 
 object ValueEncoderDeriver {
 
+  private def encodeRecord[A](
+    value: A,
+    fieldEncoders: Chunk[(Schema.Field[A, ?], ValueEncoder[?])]
+  ): Value = {
+    def encodeField[A1](field: Schema.Field[A, A1], encoder: ValueEncoder[?]): Value =
+      encoder.asInstanceOf[ValueEncoder[A1]].encode(field.get(value))
+
+    val values = Map.newBuilder[String, Value]
+    fieldEncoders.foreach { case (field, encoder) =>
+      values += field.name -> encodeField(field, encoder)
+    }
+    Value.record(values.result())
+  }
+
   val default: Deriver[ValueEncoder] = new Deriver[ValueEncoder] {
 
     override def deriveRecord[A](
@@ -37,15 +51,8 @@ object ValueEncoderDeriver {
 
       private lazy val fieldEncoders = record.fields.zip(fields.map(_.unwrap))
 
-      private def enc[A1](v: A, field: Schema.Field[A, A1], encoder: ValueEncoder[?]) =
-        encoder.asInstanceOf[ValueEncoder[A1]].encode(field.get(v))
-
       override def encode(value: A): Value =
-        Value.record(
-          fieldEncoders.map { case (field, encoder) =>
-            field.name -> enc(value, field, encoder)
-          }.toMap
-        )
+        encodeRecord(value, fieldEncoders)
     }
 
     override def deriveEnum[A](
@@ -183,17 +190,9 @@ object ValueEncoderDeriver {
       new ValueEncoder[B] {
         private lazy val fieldEncoders = record.fields.zip(fields.map(_.unwrap))
 
-        private def enc[A1](v: A, field: Schema.Field[A, A1], encoder: ValueEncoder[?]) =
-          encoder.asInstanceOf[ValueEncoder[A1]].encode(field.get(v))
-
         override def encode(value: B): Value =
           transform.g(value) match {
-            case Right(v)     =>
-              Value.record(
-                fieldEncoders.map { case (field, encoder) =>
-                  field.name -> enc(v, field, encoder)
-                }.toMap
-              )
+            case Right(v)     => encodeRecord(v, fieldEncoders)
             case Left(reason) =>
               throw EncoderError(s"Failed to encode transformed record for value $value: $reason")
           }
