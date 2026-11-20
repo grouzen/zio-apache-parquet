@@ -10,6 +10,9 @@ object Dep {
     val zioStreams    = "2.1.27"
     val apacheParquet = "1.18.2"
     val apacheHadoop  = "3.5.0"
+    val parquet4s     = "2.23.0"
+    val fs2           = "3.12.0"
+    val catsEffect    = "3.6.2"
   }
 
   object O {
@@ -17,6 +20,9 @@ object Dep {
     val apacheHadoop  = "org.apache.hadoop"
     val zio           = "dev.zio"
     val scalaLang     = "org.scala-lang"
+    val parquet4s     = "com.github.mjakubowski84"
+    val fs2           = "co.fs2"
+    val typelevel     = "org.typelevel"
   }
 
   lazy val zio                 = O.zio %% "zio"                   % V.zio
@@ -34,6 +40,11 @@ object Dep {
   lazy val hadoopCommon = O.apacheHadoop % "hadoop-common" % V.apacheHadoop
   lazy val hadoopMapred = O.apacheHadoop % "hadoop-mapred" % "0.22.0"
   lazy val scalaReflect = Def.setting("org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided")
+
+  lazy val parquet4sCore = O.parquet4s %% "parquet4s-core" % V.parquet4s
+  lazy val parquet4sFs2  = O.parquet4s %% "parquet4s-fs2"  % V.parquet4s
+  lazy val fs2Core       = O.fs2       %% "fs2-core"       % V.fs2
+  lazy val catsEffect    = O.typelevel %% "cats-effect"    % V.catsEffect
 
   lazy val core = Seq(
     zio,
@@ -57,6 +68,19 @@ object Dep {
     parquetCommon,
     zioTest      % Test,
     zioTestSbt   % Test
+  )
+
+  lazy val benchmarks = Seq(
+    zio,
+    zioSchema,
+    zioSchemaDerivation,
+    zioStreams,
+    parquetHadoop,
+    hadoopCommon,
+    parquet4sCore,
+    parquet4sFs2,
+    fs2Core,
+    catsEffect
   )
 
 }
