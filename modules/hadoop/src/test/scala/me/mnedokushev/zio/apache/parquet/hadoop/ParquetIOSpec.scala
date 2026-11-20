@@ -21,10 +21,9 @@ object ParquetIOSpec extends ZIOSpecDefault {
   override def spec: Spec[TestEnvironment & Scope, Any] =
     suite("ParquetIOSpec")(
       test("write and read - chunk") {
-        val payload = Chunk(
-          MyRecordIO(1, "foo", None, List(1, 2), Map("first" -> 1, "second" -> 2)),
-          MyRecordIO(2, "bar", Some(3L), List.empty, Map("third" -> 3))
-        )
+        val payload = Chunk.fromIterable((1 to 1025).map { id =>
+          MyRecordIO(id, "foo", None, List(1, 2), Map("first" -> 1, "second" -> 2))
+        })
 
         for {
           writer <- ZIO.service[ParquetWriter[MyRecordIO]]
@@ -34,17 +33,17 @@ object ParquetIOSpec extends ZIOSpecDefault {
         } yield assertTrue(result == payload)
       } @@ after(cleanTmpFile(tmpDir)),
       test("write and read - stream") {
-        val payload = Chunk(
-          MyRecordIO(1, "foo", None, List(1, 2), Map("first" -> 1, "second" -> 2)),
-          MyRecordIO(2, "bar", Some(3L), List.empty, Map("third" -> 3))
-        )
+        val first = Chunk.single(MyRecordIO(0, "bar", Some(3L), List.empty, Map("third" -> 3)))
+        val rest  = Chunk.fromIterable((1 to 1025).map { id =>
+          MyRecordIO(id, "foo", None, List(1, 2), Map("first" -> 1, "second" -> 2))
+        })
 
         for {
           writer       <- ZIO.service[ParquetWriter[MyRecordIO]]
           reader       <- ZIO.service[ParquetReader[MyRecordIO]]
-          _            <- writer.writeStream(tmpPath, ZStream.fromChunk(payload))
+          _            <- writer.writeStream(tmpPath, ZStream.fromChunks(first, rest))
           resultStream <- ZIO.scoped[Any](reader.readStream(tmpPath).runCollect)
-        } yield assertTrue(resultStream == payload)
+        } yield assertTrue(resultStream == first ++ rest)
       } @@ after(cleanTmpFile(tmpDir)),
       test("write full and read projected") {
         val payload          = Chunk(

@@ -34,11 +34,13 @@ final class ParquetWriterLive[A <: Product](
 )(implicit schema: Schema[A], schemaEncoder: SchemaEncoder[A], encoder: ValueEncoder[A], tag: Tag[A])
     extends ParquetWriter[A] {
 
+  private val writeBatchSize = 1024
+
   override def writeChunk(path: Path, data: Chunk[A]): Task[Unit] =
     ZIO.scoped[Any](
       for {
         writer <- build(path)
-        _      <- ZIO.foreachDiscard(data)(writeSingle(writer, _))
+        _      <- writeBatches(writer, data)
       } yield ()
     )
 
@@ -46,9 +48,18 @@ final class ParquetWriterLive[A <: Product](
     ZIO.scoped[R](
       for {
         writer <- build(path)
-        _      <- stream.runForeach(writeSingle(writer, _))
+        _      <- stream.runForeachChunk(writeBatches(writer, _))
       } yield ()
     )
+
+  private def writeBatches(writer: HadoopParquetWriter[RecordValue], data: Chunk[A]): Task[Unit] =
+    ZIO.suspendSucceed {
+      val batches = data.grouped(writeBatchSize)
+      ZIO.whileLoop(batches.hasNext) {
+        val batch = batches.next()
+        ZIO.blocking(ZIO.foreachDiscard(batch)(writeSingle(writer, _)))
+      }(_ => ())
+    }
 
   private def writeSingle(writer: HadoopParquetWriter[RecordValue], value: A): Task[Unit] =
     for {
