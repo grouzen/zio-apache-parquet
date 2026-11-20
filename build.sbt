@@ -75,8 +75,8 @@ lazy val hadoop =
     .in(file("modules/hadoop"))
     .settings(
       stdSettings("hadoop"),
-      Test / exportJars := false,
-      Test / fork := false,
+      Test / exportJars        := false,
+      Test / fork              := false,
       Test / closeClassLoaders := false,
       undeclaredCompileDependenciesFilter -= DependencyFilter.moduleFilter("dev.zio", "izumi-reflect"),
       undeclaredCompileDependenciesFilter -= DependencyFilter.moduleFilter("dev.zio", "zio-stacktracer"),
@@ -91,3 +91,14 @@ val tpolecatSettings =
     tpolecatScalacOptions += ScalacOptions.source3,
     tpolecatExcludeOptions += ScalacOptions.lintInferAny
   )
+
+lazy val benchmarks =
+  project
+    .in(file("modules/benchmarks"))
+    .enablePlugins(JmhPlugin)
+    .dependsOn(hadoop)
+    .settings(
+      publish / skip     := true,
+      crossScalaVersions := Seq(Scala3),
+      libraryDependencies ++= Dep.benchmarks
+    )
