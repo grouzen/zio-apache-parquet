@@ -35,14 +35,17 @@ object ValueDecoderDeriver {
       fields: => Chunk[Deriver.WrappedF[ValueDecoder, ?]],
       summoned: => Option[ValueDecoder[A]]
     ): ValueDecoder[A] = new ValueDecoder[A] {
+      private lazy val fieldNames    = record.fields.map(_.name)
+      private lazy val fieldDecoders = fields.map(_.unwrap)
+
       override def decode(value: Value): A =
         value match {
           case GroupValue.RecordValue(values) =>
             Unsafe.unsafe { implicit unsafe =>
               record.construct(
-                Chunk
-                  .fromIterable(record.fields.map(f => values(f.name)))
-                  .zip(fields.map(_.unwrap))
+                fieldNames
+                  .map(values)
+                  .zip(fieldDecoders)
                   .map { case (v, decoder) =>
                     decoder.decode(v)
                   }
@@ -219,15 +222,18 @@ object ValueDecoderDeriver {
       summoned: => Option[ValueDecoder[B]]
     ): ValueDecoder[B] = summoned.getOrElse {
       new ValueDecoder[B] {
+        private lazy val fieldNames    = record.fields.map(_.name)
+        private lazy val fieldDecoders = fields.map(_.unwrap)
+
         override def decode(value: Value): B =
           value match {
             case GroupValue.RecordValue(values) =>
               Unsafe.unsafe { implicit unsafe =>
                 record
                   .construct(
-                    Chunk
-                      .fromIterable(record.fields.map(f => values(f.name)))
-                      .zip(fields.map(_.unwrap))
+                    fieldNames
+                      .map(values)
+                      .zip(fieldDecoders)
                       .map { case (v, decoder) =>
                         decoder.decode(v)
                       }
