@@ -33,6 +33,8 @@ final class ParquetReaderLive[A <: Product: Tag](
 )(implicit decoder: ValueDecoder[A])
     extends ParquetReader[A] {
 
+  private val readBatchSize = 1024
+
   override def readStream(path: Path): ZStream[Scope, Throwable, A] =
     for {
       reader <- ZStream.fromZIO(build(path, None))
@@ -49,7 +51,7 @@ final class ParquetReaderLive[A <: Product: Tag](
     ZIO.scoped(
       for {
         reader <- build(path, None)
-        result <- readChunk0(reader)
+        result <- readStream0(reader).runCollect
       } yield result
     )
 
@@ -57,43 +59,42 @@ final class ParquetReaderLive[A <: Product: Tag](
     ZIO.scoped(
       for {
         reader <- build(path, Some(filter))
-        result <- readChunk0(reader)
+        result <- readStream0(reader).runCollect
       } yield result
     )
 
   private def readStream0(reader: HadoopParquetReader[RecordValue]): ZStream[Any, Throwable, A] =
-    ZStream.repeatZIOOption(
-      ZIO
+    ZStream.suspend {
+      val readNext = ZIO
         .attemptBlockingIO(reader.read())
         .asSomeError
         .filterOrFail(_ != null)(None)
         .flatMap(decoder.decodeZIO(_).asSomeError)
-    )
 
-  private def readChunk0[B](reader: HadoopParquetReader[RecordValue]): Task[Chunk[A]] = {
-    val readNext = for {
-      value  <- ZIO.attemptBlockingIO(reader.read())
-      record <- if (value != null)
-                  decoder.decodeZIO(value)
-                else
-                  ZIO.succeed(null.asInstanceOf[A])
-    } yield record
-    val builder  = Chunk.newBuilder[A]
-
-    ZIO.scoped(
-      for {
-        initial <- readNext
-        _       <- {
-          var current = initial
-
-          ZIO.whileLoop(current != null)(readNext) { next =>
-            builder.addOne(current)
-            current = next
-          }
+      var terminal  = Option.empty[Cause[Option[Throwable]]]
+      val readBatch = ZIO.suspendSucceed {
+        terminal match {
+          case Some(cause) => ZIO.failCause(cause)
+          case None        =>
+            val batch = Chunk.newBuilder[A]
+            var count = 0
+            ZIO.blocking {
+              ZIO.whileLoop(count < readBatchSize)(readNext) { row =>
+                batch.addOne(row)
+                count += 1
+              }
+            }.as(batch.result()).catchAllCause { cause =>
+              if (count == 0 || cause.isInterrupted) ZIO.failCause(cause)
+              else {
+                // Emit the successful prefix before reporting EOF or failure.
+                terminal = Some(cause)
+                ZIO.succeed(batch.result())
+              }
+            }
         }
-      } yield builder.result()
-    )
-  }
+      }
+      ZStream.repeatZIOChunkOption(readBatch)
+    }
 
   private def build[B](
     path: Path,

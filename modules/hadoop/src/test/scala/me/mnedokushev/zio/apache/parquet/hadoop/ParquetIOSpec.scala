@@ -1,8 +1,10 @@
 package me.mnedokushev.zio.apache.parquet.hadoop
 
 import me.mnedokushev.zio.apache.parquet.core.Fixtures._
+import me.mnedokushev.zio.apache.parquet.core.codec.ValueDecoder
 import me.mnedokushev.zio.apache.parquet.core.filter.Filter
 import me.mnedokushev.zio.apache.parquet.core.filter.syntax._
+import org.apache.hadoop.conf.Configuration
 import zio._
 import zio.stream._
 import zio.test.Assertion._
@@ -39,11 +41,30 @@ object ParquetIOSpec extends ZIOSpecDefault {
         })
 
         for {
-          writer       <- ZIO.service[ParquetWriter[MyRecordIO]]
-          reader       <- ZIO.service[ParquetReader[MyRecordIO]]
-          _            <- writer.writeStream(tmpPath, ZStream.fromChunks(first, rest))
-          resultStream <- ZIO.scoped[Any](reader.readStream(tmpPath).runCollect)
-        } yield assertTrue(resultStream == first ++ rest)
+          writer  <- ZIO.service[ParquetWriter[MyRecordIO]]
+          reader  <- ZIO.service[ParquetReader[MyRecordIO]]
+          _       <- writer.writeStream(tmpPath, ZStream.fromChunks(first, rest))
+          batches <- ZIO.scoped[Any](reader.readStream(tmpPath).chunks.runCollect)
+        } yield assertTrue(batches.map(_.size) == Chunk(1024, 2), batches.flatten == first ++ rest)
+      } @@ after(cleanTmpFile(tmpDir)),
+      test("stream emits rows before a decoding failure within a batch") {
+        val first                                             = MyRecordIO(1, "foo", None, List.empty, Map.empty)
+        val failure                                           = new IllegalStateException("failed to decode row 2")
+        val decoder                                           = MyRecordIO.valueDecoder.map { row =>
+          if (row.a == 2) throw failure
+          row
+        }
+        implicit val failingDecoder: ValueDecoder[MyRecordIO] = decoder
+        val reader                                            = new ParquetReaderLive[MyRecordIO](new Configuration())
+
+        for {
+          writer <- ZIO.service[ParquetWriter[MyRecordIO]]
+          _      <- writer.writeChunk(tmpPath, Chunk(first, first.copy(a = 2)))
+          prefix <- ZIO.scoped(reader.readStream(tmpPath).take(1).runCollect)
+          seen   <- Ref.make(Chunk.empty[MyRecordIO])
+          result <- ZIO.scoped(reader.readStream(tmpPath).runForeach(row => seen.update(_ :+ row))).either
+          rows   <- seen.get
+        } yield assertTrue(prefix == Chunk(first), rows == prefix, result == Left(failure))
       } @@ after(cleanTmpFile(tmpDir)),
       test("write full and read projected") {
         val payload          = Chunk(
