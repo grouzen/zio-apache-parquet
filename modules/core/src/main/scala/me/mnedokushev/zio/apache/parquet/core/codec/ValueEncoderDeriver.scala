@@ -35,17 +35,16 @@ object ValueEncoderDeriver {
       summoned: => Option[ValueEncoder[A]]
     ): ValueEncoder[A] = new ValueEncoder[A] {
 
+      private lazy val fieldEncoders = record.fields.zip(fields.map(_.unwrap))
+
       private def enc[A1](v: A, field: Schema.Field[A, A1], encoder: ValueEncoder[?]) =
         encoder.asInstanceOf[ValueEncoder[A1]].encode(field.get(v))
 
       override def encode(value: A): Value =
         Value.record(
-          record.fields
-            .zip(fields.map(_.unwrap))
-            .map { case (field, encoder) =>
-              field.name -> enc(value, field, encoder)
-            }
-            .toMap
+          fieldEncoders.map { case (field, encoder) =>
+            field.name -> enc(value, field, encoder)
+          }.toMap
         )
     }
 
@@ -182,6 +181,8 @@ object ValueEncoderDeriver {
       summoned: => Option[ValueEncoder[B]]
     ): ValueEncoder[B] = summoned.getOrElse {
       new ValueEncoder[B] {
+        private lazy val fieldEncoders = record.fields.zip(fields.map(_.unwrap))
+
         private def enc[A1](v: A, field: Schema.Field[A, A1], encoder: ValueEncoder[?]) =
           encoder.asInstanceOf[ValueEncoder[A1]].encode(field.get(v))
 
@@ -189,12 +190,9 @@ object ValueEncoderDeriver {
           transform.g(value) match {
             case Right(v)     =>
               Value.record(
-                record.fields
-                  .zip(fields.map(_.unwrap))
-                  .map { case (field, encoder) =>
-                    field.name -> enc(v, field, encoder)
-                  }
-                  .toMap
+                fieldEncoders.map { case (field, encoder) =>
+                  field.name -> enc(v, field, encoder)
+                }.toMap
               )
             case Left(reason) =>
               throw EncoderError(s"Failed to encode transformed record for value $value: $reason")
