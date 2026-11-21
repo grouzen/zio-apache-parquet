@@ -1,5 +1,5 @@
 //> using scala "3.10.1"
-//> using dep me.mnedokushev::zio-apache-parquet-hadoop:0.3.5
+//> using dep me.mnedokushev::zio-apache-parquet-hadoop:0.3.6
 
 import zio.schema.*
 import me.mnedokushev.zio.apache.parquet.core.codec.*
