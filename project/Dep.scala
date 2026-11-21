@@ -5,7 +5,7 @@ object Dep {
 
   object V {
     val zio           = "2.1.27"
-    val zioSchema     = "1.8.7"
+    val zioSchema     = "1.9.2"
     val zioPrelude    = "1.0.0-RC49"
     val zioStreams    = "2.1.27"
     val apacheParquet = "1.18.2"
