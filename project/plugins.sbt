@@ -13,4 +13,4 @@ addSbtPlugin("com.github.sbt" % "sbt-ci-release"     % "1.12.1")
 addSbtPlugin("com.github.sbt" % "sbt-github-actions" % "0.32.2")
 
 // Benchmarks
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.8")
+addSbtPlugin("com.github.sbt" % "sbt-jmh" % "0.4.9")
