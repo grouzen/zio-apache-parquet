@@ -7,7 +7,7 @@ trait ValueEncoder[-A] { self =>
 
   def encode(value: A): Value
 
-  def encodeZIO(value: A): Task[Value] =
+  final def encodeZIO(value: A): Task[Value] =
     ZIO.attemptBlocking(encode(value))
 
   def contramap[B](f: B => A): ValueEncoder[B] =

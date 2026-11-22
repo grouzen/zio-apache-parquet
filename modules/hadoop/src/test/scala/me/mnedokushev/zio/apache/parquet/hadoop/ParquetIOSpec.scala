@@ -1,7 +1,7 @@
 package me.mnedokushev.zio.apache.parquet.hadoop
 
 import me.mnedokushev.zio.apache.parquet.core.Fixtures._
-import me.mnedokushev.zio.apache.parquet.core.codec.ValueDecoder
+import me.mnedokushev.zio.apache.parquet.core.codec.{ ValueDecoder, ValueEncoder }
 import me.mnedokushev.zio.apache.parquet.core.filter.Filter
 import me.mnedokushev.zio.apache.parquet.core.filter.syntax._
 import org.apache.hadoop.conf.Configuration
@@ -46,6 +46,21 @@ object ParquetIOSpec extends ZIOSpecDefault {
           _       <- writer.writeStream(tmpPath, ZStream.fromChunks(first, rest))
           batches <- ZIO.scoped[Any](reader.readStream(tmpPath).chunks.runCollect)
         } yield assertTrue(batches.map(_.size) == Chunk(1024, 2), batches.flatten == first ++ rest)
+      } @@ after(cleanTmpFile(tmpDir)),
+      test("write stops at an encoding failure and closes the file") {
+        val first                                             = MyRecordIO(1, "foo", None, List.empty, Map.empty)
+        val failure                                           = new IllegalStateException("failed to encode row 2")
+        implicit val failingEncoder: ValueEncoder[MyRecordIO] = MyRecordIO.valueEncoder.contramap[MyRecordIO] { row =>
+          if (row.a == 2) throw failure
+          row
+        }
+
+        for {
+          writer <- ZIO.scoped(ParquetWriter.configured[MyRecordIO]().build.map(_.get))
+          reader <- ZIO.service[ParquetReader[MyRecordIO]]
+          result <- writer.writeChunk(tmpPath, Chunk(first, first.copy(a = 2), first.copy(a = 3))).either
+          rows   <- reader.readChunk(tmpPath)
+        } yield assertTrue(result == Left(failure), rows == Chunk(first))
       } @@ after(cleanTmpFile(tmpDir)),
       test("stream emits rows before a decoding failure within a batch") {
         val first                                             = MyRecordIO(1, "foo", None, List.empty, Map.empty)

@@ -13,6 +13,9 @@ import zio._
 import zio.schema.Schema
 import zio.stream._
 
+import java.io.IOException
+import scala.util.control.NonFatal
+
 trait ParquetWriter[-A <: Product] {
 
   def writeChunk(path: Path, data: Chunk[A]): Task[Unit]
@@ -57,15 +60,26 @@ final class ParquetWriterLive[A <: Product](
       val batches = data.grouped(writeBatchSize)
       ZIO.whileLoop(batches.hasNext) {
         val batch = batches.next()
-        ZIO.blocking(ZIO.foreachDiscard(batch)(writeSingle(writer, _)))
+        ZIO.blocking {
+          ZIO.suspendSucceed {
+            var encoding = false
+            try {
+              batch.foreach { value =>
+                encoding = true
+                val record = encoder.encode(value)
+                encoding = false
+                writer.write(record.asInstanceOf[RecordValue])
+              }
+              Exit.unit
+            } catch {
+              case NonFatal(error) if encoding => Exit.fail(error)
+              case error: IOException          => Exit.fail(error)
+              case NonFatal(error)             => Exit.die(error)
+            }
+          }
+        }
       }(_ => ())
     }
-
-  private def writeSingle(writer: HadoopParquetWriter[RecordValue], value: A): Task[Unit] =
-    for {
-      record <- encoder.encodeZIO(value)
-      _      <- ZIO.attemptBlockingIO(writer.write(record.asInstanceOf[RecordValue]))
-    } yield ()
 
   private def build(path: Path): RIO[Scope, HadoopParquetWriter[RecordValue]] =
     for {
