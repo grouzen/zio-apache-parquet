@@ -13,6 +13,7 @@ import zio.schema.Schema
 import zio.stream._
 
 import java.io.IOException
+import scala.util.control.NonFatal
 
 trait ParquetReader[+A <: Product] {
 
@@ -65,32 +66,47 @@ final class ParquetReaderLive[A <: Product: Tag](
 
   private def readStream0(reader: HadoopParquetReader[RecordValue]): ZStream[Any, Throwable, A] =
     ZStream.suspend {
-      val readNext = ZIO
-        .attemptBlockingIO(reader.read())
-        .asSomeError
-        .filterOrFail(_ != null)(None)
-        .flatMap(decoder.decodeZIO(_).asSomeError)
-
       var terminal  = Option.empty[Cause[Option[Throwable]]]
       val readBatch = ZIO.suspendSucceed {
         terminal match {
           case Some(cause) => ZIO.failCause(cause)
           case None        =>
             val batch = Chunk.newBuilder[A]
-            var count = 0
             ZIO.blocking {
-              ZIO.whileLoop(count < readBatchSize)(readNext) { row =>
-                batch.addOne(row)
-                count += 1
-              }
-            }.as(batch.result()).catchAllCause { cause =>
-              if (count == 0 || cause.isInterrupted) ZIO.failCause(cause)
-              else {
-                // Emit the successful prefix before reporting EOF or failure.
-                terminal = Some(cause)
-                ZIO.succeed(batch.result())
+              ZIO.suspendSucceed {
+                var count    = 0
+                var eof      = false
+                var decoding = false
+                try {
+                  while (count < readBatchSize && !eof) {
+                    val row = reader.read()
+                    if (row == null) eof = true
+                    else {
+                      decoding = true
+                      val decoded = decoder.decode(row)
+                      decoding = false
+                      batch.addOne(decoded)
+                      count += 1
+                    }
+                  }
+                  if (eof) Exit.fail(None) else Exit.unit
+                } catch {
+                  case NonFatal(error) if decoding => Exit.fail(Some(error))
+                  case error: IOException          => Exit.fail(Some(error))
+                  case NonFatal(error)             => Exit.die(error)
+                }
               }
             }
+              .as(batch.result())
+              .catchAllCause { cause =>
+                val rows = batch.result()
+                if (rows.isEmpty || cause.isInterrupted) ZIO.failCause(cause)
+                else {
+                  // Emit the successful prefix before reporting EOF or failure.
+                  terminal = Some(cause)
+                  ZIO.succeed(rows)
+                }
+              }
         }
       }
       ZStream.repeatZIOChunkOption(readBatch)

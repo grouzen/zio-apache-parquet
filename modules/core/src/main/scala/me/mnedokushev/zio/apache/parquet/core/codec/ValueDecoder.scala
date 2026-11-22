@@ -7,7 +7,7 @@ trait ValueDecoder[+A] { self =>
 
   def decode(value: Value): A
 
-  def decodeZIO(value: Value): Task[A] =
+  final def decodeZIO(value: Value): Task[A] =
     ZIO.attempt(decode(value))
 
   def map[B](f: A => B): ValueDecoder[B] =
