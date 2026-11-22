@@ -151,9 +151,11 @@ object ValueEncoderDeriver {
       summoned: => Option[ValueEncoder[Option[A]]]
     ): ValueEncoder[Option[A]] =
       new ValueEncoder[Option[A]] {
+        private lazy val encoder = inner
+
         override def encode(value: Option[A]): Value =
           value match {
-            case Some(v) => inner.encode(v)
+            case Some(v) => encoder.encode(v)
             case _       => Value.nil
           }
       }
