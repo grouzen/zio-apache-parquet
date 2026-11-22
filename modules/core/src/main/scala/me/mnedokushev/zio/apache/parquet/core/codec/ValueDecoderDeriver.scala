@@ -174,12 +174,14 @@ object ValueDecoderDeriver {
       inner: => ValueDecoder[A],
       summoned: => Option[ValueDecoder[Option[A]]]
     ): ValueDecoder[Option[A]] = new ValueDecoder[Option[A]] {
+      private lazy val decoder = inner
+
       override def decode(value: Value): Option[A] =
         value match {
           case Value.NullValue =>
             None
           case _               =>
-            Some(inner.decode(value))
+            Some(decoder.decode(value))
         }
 
     }
