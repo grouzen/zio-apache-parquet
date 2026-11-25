@@ -6,10 +6,12 @@ import me.mnedokushev.zio.apache.parquet.core.codec.SchemaEncoder
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.api.{ InitContext, ReadSupport => HadoopReadSupport }
 import org.apache.parquet.io.api.{ GroupConverter, RecordMaterializer }
-import org.apache.parquet.schema.MessageType
+import org.apache.parquet.schema.{ GroupType, MessageType, Type }
 import zio.Tag
 import zio.prelude._
 import zio.schema.Schema
+
+import scala.jdk.CollectionConverters._
 
 class ReadSupport[A](
   schema: Option[Schema[A]] = None,
@@ -25,7 +27,7 @@ class ReadSupport[A](
   ): RecordMaterializer[RecordValue] = new RecordMaterializer[RecordValue] {
 
     private val converter =
-      GroupValueConverter.root(resolveSchema(fileSchema))
+      GroupValueConverter.root(readContext.getRequestedSchema)
 
     override def getCurrentRecord: RecordValue =
       converter.get
@@ -35,12 +37,21 @@ class ReadSupport[A](
 
   }
 
-  override def init(context: InitContext): HadoopReadSupport.ReadContext =
-    new HadoopReadSupport.ReadContext(resolveSchema(context.getFileSchema))
+  override def init(context: InitContext): HadoopReadSupport.ReadContext = {
+    val fileSchema      = context.getFileSchema
+    val requestedSchema = (schema <*> schemaEncoder).fold(fileSchema) { case (schema0, schemaEncoder0) =>
+      val projection = Schemas.asMessageType(schemaEncoder0.encode(schema0, tag.tag.shortName, optional = false))
+      new MessageType(projection.getName, projectFields(projection, fileSchema).asJava)
+    }
+    new HadoopReadSupport.ReadContext(requestedSchema)
+  }
 
-  private def resolveSchema(contextSchema: MessageType): MessageType =
-    (schema <*> schemaEncoder).fold(contextSchema) { case (schema0, schemaEncoder0) =>
-      Schemas.asMessageType(schemaEncoder0.encode(schema0, tag.tag.shortName, optional = false))
+  // Keep absent columns out of the materializer so only columns in the file can be initialized to null.
+  private def projectFields(projection: GroupType, file: GroupType): List[Type] =
+    projection.getFields.asScala.toList.filter(field => file.containsField(field.getName)).map { field =>
+      val fileField = file.getType(field.getName)
+      if (field.isPrimitive || fileField.isPrimitive) field
+      else field.asGroupType().withNewFields(projectFields(field.asGroupType(), fileField.asGroupType()).asJava)
     }
 
 }

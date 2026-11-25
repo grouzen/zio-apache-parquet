@@ -20,6 +20,35 @@ import java.util.{ Currency, UUID }
 
 object Fixtures {
 
+  object SchemaEvolution {
+    case class OldDetails(value: Int)
+    case class OldRecord(id: Int, note: Option[String], unused: String, details: OldDetails)
+
+    case class NewDetails(label: Option[String], value: Int)
+    case class NewRecord(id: Int, note: Option[String], added: Option[Long], details: NewDetails)
+
+    case class RequiredDetails(value: Int, label: String)
+    case class RequiredRecord(id: Int, details: RequiredDetails)
+
+    implicit val oldSchema: Schema[OldRecord]               = DeriveSchema.gen[OldRecord]
+    implicit val oldSchemaEncoder: SchemaEncoder[OldRecord] =
+      Derive.derive[SchemaEncoder, OldRecord](SchemaEncoderDeriver.default)
+    implicit val oldValueEncoder: ValueEncoder[OldRecord]   =
+      Derive.derive[ValueEncoder, OldRecord](ValueEncoderDeriver.default)
+
+    implicit val newSchema: Schema[NewRecord]               = DeriveSchema.gen[NewRecord]
+    implicit val newSchemaEncoder: SchemaEncoder[NewRecord] =
+      Derive.derive[SchemaEncoder, NewRecord](SchemaEncoderDeriver.default)
+    implicit val newValueDecoder: ValueDecoder[NewRecord]   =
+      Derive.derive[ValueDecoder, NewRecord](ValueDecoderDeriver.default)
+
+    implicit val requiredSchema: Schema[RequiredRecord]               = DeriveSchema.gen[RequiredRecord]
+    implicit val requiredSchemaEncoder: SchemaEncoder[RequiredRecord] =
+      Derive.derive[SchemaEncoder, RequiredRecord](SchemaEncoderDeriver.default)
+    implicit val requiredValueDecoder: ValueDecoder[RequiredRecord]   =
+      Derive.derive[ValueDecoder, RequiredRecord](ValueDecoderDeriver.default)
+  }
+
   // unable to generate code for case classes with more than 120 int fields due to following error:
   // tested with jdk 11.0.23 64bit
   // Error while emitting me/mnedokushev/zio/apache/parquet/core/codec/SchemaEncoderDeriverSpec$MaxArityRecord$

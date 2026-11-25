@@ -333,6 +333,21 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
           result <- decoder.decodeZIO(value)
         } yield assertTrue(result == payload)
       },
+      test("report a missing required top-level field by name") {
+        val decoder = Derive.derive[ValueDecoder, Record](ValueDecoderDeriver.default)
+
+        decoder.decodeZIO(Value.record(Map.empty)).either.map { result =>
+          assert(result)(isLeft(isSubtype[DecoderError](hasField("message", _.message, containsString("'a'")))))
+        }
+      },
+      test("decode a missing optional field in a transformed record") {
+        val decoder = Derive.derive[ValueDecoder, Fixtures.Arity23](ValueDecoderDeriver.default)
+        val value   = Value.record(
+          ('a' to 'w').filterNot(_ == 'b').map(name => name.toString -> Value.int(name - 'a' + 1)).toMap
+        )
+
+        decoder.decodeZIO(value).map(result => assertTrue(result.a == 1, result.b.isEmpty, result.w == 23))
+      },
       test("record arity > 22") {
         val encoder = Derive.derive[ValueEncoder, Fixtures.Arity23](ValueEncoderDeriver.default)
         val decoder = Derive.derive[ValueDecoder, Fixtures.Arity23](ValueDecoderDeriver.default)
