@@ -28,6 +28,29 @@ import java.util.{ Currency, UUID }
 
 object ValueDecoderDeriver {
 
+  private def decodeRecordArguments(
+    values: Map[String, Value],
+    fieldNames: Chunk[String],
+    fieldDecoders: => Chunk[ValueDecoder[?]]
+  ): Chunk[Any] = {
+    val arguments = new Array[Any](fieldNames.size)
+    var index     = 0
+    // Resolve all field values before decoding, preserving missing-field error precedence.
+    while (index < arguments.length) {
+      arguments(index) = values(fieldNames(index))
+      index += 1
+    }
+
+    val decoders = fieldDecoders
+    val size     = arguments.length.min(decoders.size)
+    index = 0
+    while (index < size) {
+      arguments(index) = decoders(index).decode(arguments(index).asInstanceOf[Value])
+      index += 1
+    }
+    Chunk.fromArray(arguments).take(size)
+  }
+
   val default: Deriver[ValueDecoder] = new Deriver[ValueDecoder] {
 
     override def deriveRecord[A](
@@ -42,14 +65,7 @@ object ValueDecoderDeriver {
         value match {
           case GroupValue.RecordValue(values) =>
             Unsafe.unsafe { implicit unsafe =>
-              record.construct(
-                fieldNames
-                  .map(values)
-                  .zip(fieldDecoders)
-                  .map { case (v, decoder) =>
-                    decoder.decode(v)
-                  }
-              ) match {
+              record.construct(decodeRecordArguments(values, fieldNames, fieldDecoders)) match {
                 case Right(v)     =>
                   v
                 case Left(reason) =>
@@ -232,14 +248,7 @@ object ValueDecoderDeriver {
             case GroupValue.RecordValue(values) =>
               Unsafe.unsafe { implicit unsafe =>
                 record
-                  .construct(
-                    fieldNames
-                      .map(values)
-                      .zip(fieldDecoders)
-                      .map { case (v, decoder) =>
-                        decoder.decode(v)
-                      }
-                  )
+                  .construct(decodeRecordArguments(values, fieldNames, fieldDecoders))
                   .flatMap(transform.f) match {
                   case Right(v)     => v
                   case Left(reason) =>
