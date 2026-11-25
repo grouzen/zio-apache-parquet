@@ -24,21 +24,74 @@ import java.time.{
   ZonedDateTime
 }
 import java.util.{ Currency, UUID }
+import scala.collection.immutable.HashMap
 
 object ValueEncoderDeriver {
 
+  private def mapArity[A](fieldEncoders: Chunk[(Schema.Field[A, ?], ValueEncoder[?])]): Int = {
+    val distinctNames = fieldEncoders.map(_._1.name).toSet.size
+    // Small maps with duplicate names still need the builder's last-value-wins behavior.
+    if (distinctNames > 4 || distinctNames == fieldEncoders.size) distinctNames else -1
+  }
+
   private def encodeRecord[A](
     value: A,
-    fieldEncoders: Chunk[(Schema.Field[A, ?], ValueEncoder[?])]
+    fieldEncoders: Chunk[(Schema.Field[A, ?], ValueEncoder[?])],
+    arity: Int
   ): Value = {
     def encodeField[A1](field: Schema.Field[A, A1], encoder: ValueEncoder[?]): Value =
       encoder.asInstanceOf[ValueEncoder[A1]].encode(field.get(value))
 
-    val values = Map.newBuilder[String, Value]
-    fieldEncoders.foreach { case (field, encoder) =>
-      values += field.name -> encodeField(field, encoder)
+    val values = arity match {
+      case 0 =>
+        Map.empty[String, Value]
+      case 1 =>
+        val (first, firstEncoder) = fieldEncoders(0)
+        new Map.Map1[String, Value](first.name, encodeField(first, firstEncoder))
+      case 2 =>
+        val (first, firstEncoder)   = fieldEncoders(0)
+        val (second, secondEncoder) = fieldEncoders(1)
+        new Map.Map2[String, Value](
+          first.name,
+          encodeField(first, firstEncoder),
+          second.name,
+          encodeField(second, secondEncoder)
+        )
+      case 3 =>
+        val (first, firstEncoder)   = fieldEncoders(0)
+        val (second, secondEncoder) = fieldEncoders(1)
+        val (third, thirdEncoder)   = fieldEncoders(2)
+        new Map.Map3[String, Value](
+          first.name,
+          encodeField(first, firstEncoder),
+          second.name,
+          encodeField(second, secondEncoder),
+          third.name,
+          encodeField(third, thirdEncoder)
+        )
+      case 4 =>
+        val (first, firstEncoder)   = fieldEncoders(0)
+        val (second, secondEncoder) = fieldEncoders(1)
+        val (third, thirdEncoder)   = fieldEncoders(2)
+        val (fourth, fourthEncoder) = fieldEncoders(3)
+        new Map.Map4[String, Value](
+          first.name,
+          encodeField(first, firstEncoder),
+          second.name,
+          encodeField(second, secondEncoder),
+          third.name,
+          encodeField(third, thirdEncoder),
+          fourth.name,
+          encodeField(fourth, fourthEncoder)
+        )
+      case _ =>
+        val builder = if (arity > 4) HashMap.newBuilder[String, Value] else Map.newBuilder[String, Value]
+        fieldEncoders.foreach { case (field, encoder) =>
+          builder += field.name -> encodeField(field, encoder)
+        }
+        builder.result()
     }
-    Value.record(values.result())
+    Value.record(values)
   }
 
   val default: Deriver[ValueEncoder] = new Deriver[ValueEncoder] {
@@ -50,9 +103,10 @@ object ValueEncoderDeriver {
     ): ValueEncoder[A] = new ValueEncoder[A] {
 
       private lazy val fieldEncoders = record.fields.zip(fields.map(_.unwrap))
+      private lazy val arity         = mapArity(fieldEncoders)
 
       override def encode(value: A): Value =
-        encodeRecord(value, fieldEncoders)
+        encodeRecord(value, fieldEncoders, arity)
     }
 
     override def deriveEnum[A](
@@ -191,10 +245,11 @@ object ValueEncoderDeriver {
     ): ValueEncoder[B] = summoned.getOrElse {
       new ValueEncoder[B] {
         private lazy val fieldEncoders = record.fields.zip(fields.map(_.unwrap))
+        private lazy val arity         = mapArity(fieldEncoders)
 
         override def encode(value: B): Value =
           transform.g(value) match {
-            case Right(v)     => encodeRecord(v, fieldEncoders)
+            case Right(v)     => encodeRecord(v, fieldEncoders, arity)
             case Left(reason) =>
               throw EncoderError(s"Failed to encode transformed record for value $value: $reason")
           }
