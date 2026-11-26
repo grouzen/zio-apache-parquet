@@ -1,0 +1,548 @@
+[
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "me.mnedokushev.zio.apache.parquet.benchmarks.ParquetPekkoBenchmark.pekkoStreamingRead",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/opt/openjdk-bin-17.0.21_p9/bin/java",
+        "jvmArgs" : [
+            "-Djava.io.tmpdir=/tmp/zio-parquet-full.uLhQQP"
+        ],
+        "jdkVersion" : "17.0.21",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "17.0.21+9",
+        "warmupIterations" : 5,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 8,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "rows" : "10000"
+        },
+        "primaryMetric" : {
+            "score" : 10.965799783763327,
+            "scoreError" : 0.619179817593897,
+            "scoreConfidence" : [
+                10.34661996616943,
+                11.584979601357224
+            ],
+            "scorePercentiles" : {
+                "0.0" : 10.10477561,
+                "50.0" : 10.801593365591398,
+                "90.0" : 12.006421150703014,
+                "95.0" : 12.28237012195122,
+                "99.0" : 12.28237012195122,
+                "99.9" : 12.28237012195122,
+                "99.99" : 12.28237012195122,
+                "99.999" : 12.28237012195122,
+                "99.9999" : 12.28237012195122,
+                "100.0" : 12.28237012195122
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    12.28237012195122,
+                    11.888157305882354,
+                    10.53066387368421,
+                    11.057432307692308,
+                    10.371340989690722,
+                    10.11436306060606,
+                    10.81215335483871,
+                    10.10477561
+                ],
+                [
+                    11.153421833333333,
+                    11.312933730337079,
+                    11.749204558139535,
+                    10.987783826086957,
+                    10.737924978723404,
+                    10.791033376344085,
+                    10.76827069892473,
+                    10.790966913978494
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "me.mnedokushev.zio.apache.parquet.benchmarks.ParquetPekkoBenchmark.pekkoStreamingRead",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/opt/openjdk-bin-17.0.21_p9/bin/java",
+        "jvmArgs" : [
+            "-Djava.io.tmpdir=/tmp/zio-parquet-full.uLhQQP"
+        ],
+        "jdkVersion" : "17.0.21",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "17.0.21+9",
+        "warmupIterations" : 5,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 8,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "rows" : "524288"
+        },
+        "primaryMetric" : {
+            "score" : 439.455459,
+            "scoreError" : 29.542471453967302,
+            "scoreConfidence" : [
+                409.9129875460327,
+                468.99793045396734
+            ],
+            "scorePercentiles" : {
+                "0.0" : 364.9622973333333,
+                "50.0" : 448.2797028333333,
+                "90.0" : 472.15807046666663,
+                "95.0" : 482.7018503333333,
+                "99.0" : 482.7018503333333,
+                "99.9" : 482.7018503333333,
+                "99.99" : 482.7018503333333,
+                "99.999" : 482.7018503333333,
+                "99.9999" : 482.7018503333333,
+                "100.0" : 482.7018503333333
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    449.7051593333333,
+                    467.63930766666664,
+                    460.426913,
+                    453.0427006666667,
+                    423.93720133333335,
+                    425.5770503333333,
+                    398.12657133333335,
+                    438.9154463333333
+                ],
+                [
+                    482.7018503333333,
+                    454.24431366666664,
+                    446.8542463333333,
+                    462.04084566666666,
+                    455.54167566666666,
+                    421.6308843333333,
+                    425.94088066666666,
+                    364.9622973333333
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "me.mnedokushev.zio.apache.parquet.benchmarks.ParquetPekkoBenchmark.pekkoStreamingWrite",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/opt/openjdk-bin-17.0.21_p9/bin/java",
+        "jvmArgs" : [
+            "-Djava.io.tmpdir=/tmp/zio-parquet-full.uLhQQP"
+        ],
+        "jdkVersion" : "17.0.21",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "17.0.21+9",
+        "warmupIterations" : 5,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 8,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "rows" : "10000"
+        },
+        "primaryMetric" : {
+            "score" : 7.986645054941896,
+            "scoreError" : 0.21921037881414396,
+            "scoreConfidence" : [
+                7.767434676127752,
+                8.205855433756039
+            ],
+            "scorePercentiles" : {
+                "0.0" : 7.5919254961240314,
+                "50.0" : 7.951138627393129,
+                "90.0" : 8.402970001429413,
+                "95.0" : 8.440294224137931,
+                "99.0" : 8.440294224137931,
+                "99.9" : 8.440294224137931,
+                "99.99" : 8.440294224137931,
+                "99.999" : 8.440294224137931,
+                "99.9999" : 8.440294224137931,
+                "100.0" : 8.440294224137931
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    8.440294224137931,
+                    7.965143593495935,
+                    8.037383713114755,
+                    8.055660581967214,
+                    7.908172258064516,
+                    7.937133661290322,
+                    7.965924243902439,
+                    8.041053385245903
+                ],
+                [
+                    8.186352091666667,
+                    8.386973905982906,
+                    7.889311322580645,
+                    7.870977144,
+                    7.869147968,
+                    7.5919254961240314,
+                    7.924872588709677,
+                    7.715994700787402
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "me.mnedokushev.zio.apache.parquet.benchmarks.ParquetPekkoBenchmark.pekkoStreamingWrite",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/opt/openjdk-bin-17.0.21_p9/bin/java",
+        "jvmArgs" : [
+            "-Djava.io.tmpdir=/tmp/zio-parquet-full.uLhQQP"
+        ],
+        "jdkVersion" : "17.0.21",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "17.0.21+9",
+        "warmupIterations" : 5,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 8,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "rows" : "524288"
+        },
+        "primaryMetric" : {
+            "score" : 296.79892754687495,
+            "scoreError" : 8.305884529559123,
+            "scoreConfidence" : [
+                288.4930430173158,
+                305.1048120764341
+            ],
+            "scorePercentiles" : {
+                "0.0" : 286.5982265,
+                "50.0" : 298.828735875,
+                "90.0" : 306.80371785,
+                "95.0" : 306.837573,
+                "99.0" : 306.837573,
+                "99.9" : 306.837573,
+                "99.99" : 306.837573,
+                "99.999" : 306.837573,
+                "99.9999" : 306.837573,
+                "100.0" : 306.837573
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    306.837573,
+                    305.881987,
+                    306.7892085,
+                    303.66445575,
+                    304.19333025,
+                    303.041828,
+                    302.12928975,
+                    302.0408785
+                ],
+                [
+                    287.219499,
+                    286.5982265,
+                    286.7343235,
+                    290.9071405,
+                    287.416901,
+                    289.24480875,
+                    290.4667975,
+                    295.61659325
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "me.mnedokushev.zio.apache.parquet.benchmarks.ParquetPekkoBenchmark.zioStreamingRead",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/opt/openjdk-bin-17.0.21_p9/bin/java",
+        "jvmArgs" : [
+            "-Djava.io.tmpdir=/tmp/zio-parquet-full.uLhQQP"
+        ],
+        "jdkVersion" : "17.0.21",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "17.0.21+9",
+        "warmupIterations" : 5,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 8,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "rows" : "10000"
+        },
+        "primaryMetric" : {
+            "score" : 2.04959103428183,
+            "scoreError" : 0.15431705592491007,
+            "scoreConfidence" : [
+                1.8952739783569201,
+                2.20390809020674
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1.934477578336557,
+                "50.0" : 2.0093239297188754,
+                "90.0" : 2.2731213021421395,
+                "95.0" : 2.592791554404145,
+                "99.0" : 2.592791554404145,
+                "99.9" : 2.592791554404145,
+                "99.99" : 2.592791554404145,
+                "99.999" : 2.592791554404145,
+                "99.9999" : 2.592791554404145,
+                "100.0" : 2.592791554404145
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    2.009119343373494,
+                    2.009528516064257,
+                    2.021026622222222,
+                    2.0345683245436104,
+                    2.049392429447853,
+                    1.998745502994012,
+                    1.9861111646825398,
+                    1.9995860678642714
+                ],
+                [
+                    2.592791554404145,
+                    2.1361197654584223,
+                    2.0560228685831623,
+                    2.0200472560483873,
+                    1.9694806614173228,
+                    2.003814398,
+                    1.934477578336557,
+                    1.9726244950690335
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "me.mnedokushev.zio.apache.parquet.benchmarks.ParquetPekkoBenchmark.zioStreamingRead",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/opt/openjdk-bin-17.0.21_p9/bin/java",
+        "jvmArgs" : [
+            "-Djava.io.tmpdir=/tmp/zio-parquet-full.uLhQQP"
+        ],
+        "jdkVersion" : "17.0.21",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "17.0.21+9",
+        "warmupIterations" : 5,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 8,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "rows" : "524288"
+        },
+        "primaryMetric" : {
+            "score" : 96.48016745056819,
+            "scoreError" : 2.3049417537688996,
+            "scoreConfidence" : [
+                94.17522569679929,
+                98.78510920433709
+            ],
+            "scorePercentiles" : {
+                "0.0" : 93.31814363636363,
+                "50.0" : 96.2425525,
+                "90.0" : 99.98742463545454,
+                "95.0" : 100.2156433,
+                "99.0" : 100.2156433,
+                "99.9" : 100.2156433,
+                "99.99" : 100.2156433,
+                "99.999" : 100.2156433,
+                "99.9999" : 100.2156433,
+                "100.0" : 100.2156433
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    96.53487745454545,
+                    95.23070745454545,
+                    95.27150427272727,
+                    94.79225272727273,
+                    97.83299709090909,
+                    100.2156433,
+                    98.44068472727272,
+                    99.88961663636364
+                ],
+                [
+                    96.04128663636364,
+                    94.67028181818182,
+                    96.44381836363637,
+                    94.29734381818182,
+                    99.82466636363637,
+                    97.45914927272727,
+                    93.41970563636363,
+                    93.31814363636363
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "me.mnedokushev.zio.apache.parquet.benchmarks.ParquetPekkoBenchmark.zioStreamingWrite",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/opt/openjdk-bin-17.0.21_p9/bin/java",
+        "jvmArgs" : [
+            "-Djava.io.tmpdir=/tmp/zio-parquet-full.uLhQQP"
+        ],
+        "jdkVersion" : "17.0.21",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "17.0.21+9",
+        "warmupIterations" : 5,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 8,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "rows" : "10000"
+        },
+        "primaryMetric" : {
+            "score" : 6.756991327888286,
+            "scoreError" : 0.20787529145339592,
+            "scoreConfidence" : [
+                6.5491160364348895,
+                6.964866619341682
+            ],
+            "scorePercentiles" : {
+                "0.0" : 6.495638443708609,
+                "50.0" : 6.768527703448276,
+                "90.0" : 7.1745384889705885,
+                "95.0" : 7.18310630882353,
+                "99.0" : 7.18310630882353,
+                "99.9" : 7.18310630882353,
+                "99.99" : 7.18310630882353,
+                "99.999" : 7.18310630882353,
+                "99.9999" : 7.18310630882353,
+                "100.0" : 7.18310630882353
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    6.7626317931034485,
+                    6.780395138888889,
+                    6.5886400604026845,
+                    6.578377825503356,
+                    6.503121860927152,
+                    6.541436293333334,
+                    6.712238417808219,
+                    6.495638443708609
+                ],
+                [
+                    7.17086656617647,
+                    6.781045402777778,
+                    7.18310630882353,
+                    6.898738098591549,
+                    6.80238875,
+                    6.828444083333333,
+                    6.710368589041096,
+                    6.774423613793103
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "me.mnedokushev.zio.apache.parquet.benchmarks.ParquetPekkoBenchmark.zioStreamingWrite",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/opt/openjdk-bin-17.0.21_p9/bin/java",
+        "jvmArgs" : [
+            "-Djava.io.tmpdir=/tmp/zio-parquet-full.uLhQQP"
+        ],
+        "jdkVersion" : "17.0.21",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "17.0.21+9",
+        "warmupIterations" : 5,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 8,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "rows" : "524288"
+        },
+        "primaryMetric" : {
+            "score" : 196.62907194374998,
+            "scoreError" : 2.2141292596979847,
+            "scoreConfidence" : [
+                194.414942684052,
+                198.84320120344796
+            ],
+            "scorePercentiles" : {
+                "0.0" : 192.7999935,
+                "50.0" : 195.95594533333332,
+                "90.0" : 200.15817953333334,
+                "95.0" : 201.321335,
+                "99.0" : 201.321335,
+                "99.9" : 201.321335,
+                "99.99" : 201.321335,
+                "99.999" : 201.321335,
+                "99.9999" : 201.321335,
+                "100.0" : 201.321335
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    196.053839,
+                    194.59790233333334,
+                    194.69352516666666,
+                    195.63430133333333,
+                    196.27104316666666,
+                    199.65968433333333,
+                    195.762416,
+                    198.7856772
+                ],
+                [
+                    197.655028,
+                    198.480749,
+                    201.321335,
+                    195.85805166666665,
+                    192.7999935,
+                    194.84452783333333,
+                    195.82131016666668,
+                    197.8257674
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    }
+]
+
+

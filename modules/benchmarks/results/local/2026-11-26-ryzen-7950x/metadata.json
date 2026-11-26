@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-26",
+  "sourceRevision": "c44e9d5ab3db9d7f16252fe792be1ef6699cd9be",
+  "environment": {
+    "profile": "local",
+    "os": "Linux",
+    "architecture": "x86_64",
+    "cpu": "AMD Ryzen 9 7950X",
+    "jdkVersion": "17.0.21+9"
+  },
+  "parquet4sVersion": "2.23.0",
+  "suites": [
+    {
+      "result": "batch.json",
+      "sbtCommand": "benchmarks/Jmh/run -foe true -rf json -rff batch.json .*ParquetBatchBenchmark.*"
+    },
+    {
+      "result": "fs2.json",
+      "sbtCommand": "benchmarksFs2/Jmh/run -foe true -rf json -rff fs2.json .*ParquetFs2Benchmark.*"
+    },
+    {
+      "result": "akka.json",
+      "sbtCommand": "benchmarksAkka/Jmh/run -foe true -rf json -rff akka.json .*ParquetAkkaBenchmark.*"
+    },
+    {
+      "result": "pekko.json",
+      "sbtCommand": "benchmarksPekko/Jmh/run -foe true -rf json -rff pekko.json .*ParquetPekkoBenchmark.*"
+    }
+  ]
+}
