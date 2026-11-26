@@ -44,6 +44,8 @@ object Dep {
 
   lazy val parquet4sCore = O.parquet4s %% "parquet4s-core" % V.parquet4s
   lazy val parquet4sFs2  = O.parquet4s %% "parquet4s-fs2"  % V.parquet4s
+  lazy val parquet4sAkka  = O.parquet4s %% "parquet4s-akka" % V.parquet4s
+  lazy val parquet4sPekko = O.parquet4s %% "parquet4s-pekko" % V.parquet4s
   lazy val fs2Core       = O.fs2       %% "fs2-core"       % V.fs2
   lazy val catsEffect    = O.typelevel %% "cats-effect"    % V.catsEffect
 
@@ -79,7 +81,10 @@ object Dep {
     zioStreams,
     parquetHadoop,
     hadoopCommon,
-    parquet4sCore,
+    parquet4sCore
+  )
+
+  lazy val benchmarksFs2 = Seq(
     parquet4sFs2,
     fs2Core,
     catsEffect

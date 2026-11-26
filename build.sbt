@@ -74,13 +74,48 @@ val tpolecatSettings =
     tpolecatExcludeOptions += ScalacOptions.lintInferAny
   )
 
+val benchmarkSettings = Seq(
+  publish / skip       := true,
+  crossScalaVersions   := Seq(Scala3),
+  Compile / run / fork := true
+)
+
 lazy val benchmarks =
   project
     .in(file("modules/benchmarks"))
     .enablePlugins(JmhPlugin)
     .dependsOn(hadoop)
+    .settings(benchmarkSettings)
     .settings(
-      publish / skip     := true,
-      crossScalaVersions := Seq(Scala3),
       libraryDependencies ++= Dep.benchmarks
+    )
+
+lazy val benchmarksFs2 =
+  project
+    .in(file("modules/benchmarks-fs2"))
+    .enablePlugins(JmhPlugin)
+    .dependsOn(benchmarks)
+    .settings(benchmarkSettings)
+    .settings(
+      libraryDependencies ++= Dep.benchmarksFs2
+    )
+
+lazy val benchmarksAkka =
+  project
+    .in(file("modules/benchmarks-akka"))
+    .enablePlugins(JmhPlugin)
+    .dependsOn(benchmarks)
+    .settings(benchmarkSettings)
+    .settings(
+      libraryDependencies += Dep.parquet4sAkka
+    )
+
+lazy val benchmarksPekko =
+  project
+    .in(file("modules/benchmarks-pekko"))
+    .enablePlugins(JmhPlugin)
+    .dependsOn(benchmarks)
+    .settings(benchmarkSettings)
+    .settings(
+      libraryDependencies += Dep.parquet4sPekko
     )
