@@ -35,7 +35,6 @@ object ValueDecoderDeriver {
   ): Chunk[Any] = {
     val arguments = new Array[Any](fieldNames.size)
     var index     = 0
-    // Resolve all field values before decoding, preserving missing-field error precedence.
     while (index < arguments.length) {
       arguments(index) = values(fieldNames(index))
       index += 1

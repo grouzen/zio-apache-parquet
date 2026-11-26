@@ -30,29 +30,30 @@ trait ParquetReader[+A <: Product] {
 final class ParquetReaderLive[A <: Product: Tag](
   hadoopConf: Configuration,
   schema: Option[Schema[A]] = None,
-  schemaEncoder: Option[SchemaEncoder[A]] = None
+  schemaEncoder: Option[SchemaEncoder[A]] = None,
+  readBatchSize: Int = ParquetReader.defaultReadBatchSize
 )(implicit decoder: ValueDecoder[A])
     extends ParquetReader[A] {
 
-  private val readBatchSize = 1024
+  require(readBatchSize > 0, "readBatchSize must be positive")
 
   override def readStream(path: Path): ZStream[Scope, Throwable, A] =
     for {
       reader <- ZStream.fromZIO(build(path, None))
-      value  <- readStream0(reader)
+      value  <- streamFromReader(reader)
     } yield value
 
   override def readStreamFiltered(path: Path, filter: CompiledPredicate): ZStream[Scope, Throwable, A] =
     for {
       reader <- ZStream.fromZIO(build(path, Some(filter)))
-      value  <- readStream0(reader)
+      value  <- streamFromReader(reader)
     } yield value
 
   override def readChunk[B](path: Path): Task[Chunk[A]] =
     ZIO.scoped(
       for {
         reader <- build(path, None)
-        result <- readStream0(reader).runCollect
+        result <- streamFromReader(reader).runCollect
       } yield result
     )
 
@@ -60,11 +61,11 @@ final class ParquetReaderLive[A <: Product: Tag](
     ZIO.scoped(
       for {
         reader <- build(path, Some(filter))
-        result <- readStream0(reader).runCollect
+        result <- streamFromReader(reader).runCollect
       } yield result
     )
 
-  private def readStream0(reader: HadoopParquetReader[RecordValue]): ZStream[Any, Throwable, A] =
+  private def streamFromReader(reader: HadoopParquetReader[RecordValue]): ZStream[Any, Throwable, A] =
     ZStream.suspend {
       var terminal  = Option.empty[Cause[Option[Throwable]]]
       val readBatch = ZIO.suspendSucceed {
@@ -137,6 +138,8 @@ final class ParquetReaderLive[A <: Product: Tag](
 
 object ParquetReader {
 
+  private[hadoop] val defaultReadBatchSize = 1024
+
   final class Builder[A: Tag](
     file: InputFile,
     schema: Option[Schema[A]] = None,
@@ -149,16 +152,18 @@ object ParquetReader {
   }
 
   def configured[A <: Product: ValueDecoder: Tag](
-    hadoopConf: Configuration = new Configuration()
+    hadoopConf: Configuration = new Configuration(),
+    readBatchSize: Int = defaultReadBatchSize
   ): ULayer[ParquetReader[A]] =
-    ZLayer.succeed(new ParquetReaderLive[A](hadoopConf))
+    ZLayer.succeed(new ParquetReaderLive[A](hadoopConf, readBatchSize = readBatchSize))
 
   def projected[A <: Product: ValueDecoder: Tag](
-    hadoopConf: Configuration = new Configuration()
+    hadoopConf: Configuration = new Configuration(),
+    readBatchSize: Int = defaultReadBatchSize
   )(implicit
     schema: Schema[A],
     schemaEncoder: SchemaEncoder[A]
   ): ULayer[ParquetReader[A]] =
-    ZLayer.succeed(new ParquetReaderLive[A](hadoopConf, Some(schema), Some(schemaEncoder)))
+    ZLayer.succeed(new ParquetReaderLive[A](hadoopConf, Some(schema), Some(schemaEncoder), readBatchSize))
 
 }

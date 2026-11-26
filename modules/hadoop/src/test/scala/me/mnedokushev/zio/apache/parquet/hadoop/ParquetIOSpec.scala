@@ -45,7 +45,18 @@ object ParquetIOSpec extends ZIOSpecDefault {
           reader  <- ZIO.service[ParquetReader[MyRecordIO]]
           _       <- writer.writeStream(tmpPath, ZStream.fromChunks(first, rest))
           batches <- ZIO.scoped[Any](reader.readStream(tmpPath).chunks.runCollect)
-        } yield assertTrue(batches.map(_.size) == Chunk(1024, 2), batches.flatten == first ++ rest)
+          custom  <- ZIO.scoped {
+                       for {
+                         env  <- ParquetReader.configured[MyRecordIO](readBatchSize = 512).build
+                         rows <- env.get.readStream(tmpPath).chunks.runCollect
+                       } yield rows
+                     }
+        } yield assertTrue(
+          batches.map(_.size) == Chunk(1024, 2),
+          batches.flatten == first ++ rest,
+          custom.map(_.size) == Chunk(512, 512, 2),
+          custom.flatten == batches.flatten
+        )
       } @@ after(cleanTmpFile(tmpDir)),
       test("write stops at an encoding failure and closes the file") {
         val first                                             = MyRecordIO(1, "foo", None, List.empty, Map.empty)
@@ -56,7 +67,7 @@ object ParquetIOSpec extends ZIOSpecDefault {
         }
 
         for {
-          writer <- ZIO.scoped(ParquetWriter.configured[MyRecordIO]().build.map(_.get))
+          writer <- ZIO.scoped(ParquetWriter.configured[MyRecordIO](writeBatchSize = 2).build.map(_.get))
           reader <- ZIO.service[ParquetReader[MyRecordIO]]
           result <- writer.writeChunk(tmpPath, Chunk(first, first.copy(a = 2), first.copy(a = 3))).either
           rows   <- reader.readChunk(tmpPath)
@@ -65,11 +76,10 @@ object ParquetIOSpec extends ZIOSpecDefault {
       test("stream emits rows before a decoding failure within a batch") {
         val first                                             = MyRecordIO(1, "foo", None, List.empty, Map.empty)
         val failure                                           = new IllegalStateException("failed to decode row 2")
-        val decoder                                           = MyRecordIO.valueDecoder.map { row =>
+        implicit val failingDecoder: ValueDecoder[MyRecordIO] = MyRecordIO.valueDecoder.map { row =>
           if (row.a == 2) throw failure
           row
         }
-        implicit val failingDecoder: ValueDecoder[MyRecordIO] = decoder
         val reader                                            = new ParquetReaderLive[MyRecordIO](new Configuration())
 
         for {

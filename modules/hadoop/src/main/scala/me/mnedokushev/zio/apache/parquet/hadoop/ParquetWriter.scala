@@ -33,11 +33,12 @@ final class ParquetWriterLive[A <: Product](
   pageSize: Int,
   rowGroupSize: Long,
   validationEnabled: Boolean,
-  hadoopConf: Configuration
+  hadoopConf: Configuration,
+  writeBatchSize: Int = ParquetWriter.defaultWriteBatchSize
 )(implicit schema: Schema[A], schemaEncoder: SchemaEncoder[A], encoder: ValueEncoder[A], tag: Tag[A])
     extends ParquetWriter[A] {
 
-  private val writeBatchSize = 1024
+  require(writeBatchSize > 0, "writeBatchSize must be positive")
 
   override def writeChunk(path: Path, data: Chunk[A]): Task[Unit] =
     ZIO.scoped[Any](
@@ -103,6 +104,8 @@ final class ParquetWriterLive[A <: Product](
 
 object ParquetWriter {
 
+  private[hadoop] val defaultWriteBatchSize = 1024
+
   final class Builder(file: OutputFile, schema: MessageType)
       extends HadoopParquetWriter.Builder[RecordValue, Builder](file) {
 
@@ -122,7 +125,8 @@ object ParquetWriter {
     pageSize: Int = HadoopParquetWriter.DEFAULT_PAGE_SIZE,
     rowGroupSize: Long = HadoopParquetWriter.DEFAULT_BLOCK_SIZE,
     validationEnabled: Boolean = HadoopParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
-    hadoopConf: Configuration = new Configuration()
+    hadoopConf: Configuration = new Configuration(),
+    writeBatchSize: Int = defaultWriteBatchSize
   )(implicit
     schema: Schema[A],
     schemaEncoder: SchemaEncoder[A],
@@ -138,7 +142,8 @@ object ParquetWriter {
         pageSize,
         rowGroupSize,
         validationEnabled,
-        hadoopConf
+        hadoopConf,
+        writeBatchSize
       )
     )
 

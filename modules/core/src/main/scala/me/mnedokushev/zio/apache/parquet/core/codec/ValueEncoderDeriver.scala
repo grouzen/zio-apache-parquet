@@ -46,46 +46,46 @@ object ValueEncoderDeriver {
       case 0 =>
         Map.empty[String, Value]
       case 1 =>
-        val (first, firstEncoder) = fieldEncoders(0)
-        new Map.Map1[String, Value](first.name, encodeField(first, firstEncoder))
+        val (field0, encoder0) = fieldEncoders(0)
+        new Map.Map1[String, Value](field0.name, encodeField(field0, encoder0))
       case 2 =>
-        val (first, firstEncoder)   = fieldEncoders(0)
-        val (second, secondEncoder) = fieldEncoders(1)
+        val (field0, encoder0) = fieldEncoders(0)
+        val (field1, encoder1) = fieldEncoders(1)
         new Map.Map2[String, Value](
-          first.name,
-          encodeField(first, firstEncoder),
-          second.name,
-          encodeField(second, secondEncoder)
+          field0.name,
+          encodeField(field0, encoder0),
+          field1.name,
+          encodeField(field1, encoder1)
         )
       case 3 =>
-        val (first, firstEncoder)   = fieldEncoders(0)
-        val (second, secondEncoder) = fieldEncoders(1)
-        val (third, thirdEncoder)   = fieldEncoders(2)
+        val (field0, encoder0) = fieldEncoders(0)
+        val (field1, encoder1) = fieldEncoders(1)
+        val (field2, encoder2) = fieldEncoders(2)
         new Map.Map3[String, Value](
-          first.name,
-          encodeField(first, firstEncoder),
-          second.name,
-          encodeField(second, secondEncoder),
-          third.name,
-          encodeField(third, thirdEncoder)
+          field0.name,
+          encodeField(field0, encoder0),
+          field1.name,
+          encodeField(field1, encoder1),
+          field2.name,
+          encodeField(field2, encoder2)
         )
       case 4 =>
-        val (first, firstEncoder)   = fieldEncoders(0)
-        val (second, secondEncoder) = fieldEncoders(1)
-        val (third, thirdEncoder)   = fieldEncoders(2)
-        val (fourth, fourthEncoder) = fieldEncoders(3)
+        val (field0, encoder0) = fieldEncoders(0)
+        val (field1, encoder1) = fieldEncoders(1)
+        val (field2, encoder2) = fieldEncoders(2)
+        val (field3, encoder3) = fieldEncoders(3)
         new Map.Map4[String, Value](
-          first.name,
-          encodeField(first, firstEncoder),
-          second.name,
-          encodeField(second, secondEncoder),
-          third.name,
-          encodeField(third, thirdEncoder),
-          fourth.name,
-          encodeField(fourth, fourthEncoder)
+          field0.name,
+          encodeField(field0, encoder0),
+          field1.name,
+          encodeField(field1, encoder1),
+          field2.name,
+          encodeField(field2, encoder2),
+          field3.name,
+          encodeField(field3, encoder3)
         )
       case _ =>
-        val builder = if (arity > 4) HashMap.newBuilder[String, Value] else Map.newBuilder[String, Value]
+        val builder = if (arity == -1) Map.newBuilder[String, Value] else HashMap.newBuilder[String, Value]
         fieldEncoders.foreach { case (field, encoder) =>
           builder += field.name -> encodeField(field, encoder)
         }
