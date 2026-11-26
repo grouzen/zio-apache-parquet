@@ -4,7 +4,6 @@ import me.mnedokushev.zio.apache.parquet.core.Fixtures._
 import me.mnedokushev.zio.apache.parquet.core.codec.{ ValueDecoder, ValueEncoder }
 import me.mnedokushev.zio.apache.parquet.core.filter.Filter
 import me.mnedokushev.zio.apache.parquet.core.filter.syntax._
-import org.apache.hadoop.conf.Configuration
 import zio._
 import zio.stream._
 import zio.test.Assertion._
@@ -14,6 +13,8 @@ import zio.test._
 import java.nio.file.Files
 
 object ParquetIOSpec extends ZIOSpecDefault {
+
+  private final case class SmallBatchReader(reader: ParquetReader[MyRecordIO])
 
   val tmpDir     = Path(Files.createTempDirectory("zio-apache-parquet"))
   val tmpFile    = "parquet-writer-spec.parquet"
@@ -27,12 +28,15 @@ object ParquetIOSpec extends ZIOSpecDefault {
           MyRecordIO(id, "foo", None, List(1, 2), Map("first" -> 1, "second" -> 2))
         })
 
-        for {
+        (for {
           writer <- ZIO.service[ParquetWriter[MyRecordIO]]
           reader <- ZIO.service[ParquetReader[MyRecordIO]]
           _      <- writer.writeChunk(tmpPath, payload)
           result <- reader.readChunk(tmpPath)
-        } yield assertTrue(result == payload)
+        } yield assertTrue(result == payload)).provide(
+          ParquetWriter.configured[MyRecordIO](),
+          ParquetReader.configured[MyRecordIO]()
+        )
       } @@ after(cleanTmpFile(tmpDir)),
       test("write and read - stream") {
         val first = Chunk.single(MyRecordIO(0, "bar", Some(3L), List.empty, Map("third" -> 3)))
@@ -40,22 +44,23 @@ object ParquetIOSpec extends ZIOSpecDefault {
           MyRecordIO(id, "foo", None, List(1, 2), Map("first" -> 1, "second" -> 2))
         })
 
-        for {
+        (for {
           writer  <- ZIO.service[ParquetWriter[MyRecordIO]]
           reader  <- ZIO.service[ParquetReader[MyRecordIO]]
+          small   <- ZIO.service[SmallBatchReader]
           _       <- writer.writeStream(tmpPath, ZStream.fromChunks(first, rest))
           batches <- ZIO.scoped[Any](reader.readStream(tmpPath).chunks.runCollect)
-          custom  <- ZIO.scoped {
-                       for {
-                         env  <- ParquetReader.configured[MyRecordIO](readBatchSize = BatchSize(512)).build
-                         rows <- env.get.readStream(tmpPath).chunks.runCollect
-                       } yield rows
-                     }
+          custom  <- ZIO.scoped(small.reader.readStream(tmpPath).chunks.runCollect)
         } yield assertTrue(
           batches.map(_.size) == Chunk(1024, 2),
           batches.flatten == first ++ rest,
           custom.map(_.size) == Chunk(512, 512, 2),
           custom.flatten == batches.flatten
+        )).provide(
+          ParquetWriter.configured[MyRecordIO](),
+          ParquetReader.configured[MyRecordIO](),
+          ParquetReader.configured[MyRecordIO](readBatchSize = BatchSize(512)) >>>
+            ZLayer.fromFunction(SmallBatchReader(_))
         )
       } @@ after(cleanTmpFile(tmpDir)),
       test("write stops at an encoding failure and closes the file") {
@@ -66,12 +71,15 @@ object ParquetIOSpec extends ZIOSpecDefault {
           row
         }
 
-        for {
-          writer <- ZIO.scoped(ParquetWriter.configured[MyRecordIO](writeBatchSize = BatchSize(2)).build.map(_.get))
+        (for {
+          writer <- ZIO.service[ParquetWriter[MyRecordIO]]
           reader <- ZIO.service[ParquetReader[MyRecordIO]]
           result <- writer.writeChunk(tmpPath, Chunk(first, first.copy(a = 2), first.copy(a = 3))).either
           rows   <- reader.readChunk(tmpPath)
-        } yield assertTrue(result == Left(failure), rows == Chunk(first))
+        } yield assertTrue(result == Left(failure), rows == Chunk(first))).provide(
+          ParquetWriter.configured[MyRecordIO](writeBatchSize = BatchSize(2)),
+          ParquetReader.configured[MyRecordIO]()
+        )
       } @@ after(cleanTmpFile(tmpDir)),
       test("stream emits rows before a decoding failure within a batch") {
         val first                                             = MyRecordIO(1, "foo", None, List.empty, Map.empty)
@@ -80,16 +88,19 @@ object ParquetIOSpec extends ZIOSpecDefault {
           if (row.a == 2) throw failure
           row
         }
-        val reader                                            = new ParquetReaderLive[MyRecordIO](new Configuration())
 
-        for {
+        (for {
           writer <- ZIO.service[ParquetWriter[MyRecordIO]]
+          reader <- ZIO.service[ParquetReader[MyRecordIO]]
           _      <- writer.writeChunk(tmpPath, Chunk(first, first.copy(a = 2)))
           prefix <- ZIO.scoped(reader.readStream(tmpPath).take(1).runCollect)
           seen   <- Ref.make(Chunk.empty[MyRecordIO])
           result <- ZIO.scoped(reader.readStream(tmpPath).runForeach(row => seen.update(_ :+ row))).either
           rows   <- seen.get
-        } yield assertTrue(prefix == Chunk(first), rows == prefix, result == Left(failure))
+        } yield assertTrue(prefix == Chunk(first), rows == prefix, result == Left(failure))).provide(
+          ParquetWriter.configured[MyRecordIO](),
+          ParquetReader.configured[MyRecordIO]()
+        )
       } @@ after(cleanTmpFile(tmpDir)),
       test("write full and read projected") {
         val payload          = Chunk(
@@ -100,12 +111,15 @@ object ParquetIOSpec extends ZIOSpecDefault {
           MyProjectedRecordIO(r.a, r.c, r.d, r.e)
         }
 
-        for {
+        (for {
           writer <- ZIO.service[ParquetWriter[MyRecordIO]]
           reader <- ZIO.service[ParquetReader[MyProjectedRecordIO]]
           _      <- writer.writeChunk(tmpPath, payload)
           result <- reader.readChunk(tmpPath)
-        } yield assertTrue(result == projectedPayload)
+        } yield assertTrue(result == projectedPayload)).provide(
+          ParquetWriter.configured[MyRecordIO](),
+          ParquetReader.projected[MyProjectedRecordIO]()
+        )
       } @@ after(cleanTmpFile(tmpDir)),
       test("write and read with filter") {
         val payload             = Chunk(
@@ -116,17 +130,16 @@ object ParquetIOSpec extends ZIOSpecDefault {
         )
         val (id, name, _, _, _) = Filter[MyRecordIO].columns
 
-        for {
+        (for {
           writer <- ZIO.service[ParquetWriter[MyRecordIO]]
           reader <- ZIO.service[ParquetReader[MyRecordIO]]
           _      <- writer.writeChunk(tmpPath, payload)
           result <- reader.readChunkFiltered(tmpPath, filter(id > 1 `and` name =!= "foo"))
-        } yield assertTrue(result.size == 2) && assert(result)(equalTo(payload.drop(2)))
+        } yield assertTrue(result.size == 2) && assert(result)(equalTo(payload.drop(2)))).provide(
+          ParquetWriter.configured[MyRecordIO](),
+          ParquetReader.configured[MyRecordIO]()
+        )
       } @@ after(cleanTmpFile(tmpDir))
-    ).provide(
-      ParquetWriter.configured[MyRecordIO](),
-      ParquetReader.configured[MyRecordIO](),
-      ParquetReader.projected[MyProjectedRecordIO]()
     ) @@ sequential
 
   private def cleanTmpFile(path: Path) =
