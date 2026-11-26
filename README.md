@@ -26,6 +26,7 @@ Ready for more? Check out my other game-changing library that makes working with
     - [Value](#value)
   - [Reading & Writing files](#reading--writing-files)
     - [Filtering](#filtering)
+- [Benchmarks](#benchmarks)
 - [Resources](#resources)
 
 ## Installation
@@ -329,6 +330,27 @@ object Filtering extends ZIOAppDefault:
   // Outputs:
   // Chunk(MyRecord(2,bob,Some(12)),MyRecord(3,alice,Some(13)),MyRecord(4,john,None))
 ```
+
+## Benchmarks
+
+ZIO Apache Parquet and parquet4s 2.23.0 read and wrote the same uncompressed
+datasets on a Ryzen 9 7950X with Linux and JDK 17.0.21. JMH measured mean
+milliseconds per file, including file open and close. Lower is better. The
+factor is parquet4s time divided by ZIO time for the same workload and row count.
+
+| Workload | parquet4s API | ZIO (10,000 rows) | parquet4s (10,000 rows) | ZIO (524,288 rows) | parquet4s (524,288 rows) | Factor (10,000 / 524,288 rows) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Batch read | Core | 1.99 | 3.00 | 97.78 | 100.22 | 1.51× / 1.02× |
+| Batch write | Core | 6.60 | 7.13 | 189.90 | 266.99 | 1.08× / 1.41× |
+| Stream read | FS2 | 2.38 | 13.77 | 102.21 | 610.02 | 5.78× / 5.97× |
+| Stream write | FS2 | 7.01 | 10.89 | 195.70 | 438.58 | 1.55× / 2.24× |
+| Stream read | Akka | 2.17 | 10.82 | 95.62 | 453.87 | 4.99× / 4.75× |
+| Stream write | Akka | 6.61 | 8.18 | 196.74 | 315.74 | 1.24× / 1.60× |
+| Stream read | Pekko | 2.05 | 10.97 | 96.48 | 439.46 | 5.35× / 4.55× |
+| Stream write | Pekko | 6.76 | 7.99 | 196.63 | 296.80 | 1.18× / 1.51× |
+
+[Full results, confidence intervals, and raw JMH data](modules/benchmarks/results/README.md) ·
+[Benchmark setup and commands](modules/benchmarks/README.md)
 
 ## Resources
 
