@@ -47,7 +47,7 @@ object ParquetIOSpec extends ZIOSpecDefault {
           batches <- ZIO.scoped[Any](reader.readStream(tmpPath).chunks.runCollect)
           custom  <- ZIO.scoped {
                        for {
-                         env  <- ParquetReader.configured[MyRecordIO](readBatchSize = 512).build
+                         env  <- ParquetReader.configured[MyRecordIO](readBatchSize = BatchSize(512)).build
                          rows <- env.get.readStream(tmpPath).chunks.runCollect
                        } yield rows
                      }
@@ -67,7 +67,7 @@ object ParquetIOSpec extends ZIOSpecDefault {
         }
 
         for {
-          writer <- ZIO.scoped(ParquetWriter.configured[MyRecordIO](writeBatchSize = 2).build.map(_.get))
+          writer <- ZIO.scoped(ParquetWriter.configured[MyRecordIO](writeBatchSize = BatchSize(2)).build.map(_.get))
           reader <- ZIO.service[ParquetReader[MyRecordIO]]
           result <- writer.writeChunk(tmpPath, Chunk(first, first.copy(a = 2), first.copy(a = 3))).either
           rows   <- reader.readChunk(tmpPath)
