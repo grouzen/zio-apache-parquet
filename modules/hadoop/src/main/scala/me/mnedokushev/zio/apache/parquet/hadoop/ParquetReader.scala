@@ -13,6 +13,7 @@ import zio.schema.Schema
 import zio.stream._
 
 import java.io.IOException
+import scala.util.control.NonFatal
 
 trait ParquetReader[+A <: Product] {
 
@@ -29,27 +30,30 @@ trait ParquetReader[+A <: Product] {
 final class ParquetReaderLive[A <: Product: Tag](
   hadoopConf: Configuration,
   schema: Option[Schema[A]] = None,
-  schemaEncoder: Option[SchemaEncoder[A]] = None
+  schemaEncoder: Option[SchemaEncoder[A]] = None,
+  readBatchSize: BatchSize.Type = ParquetReader.defaultReadBatchSize
 )(implicit decoder: ValueDecoder[A])
     extends ParquetReader[A] {
+
+  private val batchSize = BatchSize.unwrap(readBatchSize)
 
   override def readStream(path: Path): ZStream[Scope, Throwable, A] =
     for {
       reader <- ZStream.fromZIO(build(path, None))
-      value  <- readStream0(reader)
+      value  <- streamFromReader(reader)
     } yield value
 
   override def readStreamFiltered(path: Path, filter: CompiledPredicate): ZStream[Scope, Throwable, A] =
     for {
       reader <- ZStream.fromZIO(build(path, Some(filter)))
-      value  <- readStream0(reader)
+      value  <- streamFromReader(reader)
     } yield value
 
   override def readChunk[B](path: Path): Task[Chunk[A]] =
     ZIO.scoped(
       for {
         reader <- build(path, None)
-        result <- readChunk0(reader)
+        result <- streamFromReader(reader).runCollect
       } yield result
     )
 
@@ -57,43 +61,57 @@ final class ParquetReaderLive[A <: Product: Tag](
     ZIO.scoped(
       for {
         reader <- build(path, Some(filter))
-        result <- readChunk0(reader)
+        result <- streamFromReader(reader).runCollect
       } yield result
     )
 
-  private def readStream0(reader: HadoopParquetReader[RecordValue]): ZStream[Any, Throwable, A] =
-    ZStream.repeatZIOOption(
-      ZIO
-        .attemptBlockingIO(reader.read())
-        .asSomeError
-        .filterOrFail(_ != null)(None)
-        .flatMap(decoder.decodeZIO(_).asSomeError)
-    )
-
-  private def readChunk0[B](reader: HadoopParquetReader[RecordValue]): Task[Chunk[A]] = {
-    val readNext = for {
-      value  <- ZIO.attemptBlockingIO(reader.read())
-      record <- if (value != null)
-                  decoder.decodeZIO(value)
-                else
-                  ZIO.succeed(null.asInstanceOf[A])
-    } yield record
-    val builder  = Chunk.newBuilder[A]
-
-    ZIO.scoped(
-      for {
-        initial <- readNext
-        _       <- {
-          var current = initial
-
-          ZIO.whileLoop(current != null)(readNext) { next =>
-            builder.addOne(current)
-            current = next
-          }
+  private def streamFromReader(reader: HadoopParquetReader[RecordValue]): ZStream[Any, Throwable, A] =
+    ZStream.suspend {
+      var terminal  = Option.empty[Cause[Option[Throwable]]]
+      val readBatch = ZIO.suspendSucceed {
+        terminal match {
+          case Some(cause) => ZIO.failCause(cause)
+          case None        =>
+            val batch = Chunk.newBuilder[A]
+            ZIO.blocking {
+              ZIO.suspendSucceed {
+                var count    = 0
+                var eof      = false
+                var decoding = false
+                try {
+                  while (count < batchSize && !eof) {
+                    val row = reader.read()
+                    if (row == null) eof = true
+                    else {
+                      decoding = true
+                      val decoded = decoder.decode(row)
+                      decoding = false
+                      batch.addOne(decoded)
+                      count += 1
+                    }
+                  }
+                  if (eof) Exit.fail(None) else Exit.unit
+                } catch {
+                  case NonFatal(error) if decoding => Exit.fail(Some(error))
+                  case error: IOException          => Exit.fail(Some(error))
+                  case NonFatal(error)             => Exit.die(error)
+                }
+              }
+            }
+              .as(batch.result())
+              .catchAllCause { cause =>
+                val rows = batch.result()
+                if (rows.isEmpty || cause.isInterrupted) ZIO.failCause(cause)
+                else {
+                  // Emit the successful prefix before reporting EOF or failure.
+                  terminal = Some(cause)
+                  ZIO.succeed(rows)
+                }
+              }
         }
-      } yield builder.result()
-    )
-  }
+      }
+      ZStream.repeatZIOChunkOption(readBatch)
+    }
 
   private def build[B](
     path: Path,
@@ -120,6 +138,8 @@ final class ParquetReaderLive[A <: Product: Tag](
 
 object ParquetReader {
 
+  private[hadoop] val defaultReadBatchSize = BatchSize(1024)
+
   final class Builder[A: Tag](
     file: InputFile,
     schema: Option[Schema[A]] = None,
@@ -132,16 +152,18 @@ object ParquetReader {
   }
 
   def configured[A <: Product: ValueDecoder: Tag](
-    hadoopConf: Configuration = new Configuration()
+    hadoopConf: Configuration = new Configuration(),
+    readBatchSize: BatchSize.Type = defaultReadBatchSize
   ): ULayer[ParquetReader[A]] =
-    ZLayer.succeed(new ParquetReaderLive[A](hadoopConf))
+    ZLayer.succeed(new ParquetReaderLive[A](hadoopConf, readBatchSize = readBatchSize))
 
   def projected[A <: Product: ValueDecoder: Tag](
-    hadoopConf: Configuration = new Configuration()
+    hadoopConf: Configuration = new Configuration(),
+    readBatchSize: BatchSize.Type = defaultReadBatchSize
   )(implicit
     schema: Schema[A],
     schemaEncoder: SchemaEncoder[A]
   ): ULayer[ParquetReader[A]] =
-    ZLayer.succeed(new ParquetReaderLive[A](hadoopConf, Some(schema), Some(schemaEncoder)))
+    ZLayer.succeed(new ParquetReaderLive[A](hadoopConf, Some(schema), Some(schemaEncoder), readBatchSize))
 
 }

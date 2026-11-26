@@ -28,6 +28,28 @@ import java.util.{ Currency, UUID }
 
 object ValueDecoderDeriver {
 
+  private def decodeRecordArguments(
+    values: Map[String, Value],
+    fieldNames: Chunk[String],
+    fieldDecoders: => Chunk[ValueDecoder[?]]
+  ): Chunk[Any] = {
+    val arguments = new Array[Any](fieldNames.size)
+    var index     = 0
+    while (index < arguments.length) {
+      arguments(index) = values(fieldNames(index))
+      index += 1
+    }
+
+    val decoders = fieldDecoders
+    val size     = arguments.length.min(decoders.size)
+    index = 0
+    while (index < size) {
+      arguments(index) = decoders(index).decode(arguments(index).asInstanceOf[Value])
+      index += 1
+    }
+    Chunk.fromArray(arguments).take(size)
+  }
+
   val default: Deriver[ValueDecoder] = new Deriver[ValueDecoder] {
 
     override def deriveRecord[A](
@@ -35,18 +57,14 @@ object ValueDecoderDeriver {
       fields: => Chunk[Deriver.WrappedF[ValueDecoder, ?]],
       summoned: => Option[ValueDecoder[A]]
     ): ValueDecoder[A] = new ValueDecoder[A] {
+      private lazy val fieldNames    = record.fields.map(_.name)
+      private lazy val fieldDecoders = fields.map(_.unwrap)
+
       override def decode(value: Value): A =
         value match {
           case GroupValue.RecordValue(values) =>
             Unsafe.unsafe { implicit unsafe =>
-              record.construct(
-                Chunk
-                  .fromIterable(record.fields.map(f => values(f.name)))
-                  .zip(fields.map(_.unwrap))
-                  .map { case (v, decoder) =>
-                    decoder.decode(v)
-                  }
-              ) match {
+              record.construct(decodeRecordArguments(values, fieldNames, fieldDecoders)) match {
                 case Right(v)     =>
                   v
                 case Left(reason) =>
@@ -171,12 +189,14 @@ object ValueDecoderDeriver {
       inner: => ValueDecoder[A],
       summoned: => Option[ValueDecoder[Option[A]]]
     ): ValueDecoder[Option[A]] = new ValueDecoder[Option[A]] {
+      private lazy val decoder = inner
+
       override def decode(value: Value): Option[A] =
         value match {
           case Value.NullValue =>
             None
           case _               =>
-            Some(inner.decode(value))
+            Some(decoder.decode(value))
         }
 
     }
@@ -219,19 +239,15 @@ object ValueDecoderDeriver {
       summoned: => Option[ValueDecoder[B]]
     ): ValueDecoder[B] = summoned.getOrElse {
       new ValueDecoder[B] {
+        private lazy val fieldNames    = record.fields.map(_.name)
+        private lazy val fieldDecoders = fields.map(_.unwrap)
+
         override def decode(value: Value): B =
           value match {
             case GroupValue.RecordValue(values) =>
               Unsafe.unsafe { implicit unsafe =>
                 record
-                  .construct(
-                    Chunk
-                      .fromIterable(record.fields.map(f => values(f.name)))
-                      .zip(fields.map(_.unwrap))
-                      .map { case (v, decoder) =>
-                        decoder.decode(v)
-                      }
-                  )
+                  .construct(decodeRecordArguments(values, fieldNames, fieldDecoders))
                   .flatMap(transform.f) match {
                   case Right(v)     => v
                   case Left(reason) =>

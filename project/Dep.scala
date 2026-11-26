@@ -29,6 +29,7 @@ object Dep {
   lazy val zioSchema           = O.zio %% "zio-schema"            % V.zioSchema
   lazy val zioSchemaDerivation = O.zio %% "zio-schema-derivation" % V.zioSchema
   lazy val zioPrelude          = O.zio %% "zio-prelude"           % V.zioPrelude
+  lazy val zioPreludeMacros    = O.zio %% "zio-prelude-macros"    % V.zioPrelude
   lazy val zioStreams          = O.zio %% "zio-streams"           % V.zioStreams
   lazy val zioTest             = O.zio %% "zio-test"              % V.zio
   lazy val zioTestSbt          = O.zio %% "zio-test-sbt"          % V.zio
@@ -62,6 +63,7 @@ object Dep {
     zio,
     zioSchema,
     zioPrelude,
+    zioPreludeMacros,
     zioStreams,
     parquetHadoop,
     parquetColumn,

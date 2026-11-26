@@ -5,6 +5,7 @@ package me.mnedokushev.zio.apache.parquet.core.codec
 import me.mnedokushev.zio.apache.parquet.core.{ Fixtures, NANOS_FACTOR, NANOS_PER_DAY, Value }
 import zio._
 import zio.schema._
+import zio.schema.annotation.fieldName
 import zio.test.Assertion._
 import zio.test._
 
@@ -49,6 +50,8 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
     implicit val schema: Schema[Record] =
       DeriveSchema.gen[Record]
   }
+
+  case class RenamedRecord(a: Int, @fieldName("a") b: Int)
 
   case class SummonedRecord(a: Int, b: Boolean, c: Option[String], d: Option[Int])
   object SummonedRecord {
@@ -376,36 +379,42 @@ object ValueCodecDeriverSpec extends ZIOSpecDefault {
           wrongResult <- decoder.decodeZIO(wrongId).either
         } yield assertTrue(result == payload) &&
           assert(wrongResult)(isLeft(isSubtype[DecoderError](anything)))
+      },
+      test("record encoding keeps the last value when field names collide") {
+        implicit val schema: Schema[RenamedRecord] = DeriveSchema.gen[RenamedRecord]
+        val encoder                                = Derive.derive[ValueEncoder, RenamedRecord](ValueEncoderDeriver.default)
+
+        assertTrue(encoder.encode(RenamedRecord(1, 2)) == Value.record(Map("a" -> Value.int(2))))
       }
-//      test("summoned") {
-      //        @nowarn
-      //        implicit val stringEncoder: ValueEncoder[String] = new ValueEncoder[String] {
-      //          override def encode(value: String): Value =
-      //            Value.uuid(UUID.fromString(value))
-      //        }
-      //        @nowarn
-      //        implicit val stringDecoder: ValueDecoder[String] = new ValueDecoder[String] {
-      //          override def decode(value: Value): String =
-      //            value match {
-      //              case PrimitiveValue.ByteArrayValue(v) if v.length == 16 =>
-      //                val bb = ByteBuffer.wrap(v.getBytes)
-      //                new UUID(bb.getLong, bb.getLong).toString
-      //              case other                                              =>
-      //                throw DecoderError(s"Wrong value: $other")
-      //
-      //            }
-      //        }
-      //
-      //        val uuid    = UUID.randomUUID()
-      //        val encoder = Derive.derive[ValueEncoder, SummonedRecord](ValueEncoderDeriver.summoned)
-      //        val decoder = Derive.derive[ValueDecoder, SummonedRecord](ValueDecoderDeriver.summoned)
-      //        val payload = SummonedRecord(2, false, Some(uuid.toString), None)
-      //
-      //        for {
-      //          value  <- encoder.encodeZIO(payload)
-      //          result <- decoder.decodeZIO(value)
-      //        } yield assertTrue(result == payload)
-      //      }
+      // test("summoned") {
+      //   @nowarn
+      //   implicit val stringEncoder: ValueEncoder[String] = new ValueEncoder[String] {
+      //     override def encode(value: String): Value =
+      //       Value.uuid(UUID.fromString(value))
+      //   }
+      //   @nowarn
+      //   implicit val stringDecoder: ValueDecoder[String] = new ValueDecoder[String] {
+      //     override def decode(value: Value): String =
+      //       value match {
+      //         case PrimitiveValue.ByteArrayValue(v) if v.length == 16 =>
+      //           val bb = ByteBuffer.wrap(v.getBytes)
+      //           new UUID(bb.getLong, bb.getLong).toString
+      //         case other                                              =>
+      //           throw DecoderError(s"Wrong value: $other")
+
+      //       }
+      //   }
+
+      //   val uuid    = UUID.randomUUID()
+      //   val encoder = Derive.derive[ValueEncoder, SummonedRecord](ValueEncoderDeriver.summoned)
+      //   val decoder = Derive.derive[ValueDecoder, SummonedRecord](ValueDecoderDeriver.summoned)
+      //   val payload = SummonedRecord(2, false, Some(uuid.toString), None)
+
+      //   for {
+      //     value  <- encoder.encodeZIO(payload)
+      //     result <- decoder.decodeZIO(value)
+      //   } yield assertTrue(result == payload)
+      // }
     )
 
 }

@@ -13,6 +13,9 @@ import zio._
 import zio.schema.Schema
 import zio.stream._
 
+import java.io.IOException
+import scala.util.control.NonFatal
+
 trait ParquetWriter[-A <: Product] {
 
   def writeChunk(path: Path, data: Chunk[A]): Task[Unit]
@@ -30,15 +33,18 @@ final class ParquetWriterLive[A <: Product](
   pageSize: Int,
   rowGroupSize: Long,
   validationEnabled: Boolean,
-  hadoopConf: Configuration
+  hadoopConf: Configuration,
+  writeBatchSize: BatchSize.Type = ParquetWriter.defaultWriteBatchSize
 )(implicit schema: Schema[A], schemaEncoder: SchemaEncoder[A], encoder: ValueEncoder[A], tag: Tag[A])
     extends ParquetWriter[A] {
+
+  private val batchSize = BatchSize.unwrap(writeBatchSize)
 
   override def writeChunk(path: Path, data: Chunk[A]): Task[Unit] =
     ZIO.scoped[Any](
       for {
         writer <- build(path)
-        _      <- ZIO.foreachDiscard(data)(writeSingle(writer, _))
+        _      <- writeBatches(writer, data)
       } yield ()
     )
 
@@ -46,15 +52,35 @@ final class ParquetWriterLive[A <: Product](
     ZIO.scoped[R](
       for {
         writer <- build(path)
-        _      <- stream.runForeach(writeSingle(writer, _))
+        _      <- stream.runForeachChunk(writeBatches(writer, _))
       } yield ()
     )
 
-  private def writeSingle(writer: HadoopParquetWriter[RecordValue], value: A): Task[Unit] =
-    for {
-      record <- encoder.encodeZIO(value)
-      _      <- ZIO.attemptBlockingIO(writer.write(record.asInstanceOf[RecordValue]))
-    } yield ()
+  private def writeBatches(writer: HadoopParquetWriter[RecordValue], data: Chunk[A]): Task[Unit] =
+    ZIO.suspendSucceed {
+      val batches = data.grouped(batchSize)
+      ZIO.whileLoop(batches.hasNext) {
+        val batch = batches.next()
+        ZIO.blocking {
+          ZIO.suspendSucceed {
+            var encoding = false
+            try {
+              batch.foreach { value =>
+                encoding = true
+                val record = encoder.encode(value)
+                encoding = false
+                writer.write(record.asInstanceOf[RecordValue])
+              }
+              Exit.unit
+            } catch {
+              case NonFatal(error) if encoding => Exit.fail(error)
+              case error: IOException          => Exit.fail(error)
+              case NonFatal(error)             => Exit.die(error)
+            }
+          }
+        }
+      }(_ => ())
+    }
 
   private def build(path: Path): RIO[Scope, HadoopParquetWriter[RecordValue]] =
     for {
@@ -78,6 +104,8 @@ final class ParquetWriterLive[A <: Product](
 
 object ParquetWriter {
 
+  private[hadoop] val defaultWriteBatchSize = BatchSize(1024)
+
   final class Builder(file: OutputFile, schema: MessageType)
       extends HadoopParquetWriter.Builder[RecordValue, Builder](file) {
 
@@ -97,7 +125,8 @@ object ParquetWriter {
     pageSize: Int = HadoopParquetWriter.DEFAULT_PAGE_SIZE,
     rowGroupSize: Long = HadoopParquetWriter.DEFAULT_BLOCK_SIZE,
     validationEnabled: Boolean = HadoopParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
-    hadoopConf: Configuration = new Configuration()
+    hadoopConf: Configuration = new Configuration(),
+    writeBatchSize: BatchSize.Type = defaultWriteBatchSize
   )(implicit
     schema: Schema[A],
     schemaEncoder: SchemaEncoder[A],
@@ -113,7 +142,8 @@ object ParquetWriter {
         pageSize,
         rowGroupSize,
         validationEnabled,
-        hadoopConf
+        hadoopConf,
+        writeBatchSize
       )
     )
 

@@ -125,10 +125,11 @@ object GroupValueConverter {
   ): GroupValueConverter[GroupValue.RecordValue] =
     new Default[GroupValue.RecordValue](schema) {
 
+      private lazy val emptyRecord =
+        Value.record(this.schema.getFields.asScala.iterator.map(_.getName -> Value.nil).toMap)
+
       override def start(): Unit =
-        this.groupValue = Value.record(
-          this.schema.getFields.asScala.toList.map(_.getName -> Value.nil).toMap
-        )
+        this.groupValue = emptyRecord
 
       override def end(): Unit =
         parent.put(name, this.groupValue)
@@ -193,10 +194,11 @@ object GroupValueConverter {
   def root(schema: GroupType): GroupValueConverter[GroupValue.RecordValue] =
     new Default[GroupValue.RecordValue](schema) {
 
+      private lazy val emptyRecord =
+        Value.record(this.schema.getFields.asScala.iterator.map(_.getName -> Value.nil).toMap)
+
       override def start(): Unit =
-        this.groupValue = Value.record(
-          this.schema.getFields.asScala.toList.map(_.getName -> Value.nil).toMap
-        )
+        this.groupValue = emptyRecord
 
       override def end(): Unit = ()
     }

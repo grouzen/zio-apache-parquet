@@ -24,8 +24,75 @@ import java.time.{
   ZonedDateTime
 }
 import java.util.{ Currency, UUID }
+import scala.collection.immutable.HashMap
 
 object ValueEncoderDeriver {
+
+  private def mapArity[A](fieldEncoders: Chunk[(Schema.Field[A, ?], ValueEncoder[?])]): Int = {
+    val distinctNames = fieldEncoders.map(_._1.name).toSet.size
+    // Small maps with duplicate names still need the builder's last-value-wins behavior.
+    if (distinctNames > 4 || distinctNames == fieldEncoders.size) distinctNames else -1
+  }
+
+  private def encodeRecord[A](
+    value: A,
+    fieldEncoders: Chunk[(Schema.Field[A, ?], ValueEncoder[?])],
+    arity: Int
+  ): Value = {
+    def encodeField[A1](field: Schema.Field[A, A1], encoder: ValueEncoder[?]): Value =
+      encoder.asInstanceOf[ValueEncoder[A1]].encode(field.get(value))
+
+    val values = arity match {
+      case 0 =>
+        Map.empty[String, Value]
+      case 1 =>
+        val (field0, encoder0) = fieldEncoders(0)
+        new Map.Map1[String, Value](field0.name, encodeField(field0, encoder0))
+      case 2 =>
+        val (field0, encoder0) = fieldEncoders(0)
+        val (field1, encoder1) = fieldEncoders(1)
+        new Map.Map2[String, Value](
+          field0.name,
+          encodeField(field0, encoder0),
+          field1.name,
+          encodeField(field1, encoder1)
+        )
+      case 3 =>
+        val (field0, encoder0) = fieldEncoders(0)
+        val (field1, encoder1) = fieldEncoders(1)
+        val (field2, encoder2) = fieldEncoders(2)
+        new Map.Map3[String, Value](
+          field0.name,
+          encodeField(field0, encoder0),
+          field1.name,
+          encodeField(field1, encoder1),
+          field2.name,
+          encodeField(field2, encoder2)
+        )
+      case 4 =>
+        val (field0, encoder0) = fieldEncoders(0)
+        val (field1, encoder1) = fieldEncoders(1)
+        val (field2, encoder2) = fieldEncoders(2)
+        val (field3, encoder3) = fieldEncoders(3)
+        new Map.Map4[String, Value](
+          field0.name,
+          encodeField(field0, encoder0),
+          field1.name,
+          encodeField(field1, encoder1),
+          field2.name,
+          encodeField(field2, encoder2),
+          field3.name,
+          encodeField(field3, encoder3)
+        )
+      case _ =>
+        val builder = if (arity == -1) Map.newBuilder[String, Value] else HashMap.newBuilder[String, Value]
+        fieldEncoders.foreach { case (field, encoder) =>
+          builder += field.name -> encodeField(field, encoder)
+        }
+        builder.result()
+    }
+    Value.record(values)
+  }
 
   val default: Deriver[ValueEncoder] = new Deriver[ValueEncoder] {
 
@@ -35,18 +102,11 @@ object ValueEncoderDeriver {
       summoned: => Option[ValueEncoder[A]]
     ): ValueEncoder[A] = new ValueEncoder[A] {
 
-      private def enc[A1](v: A, field: Schema.Field[A, A1], encoder: ValueEncoder[?]) =
-        encoder.asInstanceOf[ValueEncoder[A1]].encode(field.get(v))
+      private lazy val fieldEncoders = record.fields.zip(fields.map(_.unwrap))
+      private lazy val arity         = mapArity(fieldEncoders)
 
       override def encode(value: A): Value =
-        Value.record(
-          record.fields
-            .zip(fields.map(_.unwrap))
-            .map { case (field, encoder) =>
-              field.name -> enc(value, field, encoder)
-            }
-            .toMap
-        )
+        encodeRecord(value, fieldEncoders, arity)
     }
 
     override def deriveEnum[A](
@@ -145,9 +205,11 @@ object ValueEncoderDeriver {
       summoned: => Option[ValueEncoder[Option[A]]]
     ): ValueEncoder[Option[A]] =
       new ValueEncoder[Option[A]] {
+        private lazy val encoder = inner
+
         override def encode(value: Option[A]): Value =
           value match {
-            case Some(v) => inner.encode(v)
+            case Some(v) => encoder.encode(v)
             case _       => Value.nil
           }
       }
@@ -182,20 +244,12 @@ object ValueEncoderDeriver {
       summoned: => Option[ValueEncoder[B]]
     ): ValueEncoder[B] = summoned.getOrElse {
       new ValueEncoder[B] {
-        private def enc[A1](v: A, field: Schema.Field[A, A1], encoder: ValueEncoder[?]) =
-          encoder.asInstanceOf[ValueEncoder[A1]].encode(field.get(v))
+        private lazy val fieldEncoders = record.fields.zip(fields.map(_.unwrap))
+        private lazy val arity         = mapArity(fieldEncoders)
 
         override def encode(value: B): Value =
           transform.g(value) match {
-            case Right(v)     =>
-              Value.record(
-                record.fields
-                  .zip(fields.map(_.unwrap))
-                  .map { case (field, encoder) =>
-                    field.name -> enc(v, field, encoder)
-                  }
-                  .toMap
-              )
+            case Right(v)     => encodeRecord(v, fieldEncoders, arity)
             case Left(reason) =>
               throw EncoderError(s"Failed to encode transformed record for value $value: $reason")
           }
