@@ -4,10 +4,10 @@ import org.typelevel.scalacoptions.ScalacOptions
 
 inThisBuild(
   List(
-    organization                        := "me.mnedokushev",
-    homepage                            := Some(uri("https://github.com/grouzen/zio-apache-parquet")),
-    licenses                            := List("Apache-2.0" -> uri("http://www.apache.org/licenses/LICENSE-2.0")),
-    developers                          := List(
+    organization       := "me.mnedokushev",
+    homepage           := Some(uri("https://github.com/grouzen/zio-apache-parquet")),
+    licenses           := List("Apache-2.0" -> uri("http://www.apache.org/licenses/LICENSE-2.0")),
+    developers         := List(
       Developer(
         "grouzen",
         "Mykhailo Nedokushev",
@@ -15,32 +15,14 @@ inThisBuild(
         uri("https://github.com/grouzen")
       )
     ),
-    scmInfo                             := Some(
+    scmInfo            := Some(
       ScmInfo(
         uri("https://github.com/grouzen/zio-apache-parquet"),
         "scm:git:git@github.com:grouzen/zio-apache-parquet.git"
       )
     ),
-    crossScalaVersions                  := Seq(Scala213, Scala3),
-    scalaVersion                        := Scala3,
-    githubWorkflowJavaVersions          := Seq(JavaSpec.temurin("17")),
-    githubWorkflowPublishTargetBranches := Seq(),
-    githubWorkflowBuildPreamble         := Seq(
-      WorkflowStep.Sbt(
-        List(
-          "scalafix --check",
-          "scalafmtCheckAll"
-        ),
-        name = Some("Lint Scala code")
-      ),
-      WorkflowStep.Sbt(
-        List(
-          "all undeclaredCompileDependenciesTest",
-          "all unusedCompileDependenciesTest"
-        ),
-        name = Some("Check explicit dependencies")
-      )
-    )
+    crossScalaVersions := Seq(Scala213, Scala3),
+    scalaVersion       := Scala3
   )
 )
 
