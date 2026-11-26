@@ -46,7 +46,10 @@ class ReadSupport[A](
     new HadoopReadSupport.ReadContext(requestedSchema)
   }
 
-  // Keep absent columns out of the materializer so only columns in the file can be initialized to null.
+  // Match fields by name at each group, preserving the projection's order and type definitions.
+  // Parquet and the materializer use the resulting schema for the same converter indices.
+  // The materializer initializes every selected field to null, so omitting absent columns lets
+  // the decoder distinguish them from columns that exist in the file but have a null row value.
   private def projectFields(projection: GroupType, file: GroupType): List[Type] =
     projection.getFields.asScala.toList.filter(field => file.containsField(field.getName)).map { field =>
       val fileField = file.getType(field.getName)
