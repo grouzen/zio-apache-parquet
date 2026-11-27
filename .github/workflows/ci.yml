@@ -66,11 +66,10 @@ jobs:
         run: |
           results="$RUNNER_TEMP/parquet-benchmarks"
           mkdir -p "$results"
-          sbt \
-            "benchmarks/Jmh/run -foe true -rf json -rff $results/batch.json .*ParquetBatchBenchmark.*" \
-            "benchmarksFs2/Jmh/run -foe true -rf json -rff $results/fs2.json .*ParquetFs2Benchmark.*" \
-            "benchmarksAkka/Jmh/run -foe true -rf json -rff $results/akka.json .*ParquetAkkaBenchmark.*" \
-            "benchmarksPekko/Jmh/run -foe true -rf json -rff $results/pekko.json .*ParquetPekkoBenchmark.*"
+          sbt "benchmarks/Jmh/run -foe true -rf json -rff $results/batch.json .*ParquetBatchBenchmark.*; \
+               benchmarksFs2/Jmh/run -foe true -rf json -rff $results/fs2.json .*ParquetFs2Benchmark.*; \
+               benchmarksAkka/Jmh/run -foe true -rf json -rff $results/akka.json .*ParquetAkkaBenchmark.*; \
+               benchmarksPekko/Jmh/run -foe true -rf json -rff $results/pekko.json .*ParquetPekkoBenchmark.*"
 
       - name: Generate benchmark report
         id: report
