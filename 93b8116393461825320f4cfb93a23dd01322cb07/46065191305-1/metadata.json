@@ -1,0 +1,13 @@
+{
+  "revision": "93b8116393461825320f4cfb93a23dd01322cb07",
+  "runUrl": "https://github.com/grouzen/zio-apache-parquet/actions/runs/46065191305/attempts/1",
+  "recordedAt": "2026-11-27T20:58:09Z",
+  "runner": {
+    "os": "Linux",
+    "architecture": "X64",
+    "image": "ubuntu26",
+    "imageVersion": "20261122.9.1",
+    "cpu": "Intel(R) Xeon(R) 6975P-C",
+    "jdk": "openjdk version \"17.0.21.1\" 2026-11-17\nOpenJDK Runtime Environment Temurin-17.0.21.1+2 (build 17.0.21.1+2)\nOpenJDK 64-Bit Server VM Temurin-17.0.21.1+2 (build 17.0.21.1+2, mixed mode, sharing)"
+  }
+}
