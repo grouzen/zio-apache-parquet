@@ -7,7 +7,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.ParquetFileWriter
 import org.apache.parquet.hadoop.metadata.CompressionCodecName.UNCOMPRESSED
 import org.openjdk.jmh.annotations.*
-import zio.{ Chunk, Runtime, Unsafe, ZIO }
+import zio.{ Chunk, Runtime, Tag, Unsafe, ZIO }
 import zio.schema.{ Derive, DeriveSchema, Schema }
 import zio.stream.ZStream
 
@@ -31,11 +31,58 @@ object ParquetBenchmarkSupport {
   private val pageSize     = 32 * 1024
   private val rowGroupSize = 64L * 1024
 
-  private def localConfiguration(): Configuration = {
+  def localConfiguration(): Configuration = {
     val configuration = new Configuration()
     configuration.set("fs.defaultFS", "file:///")
     configuration
   }
+
+  def narrowRecords(rows: Int): Vector[Record] = {
+    val random = new Random(42L)
+    Vector.tabulate(rows) { index =>
+      val id       = index + 1
+      val dict     = ('a' + random.nextInt(3)).toChar.toString
+      val embedded = Option.when(id % 2 == 0) {
+        Embedded(1.0 / 100.12, new UUID(random.nextLong(), random.nextLong()).toString)
+      }
+      Record(id, dict, embedded)
+    }
+  }
+
+  def writerOptions(configuration: Configuration): P4sWriter.Options =
+    P4sWriter.Options(
+      writeMode = ParquetFileWriter.Mode.CREATE,
+      compressionCodecName = UNCOMPRESSED,
+      dictionaryEncodingEnabled = true,
+      pageSize = pageSize,
+      rowGroupSize = rowGroupSize,
+      hadoopConf = configuration
+    )
+
+  def configuredReader[A <: Product: ValueDecoder: Tag](configuration: Configuration): ParquetReader[A] =
+    run(ZIO.scoped(ParquetReader.configured[A](configuration).build.map(_.get)))
+
+  def configuredWriter[A <: Product: Schema: SchemaEncoder: ValueEncoder: Tag](
+    options: P4sWriter.Options
+  ): ParquetWriter[A] =
+    run(
+      ZIO.scoped(
+        ParquetWriter
+          .configured[A](
+            writeMode = options.writeMode,
+            compressionCodecName = options.compressionCodecName,
+            dictionaryEncodingEnabled = options.dictionaryEncodingEnabled,
+            dictionaryPageSize = options.dictionaryPageSize,
+            maxPaddingSize = options.maxPaddingSize,
+            pageSize = options.pageSize,
+            rowGroupSize = options.rowGroupSize,
+            validationEnabled = options.validationEnabled,
+            hadoopConf = options.hadoopConf
+          )
+          .build
+          .map(_.get)
+      )
+    )
 
   def run[A](effect: ZIO[Any, Throwable, A]): A =
     Unsafe.unsafe { implicit unsafe =>
@@ -48,14 +95,27 @@ object ParquetBenchmarkSupport {
     }
 
   @State(Scope.Thread)
-  class Dataset {
+  abstract class TrialInput {
     @Param(Array("10000", "524288"))
     var rows: Int = 0
 
-    private var directory: NioPath                = scala.compiletime.uninitialized
+    private var directory: NioPath = scala.compiletime.uninitialized
+    var input: NioPath             = scala.compiletime.uninitialized
+
+    protected def createInput(): Unit = {
+      directory = Files.createTempDirectory("parquet-read-")
+      input = directory.resolve("input.parquet")
+    }
+
+    @TearDown(Level.Trial)
+    def cleanup(): Unit =
+      if (directory != null) deleteDirectory(directory)
+  }
+
+  @State(Scope.Thread)
+  class Dataset extends TrialInput {
     var records: Vector[Record]                   = scala.compiletime.uninitialized
     var chunk: Chunk[Record]                      = scala.compiletime.uninitialized
-    var input: NioPath                            = scala.compiletime.uninitialized
     var zioReader: ParquetReader[Record]          = scala.compiletime.uninitialized
     var zioWriter: ParquetWriter[Record]          = scala.compiletime.uninitialized
     var parquet4sOptions: P4sWriter.Options       = scala.compiletime.uninitialized
@@ -63,49 +123,16 @@ object ParquetBenchmarkSupport {
 
     @Setup(Level.Trial)
     def setup(): Unit = {
-      val random        = new Random(42L)
-      records = Vector.tabulate(rows) { index =>
-        val id       = index + 1
-        val dict     = ('a' + random.nextInt(3)).toChar.toString
-        val embedded = Option.when(id % 2 == 0) {
-          Embedded(1.0 / 100.12, new UUID(random.nextLong(), random.nextLong()).toString)
-        }
-        Record(id, dict, embedded)
-      }
+      records = narrowRecords(rows)
       chunk = Chunk.fromIterable(records)
-      directory = Files.createTempDirectory("parquet-read-")
-      input = directory.resolve("input.parquet")
+      createInput()
       val configuration = localConfiguration()
-      parquet4sOptions = P4sWriter.Options(
-        writeMode = ParquetFileWriter.Mode.CREATE,
-        compressionCodecName = UNCOMPRESSED,
-        dictionaryEncodingEnabled = true,
-        pageSize = pageSize,
-        rowGroupSize = rowGroupSize,
-        hadoopConf = configuration
-      )
+      parquet4sOptions = writerOptions(configuration)
       parquet4sReaderOptions = P4sReader.Options(hadoopConf = configuration)
-      zioReader = run(ZIO.scoped(ParquetReader.configured[Record](configuration).build.map(_.get)))
-      zioWriter = run(
-        ZIO.scoped(
-          ParquetWriter
-            .configured[Record](
-              writeMode = ParquetFileWriter.Mode.CREATE,
-              compressionCodecName = UNCOMPRESSED,
-              dictionaryEncodingEnabled = true,
-              pageSize = pageSize,
-              rowGroupSize = rowGroupSize,
-              hadoopConf = configuration
-            )
-            .build
-            .map(_.get)
-        )
-      )
+      zioReader = configuredReader[Record](configuration)
+      zioWriter = configuredWriter[Record](parquet4sOptions)
       P4sWriter.of[Record].options(parquet4sOptions).writeAndClose(P4sPath(input), records)
     }
-
-    @TearDown(Level.Trial)
-    def cleanup(): Unit = deleteDirectory(directory)
   }
 
   @State(Scope.Thread)
