@@ -41,3 +41,65 @@ jobs:
 
       - name: Build project
         run: sbt '++ ${{ matrix.scala }}; test'
+
+  benchmarks:
+    name: Parquet Benchmarks
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: sbt
+
+      - uses: sbt/setup-sbt@v1
+
+      - name: Run JMH suites
+        run: |
+          results="$RUNNER_TEMP/parquet-benchmarks"
+          mkdir -p "$results"
+          sbt \
+            "benchmarks/Jmh/run -foe true -rf json -rff $results/batch.json .*ParquetBatchBenchmark.*" \
+            "benchmarksFs2/Jmh/run -foe true -rf json -rff $results/fs2.json .*ParquetFs2Benchmark.*" \
+            "benchmarksAkka/Jmh/run -foe true -rf json -rff $results/akka.json .*ParquetAkkaBenchmark.*" \
+            "benchmarksPekko/Jmh/run -foe true -rf json -rff $results/pekko.json .*ParquetPekkoBenchmark.*"
+
+      - name: Generate benchmark report
+        id: report
+        run: |
+          results="$RUNNER_TEMP/parquet-benchmarks"
+          python3 modules/benchmarks/results/render.py "$results" > "$results/README.md"
+          cat "$results/README.md" >> "$GITHUB_STEP_SUMMARY"
+          jq -n \
+            --arg revision "$GITHUB_SHA" \
+            --arg runUrl "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT" \
+            --arg recordedAt "$(date -u +%FT%TZ)" \
+            --arg os "$RUNNER_OS" \
+            --arg architecture "$RUNNER_ARCH" \
+            --arg image "${ImageOS:-unknown}" \
+            --arg imageVersion "${ImageVersion:-unknown}" \
+            --arg cpu "$(LC_ALL=C lscpu | awk -F ': +' '/^Model name:/ {print $2}')" \
+            --arg jdk "$(java -version 2>&1)" \
+            '{revision: $revision, runUrl: $runUrl, recordedAt: $recordedAt,
+              runner: {os: $os, architecture: $architecture, image: $image,
+                       imageVersion: $imageVersion, cpu: $cpu, jdk: $jdk}}' \
+            > "$results/metadata.json"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v7
+        with:
+          name: parquet-benchmarks-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/parquet-benchmarks
+          if-no-files-found: error
+
+      - name: Archive benchmark history
+        if: ${{ !cancelled() && steps.report.outcome == 'success' }}
+        run: bash modules/benchmarks/results/archive.sh "$RUNNER_TEMP/parquet-benchmarks"
