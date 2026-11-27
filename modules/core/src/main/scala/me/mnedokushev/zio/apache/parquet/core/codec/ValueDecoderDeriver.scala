@@ -29,6 +29,7 @@ import java.util.{ Currency, UUID }
 object ValueDecoderDeriver {
 
   private def decodeRecordArguments(
+    record: Schema.Record[?],
     values: Map[String, Value],
     fieldNames: Chunk[String],
     fieldDecoders: => Chunk[ValueDecoder[?]]
@@ -36,7 +37,16 @@ object ValueDecoderDeriver {
     val arguments = new Array[Any](fieldNames.size)
     var index     = 0
     while (index < arguments.length) {
-      arguments(index) = values(fieldNames(index))
+      val fieldIndex = index
+      val name       = fieldNames(fieldIndex)
+      arguments(fieldIndex) = values.getOrElse(
+        name,
+        Schema.force(record.fields(fieldIndex).schema) match {
+          case _: Schema.Optional[?] => Value.nil
+          case _                     =>
+            throw DecoderError(s"Missing required field '$name' in record ${record.id.name}")
+        }
+      )
       index += 1
     }
 
@@ -64,7 +74,7 @@ object ValueDecoderDeriver {
         value match {
           case GroupValue.RecordValue(values) =>
             Unsafe.unsafe { implicit unsafe =>
-              record.construct(decodeRecordArguments(values, fieldNames, fieldDecoders)) match {
+              record.construct(decodeRecordArguments(record, values, fieldNames, fieldDecoders)) match {
                 case Right(v)     =>
                   v
                 case Left(reason) =>
@@ -247,7 +257,7 @@ object ValueDecoderDeriver {
             case GroupValue.RecordValue(values) =>
               Unsafe.unsafe { implicit unsafe =>
                 record
-                  .construct(decodeRecordArguments(values, fieldNames, fieldDecoders))
+                  .construct(decodeRecordArguments(record, values, fieldNames, fieldDecoders))
                   .flatMap(transform.f) match {
                   case Right(v)     => v
                   case Left(reason) =>
