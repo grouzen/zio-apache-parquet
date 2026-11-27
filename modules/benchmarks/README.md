@@ -10,6 +10,10 @@ sbt 'benchmarksAkka/Jmh/run .*ParquetAkkaBenchmark.*'
 sbt 'benchmarksPekko/Jmh/run .*ParquetPekkoBenchmark.*'
 ```
 
+The **Parquet Benchmarks** CI job runs all four suites sequentially on each push
+to `main`. Open the workflow run summary for the comparison table, or download
+the benchmark artifact for the Markdown report and raw JMH JSON.
+
 Each streaming adapter runs in its own sbt project. This also keeps the Akka
 and Pekko adapters on separate classpaths, since they publish classes with the
 same fully qualified names.
