@@ -1,6 +1,12 @@
 package me.mnedokushev.zio.apache.parquet.benchmarks
 
-import com.github.mjakubowski84.parquet4s.{ ParquetWriter as P4sWriter, Path as P4sPath }
+import com.github.mjakubowski84.parquet4s.{
+  Col,
+  Filter as P4sFilter,
+  ParquetReader as P4sReader,
+  ParquetWriter as P4sWriter,
+  Path as P4sPath
+}
 import me.mnedokushev.zio.apache.parquet.core.filter.{ Column, CompiledPredicate }
 import me.mnedokushev.zio.apache.parquet.core.filter.syntax.*
 import me.mnedokushev.zio.apache.parquet.hadoop.{ ParquetReader, Path }
@@ -8,7 +14,7 @@ import org.apache.parquet.column.statistics.IntStatistics
 import org.apache.parquet.hadoop.ParquetFileReader
 import org.apache.parquet.hadoop.util.HadoopInputFile
 import org.openjdk.jmh.annotations.*
-import zio.Chunk
+import zio.{ Chunk, ZIO }
 
 import scala.jdk.CollectionConverters.*
 import scala.util.Using
@@ -23,11 +29,13 @@ object ParquetFilterBenchmark {
     @Param(Array("clustered", "scattered"))
     var layout: String = scala.compiletime.uninitialized
 
-    var reader: ParquetReader[WideFlat]   = scala.compiletime.uninitialized
-    var predicate: CompiledPredicate      = scala.compiletime.uninitialized
-    private var expected: Chunk[WideFlat] = scala.compiletime.uninitialized
-    private var rowGroups                 = 0
-    private var candidateGroups           = 0
+    var reader: ParquetReader[WideFlat]           = scala.compiletime.uninitialized
+    var predicate: CompiledPredicate              = scala.compiletime.uninitialized
+    var parquet4sPredicate: P4sFilter             = scala.compiletime.uninitialized
+    var parquet4sReaderOptions: P4sReader.Options = scala.compiletime.uninitialized
+    private var expected: Chunk[WideFlat]         = scala.compiletime.uninitialized
+    private var rowGroups                         = 0
+    private var candidateGroups                   = 0
 
     @Setup(Level.Trial)
     def setup(): Unit = {
@@ -46,7 +54,9 @@ object ParquetFilterBenchmark {
       val bucket        = Column.Named[Int, "bucket"]("bucket")
       predicate = filter(bucket === matchingBucket)
       require(predicate.isRight, s"Could not compile benchmark predicate: ${predicate}")
+      parquet4sPredicate = Col(bucket.path) === matchingBucket
       val configuration = localConfiguration()
+      parquet4sReaderOptions = P4sReader.Options(hadoopConf = configuration)
       reader = configuredReader[WideFlat](configuration)
       P4sWriter.of[WideFlat].options(writerOptions(configuration)).writeAndClose(P4sPath(input), ordered)
 
@@ -70,17 +80,26 @@ object ParquetFilterBenchmark {
       )
     }
 
-    def verify(benchmark: ParquetFilterBenchmark): Unit = {
-      require(benchmark.zioPushdownRead(this) == expected, "Pushdown returned different records")
-      require(benchmark.zioInMemoryFilterRead(this) == expected, "In-memory filtering returned different records")
+    def zioStream =
+      reader.readStreamFiltered(Path(input), predicate)
+
+    def verifyMatches(name: String, rows: Iterable[WideFlat]): Unit =
+      require(rows.iterator.sameElements(expected.iterator), s"${name} returned different records for ${layout}")
+
+    def printLayout(): Unit =
       println(
         s"${layout}, ${rows} rows: ${expected.size} matches, ${candidateGroups}/${rowGroups} candidate row groups"
       )
-    }
   }
 
-  def main(args: Array[String]): Unit = {
-    val benchmark = new ParquetFilterBenchmark
+  private[benchmarks] def verifyFilteredStreaming(read: FilterDataset => Seq[WideFlat]): Unit =
+    withFilterDatasets { data =>
+      data.verifyMatches("ZIO streaming pushdown", run(ZIO.scoped(data.zioStream.runCollect)))
+      data.verifyMatches("parquet4s streaming pushdown", read(data))
+      data.printLayout()
+    }
+
+  private def withFilterDatasets(verify: FilterDataset => Unit): Unit =
     for {
       rows   <- List(10000, 524288)
       layout <- List("clustered", "scattered")
@@ -90,8 +109,17 @@ object ParquetFilterBenchmark {
       dataset.layout = layout
       try {
         dataset.setup()
-        dataset.verify(benchmark)
+        verify(dataset)
       } finally dataset.cleanup()
+    }
+
+  def main(args: Array[String]): Unit = {
+    val benchmark = new ParquetFilterBenchmark
+    withFilterDatasets { data =>
+      data.verifyMatches("ZIO batch pushdown", benchmark.zioPushdownRead(data))
+      data.verifyMatches("ZIO in-memory filtering", benchmark.zioInMemoryFilterRead(data))
+      data.verifyMatches("parquet4s batch pushdown", benchmark.parquet4sPushdownRead(data))
+      data.printLayout()
     }
   }
 }
@@ -102,6 +130,16 @@ class ParquetFilterBenchmark extends ParquetBenchmark {
   @Benchmark
   def zioPushdownRead(data: FilterDataset): Chunk[WideFlat] =
     run(data.reader.readChunkFiltered[WideFlat](Path(data.input), data.predicate))
+
+  @Benchmark
+  def parquet4sPushdownRead(data: FilterDataset): Chunk[WideFlat] =
+    collectParquet4s(
+      P4sReader
+        .as[WideFlat]
+        .options(data.parquet4sReaderOptions)
+        .filter(data.parquet4sPredicate)
+        .read(P4sPath(data.input))
+    )
 
   @Benchmark
   def zioInMemoryFilterRead(data: FilterDataset): Chunk[WideFlat] =

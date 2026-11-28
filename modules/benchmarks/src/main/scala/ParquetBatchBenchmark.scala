@@ -18,20 +18,14 @@ import zio.schema.Schema
 
 import java.nio.file.Path as NioPath
 import scala.jdk.CollectionConverters.*
-import scala.util.Using
 
 import ParquetBenchmarkSupport.*
 import ParquetWideRecords.*
 
 object ParquetBatchBenchmark {
 
-  private val shapes = List("narrow", "wideFlat", "wideNested")
-
   @State(Scope.Thread)
-  class BatchDataset extends TrialInput {
-    @Param(Array("narrow", "wideFlat", "wideNested"))
-    var shape: String = scala.compiletime.uninitialized
-
+  class BatchDataset extends ShapedInput {
     private[benchmarks] var file: BatchFile[?] = scala.compiletime.uninitialized
 
     @Setup(Level.Trial)
@@ -65,11 +59,7 @@ object ParquetBatchBenchmark {
       run(zioReader.readChunk[A](Path(file)))
 
     def parquet4sRead(file: NioPath): Chunk[A] =
-      Using.resource(P4sReader.as[A].options(parquet4sReaderConfig).read(P4sPath(file))) { rows =>
-        val builder = Chunk.newBuilder[A]
-        rows.iterator.foreach(row => builder += row)
-        builder.result()
-      }
+      collectParquet4s(P4sReader.as[A].options(parquet4sReaderConfig).read(P4sPath(file)))
 
     def javaRead(file: NioPath): Chunk[A] =
       JavaParquetRecords.read[A](file, configuration)
@@ -121,7 +111,7 @@ object ParquetBatchBenchmark {
   }
 
   def main(args: Array[String]): Unit =
-    shapes.foreach { shape =>
+    recordShapes.foreach { shape =>
       val dataset = new BatchDataset
       dataset.rows = 256
       dataset.shape = shape

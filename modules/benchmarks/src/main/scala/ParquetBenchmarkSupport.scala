@@ -1,6 +1,14 @@
 package me.mnedokushev.zio.apache.parquet.benchmarks
 
-import com.github.mjakubowski84.parquet4s.{ ParquetReader as P4sReader, ParquetWriter as P4sWriter, Path as P4sPath }
+import com.github.mjakubowski84.parquet4s.{
+  ParquetIterable,
+  ParquetReader as P4sReader,
+  ParquetRecordDecoder,
+  ParquetRecordEncoder,
+  ParquetSchemaResolver,
+  ParquetWriter as P4sWriter,
+  Path as P4sPath
+}
 import me.mnedokushev.zio.apache.parquet.core.codec.*
 import me.mnedokushev.zio.apache.parquet.hadoop.{ ParquetReader, ParquetWriter, Path }
 import org.apache.hadoop.conf.Configuration
@@ -84,6 +92,13 @@ object ParquetBenchmarkSupport {
       )
     )
 
+  def collectParquet4s[A](rows: ParquetIterable[A]): Chunk[A] =
+    Using.resource(rows) { rows =>
+      val builder = Chunk.newBuilder[A]
+      rows.iterator.foreach(row => builder += row)
+      builder.result()
+    }
+
   def run[A](effect: ZIO[Any, Throwable, A]): A =
     Unsafe.unsafe { implicit unsafe =>
       Runtime.default.unsafe.run(effect).getOrThrowFiberFailure()
@@ -112,26 +127,63 @@ object ParquetBenchmarkSupport {
       if (directory != null) deleteDirectory(directory)
   }
 
+  private[benchmarks] val recordShapes = List("narrow", "wideFlat", "wideNested")
+
   @State(Scope.Thread)
-  class Dataset extends TrialInput {
-    var records: Vector[Record]                   = scala.compiletime.uninitialized
-    var chunk: Chunk[Record]                      = scala.compiletime.uninitialized
-    var zioReader: ParquetReader[Record]          = scala.compiletime.uninitialized
-    var zioWriter: ParquetWriter[Record]          = scala.compiletime.uninitialized
-    var parquet4sOptions: P4sWriter.Options       = scala.compiletime.uninitialized
-    var parquet4sReaderOptions: P4sReader.Options = scala.compiletime.uninitialized
+  abstract class ShapedInput extends TrialInput {
+    @Param(Array("narrow", "wideFlat", "wideNested"))
+    var shape: String = scala.compiletime.uninitialized
+  }
+
+  @State(Scope.Thread)
+  class Dataset extends ShapedInput {
+    private[benchmarks] var file: StreamFile[?] = scala.compiletime.uninitialized
 
     @Setup(Level.Trial)
     def setup(): Unit = {
-      records = narrowRecords(rows)
-      chunk = Chunk.fromIterable(records)
       createInput()
-      val configuration = localConfiguration()
-      parquet4sOptions = writerOptions(configuration)
-      parquet4sReaderOptions = P4sReader.Options(hadoopConf = configuration)
-      zioReader = configuredReader[Record](configuration)
-      zioWriter = configuredWriter[Record](parquet4sOptions)
-      P4sWriter.of[Record].options(parquet4sOptions).writeAndClose(P4sPath(input), records)
+      file = shape match {
+        case "narrow"     => new StreamFile(input, narrowRecords(rows))
+        case "wideFlat"   => new StreamFile(input, ParquetWideRecords.flatRecords(rows))
+        case "wideNested" => new StreamFile(input, ParquetWideRecords.nestedRecords(rows))
+        case unknown      => throw new IllegalArgumentException(s"Unknown record shape: ${unknown}")
+      }
+    }
+  }
+
+  private[benchmarks] class StreamFile[A <: Product: {Schema, SchemaEncoder, ValueEncoder, ValueDecoder, Tag}](
+    val input: NioPath,
+    val records: IndexedSeq[A]
+  )(using
+    val parquet4sDecoder: ParquetRecordDecoder[A],
+    val parquet4sEncoder: ParquetRecordEncoder[A],
+    val parquet4sSchema: ParquetSchemaResolver[A]
+  ) {
+    private val configuration  = localConfiguration()
+    val parquet4sOptions       = writerOptions(configuration)
+    val parquet4sReaderOptions = P4sReader.Options(hadoopConf = configuration)
+    private val zioReader      = configuredReader[A](configuration)
+    private val zioWriter      = configuredWriter[A](parquet4sOptions)
+    private val chunk          = Chunk.fromIterable(records)
+
+    P4sWriter.of[A].options(parquet4sOptions).writeAndClose(P4sPath(input), records)
+
+    def zioRead: ZStream[zio.Scope, Throwable, A] =
+      zioReader.readStream(Path(input))
+
+    def zioWrite(output: Output): Unit =
+      run(zioWriter.writeStream(Path(output.file), ZStream.fromChunk(chunk)))
+
+    def verify(read: => Seq[A], write: Output => Unit): Unit = {
+      require(read == records, "Streaming read returned different records")
+      val output = new Output
+      output.setup()
+      try {
+        write(output)
+        Using.resource(P4sReader.as[A].options(parquet4sReaderOptions).read(P4sPath(output.file))) { rows =>
+          require(rows.iterator.sameElements(records.iterator), "Streaming write produced different records")
+        }
+      } finally output.cleanup()
     }
   }
 
@@ -150,25 +202,27 @@ object ParquetBenchmarkSupport {
     def cleanup(): Unit = deleteDirectory(directory)
   }
 
-  def verify(
-    read: Dataset => Seq[Record],
-    write: (Dataset, Output) => Unit
+  private[benchmarks] def verifyStreaming(
+    read: [A <: Product] => StreamFile[A] => Seq[A],
+    write: [A <: Product] => (StreamFile[A], Output) => Unit
   ): Unit = {
-    val data = new Dataset
-    data.rows = 64
-    data.setup()
-    try {
-      require(read(data) == data.records, "Streaming read returned different records")
-      val output = new Output
-      output.setup()
+    def verify[A <: Product](file: StreamFile[A]): Unit = {
+      file.verify(run(ZIO.scoped(file.zioRead.runCollect)), file.zioWrite)
+      file.verify(read(file), output => write(file, output))
+    }
+
+    recordShapes.foreach { shape =>
+      val data = new Dataset
+      data.rows = 256
+      data.shape = shape
       try {
-        write(data, output)
-        Using.resource(P4sReader.as[Record].options(data.parquet4sReaderOptions).read(P4sPath(output.file))) { rows =>
-          require(rows.iterator.toVector == data.records, "Streaming write produced different records")
-        }
-      } finally output.cleanup()
-    } finally data.cleanup()
+        data.setup()
+        verify(data.file)
+        println(s"${shape}: verified ZIO and parquet4s streaming reads and writes")
+      } finally data.cleanup()
+    }
   }
+
 }
 
 @BenchmarkMode(Array(Mode.AverageTime))
@@ -183,10 +237,14 @@ abstract class ParquetStreamingBenchmark extends ParquetBenchmark {
   import ParquetBenchmarkSupport.*
 
   @Benchmark
-  def zioStreamingRead(data: Dataset): Record =
-    run(ZIO.scoped(data.zioReader.readStream(Path(data.input)).runLast)).get
+  def zioStreamingRead(data: Dataset): Product =
+    run(ZIO.scoped(data.file.zioRead.runLast)).get
 
   @Benchmark
   def zioStreamingWrite(data: Dataset, output: Output): Unit =
-    run(data.zioWriter.writeStream(Path(output.file), ZStream.fromChunk(data.chunk)))
+    data.file.zioWrite(output)
+
+  @Benchmark
+  def zioStreamingFilteredRead(data: ParquetFilterBenchmark.FilterDataset): ParquetWideRecords.WideFlat =
+    run(ZIO.scoped(data.zioStream.runLast)).get
 }
